@@ -593,6 +593,18 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <p class="note" style="margin-top:8px">Tax guidance for each event type is shown on each card below. For full details on tax brackets, gift limits, and required minimum distributions, open the <button onclick="toggleInfo()" style="background:none;border:none;padding:0;font-size:10.5px;color:var(--navy);cursor:pointer;text-decoration:underline;font-family:var(--font-sans);font-style:italic">Info &amp; Assumptions Panel</button> in the header.</p>
       </div>
     </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Market Events for this Scenario <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the savings account, or a property slump. Each scenario has its own list. Tick the accounts an event affects; with nothing ticked explicitly it hits every financial account.</p>
+        <div id="me-list"></div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div><!-- /lpane -->
@@ -606,6 +618,14 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
     </div>
   </div>
   <div id="met-grid" class="met-grid"></div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:4px;font-size:11px;color:var(--mu)">
+    <label for="chart-view">Chart view</label>
+    <select id="chart-view" onchange="setChartView(this.value)" style="font-size:11.5px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px">
+      <option value="bars">Stacked bars</option>
+      <option value="area">Stacked area</option>
+      <option value="lines">Separate lines</option>
+    </select>
+  </div>
   <div class="cleg" id="cleg"></div>
   <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
   <div class="resbar">
@@ -781,6 +801,11 @@ if(!S._ncid)S._ncid=3;
 // endAge is now stored; fall back to 95
 if(!S.endAge)S.endAge=95;
 delete S.startAge; // replaced by S.people[0].currentAge
+// v10: per-account growth basis + colour, per-scenario market events, chart view
+S.accounts.forEach(a=>{if(!a.growth)a.growth='nominal';if(a.color===undefined)a.color='';});
+S.scenarios.forEach(sc=>{if(!sc.marketEvents)sc.marketEvents=[];});
+if(!S._nmid)S._nmid=1;
+if(!S.chartView)S.chartView='bars';
 
 /* Account and chart colors */
 const ACCT_CLR=['#1b2f4a','#b8892b','#2d6a4f','#b83232','#7366c8','#0c7c84']; // financial accounts
@@ -875,10 +900,33 @@ const CE_T={
    Cash events:
    - Now stored per-scenario (sc.cashEvents) instead of globally.
 */
+/* Does a market event apply to this account?
+   ev.targets is a list of account ids; an empty or missing list means every
+   financial (non-property) account. Property is only hit when named explicitly. */
+function evTargets(ev,a){
+  if(ev.targets&&ev.targets.length)return ev.targets.includes(a.id);
+  return a.type!=='property';
+}
+
+/* Annual return for one account in one year.
+   1. Start from the account's own rate. The stress toggle caps financial accounts at the stress rate.
+   2. A market event with a "then return X% for N years" override replaces that rate while active.
+   3. Growth basis "real" treats the rate as a return above general inflation,
+      so the nominal growth is (1+rate)(1+inflation)-1. "nominal" uses the rate as entered. */
+function acctReturn(a,sc,tableAge){
+  let r=a.rate;
+  if(S.useStress&&a.type!=='property')r=Math.min(r,S.stressRate);
+  for(const ev of (sc.marketEvents||[])){
+    if(ev.years>0&&ev.rate!==''&&ev.rate!==null&&ev.rate!==undefined&&tableAge>=ev.age&&tableAge<ev.age+ev.years&&evTargets(ev,a))r=+ev.rate;
+  }
+  r/=100;
+  if(a.growth==='real')r=(1+r)*(1+S.genInfl/100)-1;
+  return r;
+}
+
 function simulate(){
   const primaryAge=S.people[0].currentAge;
   const sc=S.scenarios[S.activeScenario];
-  const fallbackRet=(S.useStress?S.stressRate:S.retRate)/100;
 
   // Max simulation years: until primary person hits endAge, or last person dies
   const maxYears=Math.min(
@@ -911,6 +959,14 @@ function simulate(){
         events.push({type:'death',pid:p.id,name:p.name});
       }
     });
+    // ── Market events: one-off shock to targeted accounts at the start of the year ──
+    // Applied before RMDs and growth, so a crash also shrinks that year's RMD base.
+    for(const ev of (sc.marketEvents||[])){
+      if(ev.age===tableAge&&ev.shockPct){
+        sorted.forEach((a,i)=>{if(evTargets(ev,a))bals[i]*=(1+ev.shockPct/100);});
+        events.push({type:'market',label:ev.label});
+      }
+    }
     const livePeople=S.people.filter(p=>!dead[p.id]);
     // MFJ filing for 2 people; single for 1; note: >2 uses MFJ as a simplification
     const singleFiler=livePeople.length<=1;
@@ -989,7 +1045,7 @@ function simulate(){
     // ── Update balances ───────────────────────────────────────────────────────
     bals=bals.map((b,i)=>{
       const a=sorted[i];
-      const r=(a.rate!==undefined?a.rate:fallbackRet*100)/100;
+      const r=acctReturn(a,sc,tableAge);
       // RMDs only apply to non-property accounts
       const rmd=a.type==='property'?0:acctRmds[i];
       return b*(1+r)-(a.annualCost||0)*inflY-rmd;
@@ -1141,7 +1197,7 @@ function renderAccts(){
       </div>
       <div class="g3">
         <div class="f"><label>${isP?'Current market value ($)':'Balance ($)'}</label><input type="number" class="mono" value="${a.balance}" step="10000" oninput="acctF(${a.id},'balance',+this.value)"></div>
-        <div class="f"><label>${isP?'Annual appreciation %':'Annual return %'}</label><input type="number" value="${a.rate}" step="0.1" min="-5" max="20" oninput="acctF(${a.id},'rate',+this.value)"></div>
+        <div class="f"><label>${(isP?'Annual appreciation %':'Annual return %')+(a.growth==='real'?' (above inflation)':'')}</label><input type="number" value="${a.rate}" step="0.1" min="-5" max="20" oninput="acctF(${a.id},'rate',+this.value)"></div>
         <div class="f"><label data-tip="Annual costs: property tax, HOA, insurance, management fees, maintenance. Inflation-adjusted each year.">${isP?'Annual costs (tax, maint.) $':'Annual fees / costs ($)'}</label><input type="number" class="mono" value="${a.annualCost||0}" step="500" oninput="acctF(${a.id},'annualCost',+this.value)"></div>
       </div>
       <div class="f" style="margin-bottom:3px"><label>Account / asset type</label>
@@ -1166,6 +1222,16 @@ function renderAccts(){
           </optgroup>
         </select>
       </div>
+      <div class="g2" style="margin-bottom:3px">
+        <div class="f"><label data-tip="Nominal: the rate is the total growth, as entered. Real: the rate is growth above general inflation, so the account keeps pace with inflation and adds this rate on top. Use Real for things like inflation-linked bonds, TIPS, or property you expect to track prices.">Growth basis</label>
+          <select onchange="acctF(${a.id},'growth',this.value)">
+            <option value="nominal" ${a.growth!=='real'?'selected':''}>Nominal (rate as entered)</option>
+            <option value="real" ${a.growth==='real'?'selected':''}>Real (inflation + rate)</option>
+          </select></div>
+        <div class="f"><label>Chart colour</label>
+          <input type="color" value="${acctColor(a)}" style="height:28px;padding:1px 3px" oninput="setAcctColor(${a.id},this.value)">
+          ${a.color?`<button class="btn-xs" style="margin-top:2px" onclick="setAcctColor(${a.id},'');renderAccts()">reset</button>`:''}</div>
+      </div>
       ${!isP?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
         <span style="font-size:10.5px;color:var(--mu)">Drawdown order: ${i+1} — ${i===0?'drawn first':'after account '+i}</span>
         <div style="display:flex;gap:3px">${i>0?`<button class="btn-xs" onclick="moveAcct(${a.id},-1)">↑</button>`:''}${i<S.accounts.length-1?`<button class="btn-xs" onclick="moveAcct(${a.id},1)">↓</button>`:''}</div>
@@ -1174,15 +1240,30 @@ function renderAccts(){
     </div>`;
   }).join('');
 }
-function acctF(id,f,v){const a=S.accounts.find(x=>x.id===id);if(a){a[f]=v;if(f!=='label'){renderAccts();recalc();}}}
-function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:4.5,type:'taxable',drawOrder:S.accounts.length+1,annualCost:0});renderAccts();recalc();}
-function delAcct(id){S.accounts=S.accounts.filter(x=>x.id!==id);S.accounts.forEach((a,i)=>a.drawOrder=i+1);renderAccts();recalc();}
+function acctF(id,f,v){const a=S.accounts.find(x=>x.id===id);if(a){a[f]=v;if(f!=='label'){renderAccts();recalc();}if(f==='label'||f==='type')renderME();}}
+function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:4.5,type:'taxable',drawOrder:S.accounts.length+1,annualCost:0,growth:'nominal',color:''});renderAccts();renderME();recalc();}
+
+/* Chart colour for an account: the user's choice if set, otherwise the next unused
+   palette colour for its class (financial or property), in drawdown order. */
+function acctColor(a){
+  if(a.color)return a.color;
+  const sorted=[...S.accounts].sort((x,y)=>x.drawOrder-y.drawOrder);
+  const isP=a.type==='property';
+  const idx=sorted.filter(x=>(x.type==='property')===isP).indexOf(a);
+  return isP?PROP_CLR[idx%PROP_CLR.length]:ACCT_CLR[idx%ACCT_CLR.length];
+}
+function setAcctColor(id,v){const a=S.accounts.find(x=>x.id===id);if(a){a.color=v;renderME();recalc();}}
+
+function delAcct(id){S.accounts=S.accounts.filter(x=>x.id!==id);
+  S.scenarios.forEach(sc=>(sc.marketEvents||[]).forEach(ev=>{
+    if(ev.targets&&ev.targets.length){ev.targets=ev.targets.filter(t=>t!==id);if(!ev.targets.length)ev.targets=[-1];}
+  }));S.accounts.forEach((a,i)=>a.drawOrder=i+1);renderAccts();renderME();recalc();}
 function moveAcct(id,d){
   const i=S.accounts.findIndex(x=>x.id===id);
   const ni=i+d;if(ni<0||ni>=S.accounts.length)return;
   [S.accounts[i],S.accounts[ni]]=[S.accounts[ni],S.accounts[i]];
   S.accounts.forEach((a,idx)=>a.drawOrder=idx+1);
-  renderAccts();recalc();
+  renderAccts();renderME();recalc();
 }
 
 /* ══ RENDER: SCENARIOS & EXPENSES ══ */
@@ -1196,6 +1277,7 @@ function renderScens(){
     `<button class="btn-scen-new" onclick="addScen()">+ New scenario</button>`;
   renderExp();
   renderCE();
+  renderME();
   const scName=S.scenarios[S.activeScenario].name;
   document.getElementById('ce-scen-name').textContent='"'+scName+'"';
   document.getElementById('tbl-hd').textContent='Year-by-year · '+scName;
@@ -1203,7 +1285,7 @@ function renderScens(){
 function switchScen(i){S.activeScenario=i;renderScens();recalc();}
 function addScen(){
   const n=prompt('Scenario name:','New Scenario');if(!n)return;
-  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],expenses:[
+  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],marketEvents:[],expenses:[
     {id:S._neid++,label:'Housing',amount:24000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Medical & healthcare',amount:24000,prd:'yr',infl:'medical',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Food & groceries',amount:14400,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
@@ -1219,6 +1301,7 @@ function dupScen(i){
   // Re-assign unique IDs to all copied items
   clone.expenses.forEach(e=>e.id=S._neid++);
   clone.cashEvents.forEach(ce=>ce.id=S._ncid++);
+  (clone.marketEvents||[]).forEach(ev=>ev.id=S._nmid++);
   S.scenarios.splice(i+1,0,clone);
   S.activeScenario=i+1;
   renderScens();recalc();
@@ -1320,6 +1403,77 @@ function addCE(dir){
   renderCE();
 }
 function delCE(si,id){S.scenarios[si].cashEvents=S.scenarios[si].cashEvents.filter(x=>x.id!==id);renderCE();recalc();}
+
+/* ══ RENDER: MARKET EVENTS ══
+   Per-scenario shocks that hit chosen accounts only (a stock market crash, a property
+   slump, a rate change). shockPct is applied once at the start of the age shown.
+   "years" and "rate" optionally replace the account's return for that many years from
+   the same age, so a crash can be followed by a slow recovery. */
+const ME_PRESETS={
+  crash:{label:'Stock market crash',shockPct:-35,years:2,rate:'3'},
+  slump:{label:'Property slump',shockPct:-20,years:0,rate:''},
+  lost:{label:'Lost decade (no growth)',shockPct:0,years:10,rate:'0'},
+};
+function renderME(){
+  const si=S.activeScenario;
+  const mes=(S.scenarios[si].marketEvents||[]);
+  const accts=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
+  document.getElementById('me-list').innerHTML=mes.length===0
+    ?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>'
+    :mes.map(ev=>{
+      const allOn=!(ev.targets&&ev.targets.length);
+      const chips=accts.map(a=>{
+        const on=allOn?a.type!=='property':ev.targets.includes(a.id);
+        return `<label class="pop-item" style="display:inline-flex;gap:4px;margin-right:8px;font-size:11.5px"><input type="checkbox" ${on?'checked':''} onchange="meTarget(${si},${ev.id},${a.id},this.checked)"><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</label>`;
+      }).join('');
+      return `<div class="ce-card">
+        <div class="ce-head">
+          <span class="ce-type ce-out">⚡ Market event</span>
+          <input type="text" value="${ev.label}" style="flex:1;font-size:11.5px" oninput="meF(${si},${ev.id},'label',this.value)">
+          <button class="btn-del" onclick="delME(${si},${ev.id})">✕</button>
+        </div>
+        <div class="g3">
+          <div class="f" style="margin:0"><label>At age</label><input type="number" value="${ev.age}" min="40" max="115" oninput="meF(${si},${ev.id},'age',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-tip="One-off change to the balance at the start of that year. -35 is a 35% fall. Use 0 for no immediate shock.">One-off change %</label><input type="number" value="${ev.shockPct}" step="1" oninput="meF(${si},${ev.id},'shockPct',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-tip="Optional. For this many years from the event age, the affected accounts earn the return below instead of their normal rate. 0 means no override.">Then, for N yrs</label><input type="number" value="${ev.years}" min="0" max="40" oninput="meF(${si},${ev.id},'years',+this.value)"></div>
+        </div>
+        <div class="g3" style="margin-top:5px">
+          <div class="f" style="margin:0"><label data-tip="Annual return used during those years. Blank leaves the account's own rate in place.">Return % in that time</label><input type="number" value="${ev.rate}" step="0.5" placeholder="unchanged" oninput="meF(${si},${ev.id},'rate',this.value===''?'':+this.value)"></div>
+        </div>
+        <div style="margin-top:6px;font-size:10.5px;color:var(--mu)">Affects:</div>
+        <div style="margin-top:2px">${chips}</div>
+      </div>`;
+    }).join('');
+}
+function meF(si,id,f,v){
+  const ev=(S.scenarios[si].marketEvents||[]).find(x=>x.id===id);
+  if(!ev)return;
+  ev[f]=v;
+  if(f!=='label')recalc();
+}
+function meTarget(si,id,acctId,on){
+  const ev=(S.scenarios[si].marketEvents||[]).find(x=>x.id===id);
+  if(!ev)return;
+  // First edit converts the implicit "all financial accounts" into an explicit list
+  if(!(ev.targets&&ev.targets.length))ev.targets=S.accounts.filter(a=>a.type!=='property').map(a=>a.id);
+  const has=ev.targets.includes(acctId);
+  if(on&&!has)ev.targets.push(acctId);
+  if(!on&&has)ev.targets=ev.targets.filter(t=>t!==acctId);
+  // An empty list means "all financial accounts", so unticking the last one stores [-1], which matches nothing
+  if(ev.targets.length===0)ev.targets=[-1];
+  renderME();recalc();
+}
+function addME(kind){
+  const si=S.activeScenario;
+  const sc=S.scenarios[si];
+  if(!sc.marketEvents)sc.marketEvents=[];
+  const p=ME_PRESETS[kind]||ME_PRESETS.crash;
+  sc.marketEvents.push({id:S._nmid++,label:p.label,age:S.people[0].currentAge+3,shockPct:p.shockPct,years:p.years,rate:p.rate===''?'':+p.rate,
+    // [-1] matches no account: a slump with no property account does nothing rather than hitting everything
+    targets:kind==='slump'?(S.accounts.some(a=>a.type==='property')?S.accounts.filter(a=>a.type==='property').map(a=>a.id):[-1]):[]});
+  renderME();recalc();
+}
+function delME(si,id){S.scenarios[si].marketEvents=S.scenarios[si].marketEvents.filter(x=>x.id!==id);renderME();recalc();}
 
 /* ══ METRIC DEFINITIONS ══ */
 const MET_DEFS=[
@@ -1423,17 +1577,23 @@ function renderMetrics(rows){
 }
 
 let chart=null;
+function setChartView(v){S.chartView=v;recalc();}
 function renderChart(rows){
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
-  let finColorIdx=0,propColorIdx=0;
-  // Stacked bar datasets: financial accounts first, then property accounts (same stack 's')
-  const barDatasets=sorted.map(a=>{
-    const isP=a.type==='property';
-    const color=isP?PROP_CLR[propColorIdx++%PROP_CLR.length]:ACCT_CLR[finColorIdx++%ACCT_CLR.length];
-    return{label:a.label,data:rows.map((r,i)=>r.snap[sorted.indexOf(a)]||0),backgroundColor:color,stack:'s'};
+  const view=S.chartView||'bars';
+  const labels=rows.map(r=>String(r.age));
+  const hex2rgba=(h,al)=>{const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?`rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${al})`:h;};
+  // One dataset per account. Bars and areas stack; the lines view plots each balance on its own.
+  const acctSets=sorted.map((a,idx)=>{
+    const color=acctColor(a);
+    const data=rows.map(r=>r.snap[idx]||0);
+    if(view==='bars')return{label:a.label,data,backgroundColor:color,stack:'s'};
+    if(view==='area')return{type:'line',label:a.label,data,borderColor:color,backgroundColor:hex2rgba(color,0.75),borderWidth:1.5,pointRadius:0,tension:0.25,fill:true};
+    return{type:'line',label:a.label,data,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.25};
   });
-  // Today's $ overlay line — rendered LAST so it sits on top of all bars
-  // Color: indigo (#6B48FF) — clearly distinct from all account colors
+  // Nominal total: shown on the lines view, where accounts do not stack to it
+  const totalLine=view==='lines'?{type:'line',label:'Total (nominal)',data:rows.map(r=>r.total),borderColor:'#333',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:0.25}:null;
+  // Today's $ overlay line, drawn last so it sits on top
   const realLine={
     label:"Wealth in today's $",
     data:rows.map(r=>r.realTotal),
@@ -1444,41 +1604,42 @@ function renderChart(rows){
     borderDash:[5,3],
     pointRadius:0,
     tension:0.3,
-    stack:undefined,  // not stacked — floats above bars
   };
-  // Build legend
-  finColorIdx=0;propColorIdx=0;
+  // Legend follows the same colours as the datasets
   document.getElementById('cleg').innerHTML=
-    sorted.map(a=>{const isP=a.type==='property';const c=isP?PROP_CLR[propColorIdx++%PROP_CLR.length]:ACCT_CLR[finColorIdx++%ACCT_CLR.length];return`<span><span class="ld" style="background:${c}"></span>${a.label}</span>`;}).join('')+
-    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's $</span>`;
-  // Event annotation plugin (vertical dashed lines at death and cash event ages)
+    sorted.map(a=>`<span><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</span>`).join('')+
+    (totalLine?`<span><span style="display:inline-block;width:14px;height:0;border-top:2.5px solid #333;vertical-align:middle;margin-right:3px"></span>Total</span>`:'')+
+    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's $</span>`+
+    `<span><span style="display:inline-block;width:0;height:11px;border-left:2px dashed rgba(184,50,50,0.7);vertical-align:middle;margin-right:4px"></span>Market event</span>`;
+  const sel=document.getElementById('chart-view');if(sel&&sel.value!==view)sel.value=view;
+  // Vertical dashed lines at deaths, cash events and market events
   const sc=S.scenarios[S.activeScenario];
   const evtAges={};
   (sc.cashEvents||[]).forEach(ce=>{if(!evtAges[ce.age])evtAges[ce.age]={type:'ce'};});
   S.people.forEach(p=>{if(!evtAges[p.deathAge])evtAges[p.deathAge]={type:'death'};});
-  const labels=rows.map(r=>String(r.age));
+  (sc.marketEvents||[]).forEach(ev=>{evtAges[ev.age]={type:'market'};});
   const evtPlugin={id:'evtLines',afterDraw(c){
     const ctx=c.ctx,xs=c.scales.x,ys=c.scales.y;
     Object.entries(evtAges).forEach(([ageStr,ev])=>{
       const idx=labels.indexOf(String(+ageStr));if(idx<0)return;
       const x=xs.getPixelForValue(idx);
       ctx.save();
-      ctx.strokeStyle=ev.type==='death'?'rgba(184,50,50,0.3)':'rgba(184,137,43,0.4)';
-      ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle=ev.type==='market'?'rgba(184,50,50,0.75)':ev.type==='death'?'rgba(184,50,50,0.3)':'rgba(184,137,43,0.4)';
+      ctx.lineWidth=ev.type==='market'?1.5:1;ctx.setLineDash([3,3]);
       ctx.beginPath();ctx.moveTo(x,ys.top);ctx.lineTo(x,ys.bottom);ctx.stroke();
       ctx.restore();
     });
   }};
   if(chart){chart.destroy();chart=null;}
   chart=new Chart(document.getElementById('main-chart'),{
-    type:'bar',
-    // realLine is last in datasets → drawn on top
-    data:{labels,datasets:[...barDatasets,realLine]},
+    type:view==='bars'?'bar':'line',
+    data:{labels,datasets:[...acctSets,...(totalLine?[totalLine]:[]),realLine]},
     plugins:[evtPlugin],
     options:{responsive:true,maintainAspectRatio:false,
+      interaction:view==='bars'?undefined:{mode:'index',intersect:false},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
-      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
-               y:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+      scales:{x:{stacked:view!=='lines',grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
+               y:{stacked:view!=='lines',grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
   });
 }
 
@@ -1514,8 +1675,9 @@ function renderTable(rows){
 
   document.getElementById('rt-body').innerHTML=rows.map(r=>{
     const evtNames=r.events.filter(e=>e.type==='death').map(e=>e.name);
-    const cls=r.depleted?'dep':evtNames.length?'evt':'';
-    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('');
+    const mktNames=r.events.filter(e=>e.type==='market').map(e=>e.label);
+    const cls=r.depleted?'dep':(evtNames.length||mktNames.length)?'evt':'';
+    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('')+mktNames.map(n=>`<span class="badge bw" style="background:#fef2f2;color:var(--red)">${n}</span>`).join('');
     let tds=`<td>${r.age}<span style="color:var(--text-hint);font-size:9px;margin-left:3px">${r.yr}</span>${evtB}</td>`;
     for(const key of S.colOrder){
       if(!c[key])continue;
