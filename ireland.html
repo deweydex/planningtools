@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Irish Household Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script id="istate" type="application/json">null</script>
+<style>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── Brand colours ── */
+  --navy:#1b2f4a;--navy-mid:#243d60;--gold:#b8892b;--gold-light:#d4a445;
+  --bg:#f4f0e8;--surface:#fff;--surface-raised:#faf7f2;--surface-sunken:#f2ede4;
+  --border:#e0d8cc;--border-strong:#ccc3b4;
+  --color-property:#7a4f2e;
+  /* ── Semantic text colours ── */
+  --text-primary:#1a1917;--text-muted:#786f62;--text-hint:#a8a098;
+  /* ── Status colours ── */
+  --status-green:#2d6a4f;--status-red:#b83232;--status-amber:#b5620a;
+  /* ── Aliases used in older selectors (kept for compatibility) ── */
+  --surf:var(--surface);--surf2:var(--surface-raised);--surf3:var(--surface-sunken);
+  --brd:var(--border);--brd2:var(--border-strong);
+  --tx:var(--text-primary);--mu:var(--text-muted);--hi:var(--text-hint);
+  --grn:var(--status-green);--red:var(--status-red);--amb:var(--status-amber);
+  --prop:var(--color-property);
+  /* ── Typography ── */
+  --font-serif:'Lora',Georgia,serif;
+  --font-sans:'DM Sans',system-ui,sans-serif;
+  --font-mono:'DM Mono','Courier New',monospace;
+  --fd:var(--font-serif);--fu:var(--font-sans);--fn:var(--font-mono);
+  /* ── Font-size scale ── */
+  --fs-xxs:9px;--fs-xs:10px;--fs-sm:11px;--fs-base:13px;--fs-md:14px;
+  /* ── Border radius ── */
+  --radius:6px;--radius-lg:10px;
+  --r:var(--radius);--r2:var(--radius-lg);
+  /* ── Layout ── */
+  --header-h:52px;
+  --hh:var(--header-h);
+  /* ── Motion ── */
+  --dur:0.12s;
+  /* ── Z-index layers ── */
+  --z-header:30;--z-infopanel:25;--z-popover:500;--z-tooltip:9999;
+}
+html{font-size:14px}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text-primary);line-height:1.5;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;z-index:var(--z-header)}
+.app-title{font-family:var(--font-serif);font-size:1rem;font-weight:400;color:#fff;white-space:nowrap;line-height:1.2}
+.app-title small{display:block;font-family:var(--font-sans);font-size:var(--fs-xxs);opacity:0.4;text-transform:uppercase;letter-spacing:0.09em}
+.hdr-mid{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.hdr-r{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.hdr-sep{width:1px;height:18px;background:rgba(255,255,255,0.18);flex-shrink:0}
+
+/* ── SETTINGS DROPDOWN (wide popover off the header button) ── */
+.settings-pop{min-width:360px;padding:0;overflow:visible}
+.settings-pop .pop-title{padding:0.6rem 0.875rem 0.45rem;border-bottom:1px solid var(--border);margin:0}
+.settings-group{padding:0.6rem 0.875rem}
+.settings-group+.settings-group{border-top:1px solid var(--surface-sunken)}
+.sg-title{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);font-weight:500;margin-bottom:7px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:12.5px;color:var(--text-primary)}
+.settings-row:last-child{margin-bottom:0}
+.settings-row label{flex:1;color:var(--text-muted);font-size:12px;cursor:default}
+.settings-row label[data-tip]{cursor:help}
+.settings-row input[type=number]{width:58px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:var(--font-mono);font-size:12px;text-align:center;background:var(--surface);color:var(--text-primary)}
+.settings-row input[type=number]:focus{outline:none;border-color:var(--navy)}
+.settings-row input[type=checkbox]{accent-color:var(--navy);cursor:pointer}
+.settings-row .unit{font-size:11px;color:var(--text-hint);flex-shrink:0}
+
+/* ── INFO PANEL (collapsible, below header) ── */
+.info-panel{background:var(--navy-mid);color:rgba(255,255,255,0.82);font-size:11.5px;line-height:1.6;overflow:hidden;max-height:0;transition:max-height 0.3s ease;flex-shrink:0;z-index:var(--z-infopanel)}
+.info-panel.open{max-height:600px}
+.info-inner{padding:0.875rem 1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.info-sec{font-size:11px}
+.info-sec h4{font-family:var(--font-serif);font-size:12px;font-weight:500;color:#fff;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,0.15)}
+.info-sec p{color:rgba(255,255,255,0.65);line-height:1.55;margin-bottom:4px}
+.info-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+.info-tbl th{text-align:left;padding:2px 6px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.75);font-size:10px;text-transform:uppercase;letter-spacing:0.05em;font-weight:500}
+.info-tbl td{padding:2px 6px;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);font-family:var(--font-mono);font-size:11px}
+.info-tbl tr:last-child td{border-bottom:none}
+.info-tbl td:first-child{font-family:var(--font-sans)}
+.info-disc{grid-column:1/-1;font-size:10px;color:rgba(255,255,255,0.35);line-height:1.5;padding-top:6px;border-top:1px solid rgba(255,255,255,0.1);font-style:italic}
+
+/* ── CONFIRM DIALOG (Start Fresh) ── */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,35,0.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:var(--surface);border-radius:var(--radius-lg);padding:1.5rem;width:360px;max-width:92vw;border:1px solid var(--border-strong)}
+.confirm-box h3{font-family:var(--font-serif);font-size:1rem;font-weight:500;color:var(--navy);margin-bottom:0.6rem}
+.confirm-box p{font-size:13px;color:var(--text-muted);line-height:1.55;margin-bottom:1rem}
+.confirm-btns{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── DRAGGABLE COLUMN ITEMS ── */
+.col-drag-item{display:flex;align-items:center;gap:6px;padding:4px 2px;border-radius:4px;cursor:default;user-select:none;transition:background var(--dur)}
+.col-drag-item.dragging{opacity:0.4}
+.col-drag-item.drag-over{background:var(--surface-sunken);outline:2px dashed var(--gold)}
+.drag-handle{color:var(--text-hint);font-size:13px;cursor:grab;padding:0 2px;flex-shrink:0;line-height:1}
+.drag-handle:active{cursor:grabbing}
+.col-drag-item input[type=checkbox]{accent-color:var(--navy);cursor:pointer;flex-shrink:0}
+.col-drag-item span{font-size:12.5px;color:var(--text-primary);flex:1}
+
+/* ── BUTTONS ── */
+.btn{font-family:var(--font-sans);font-size:12px;font-weight:500;padding:0.28rem 0.75rem;border-radius:var(--radius);border:1px solid;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;transition:opacity var(--dur),background var(--dur)}
+/* Header ghost — white-on-navy, used for Settings and Export */
+.btn-ghost{background:transparent;border-color:rgba(255,255,255,0.22);color:rgba(255,255,255,0.82)}
+.btn-ghost:hover{background:rgba(255,255,255,0.07)}
+/* Header teal — slightly brighter, used for Info & Assumptions panel toggle */
+.btn-teal{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3);color:#fff}
+.btn-teal:hover{background:rgba(255,255,255,0.18)}
+.btn-teal.active{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.5)}
+/* Header danger-ghost — used for Fresh Start */
+.btn-danger-ghost{background:transparent;border-color:rgba(255,120,100,0.35);color:rgba(255,160,140,0.85)}
+.btn-danger-ghost:hover{background:rgba(255,80,60,0.12)}
+/* Gold — used for Export & Save */
+.btn-gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-gold:hover{opacity:0.87}
+/* Light surface button — used in left/right panes */
+.btn-outline{background:var(--surface);border-color:var(--border-strong);color:var(--text-primary);font-size:12px}
+.btn-outline:hover{background:var(--surface-raised)}
+/* Dashed add button — full-width, used below lists */
+.btn-add{background:transparent;border:1.5px dashed var(--border-strong);color:var(--text-muted);width:100%;justify-content:center;padding:0.35rem;border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:var(--font-sans);display:flex;align-items:center;gap:4px;margin-top:4px;transition:all var(--dur)}
+.btn-add:hover{border-color:var(--gold);color:var(--gold)}
+/* Small inline delete button */
+.btn-del{background:transparent;border:1px solid #f2d0d0;color:var(--status-red);font-size:11px;padding:1px 5px;border-radius:4px;cursor:pointer;font-family:var(--font-sans)}
+.btn-del:hover{background:#fef2f2}
+/* Tiny xs button — reorder arrows, scenario new etc. */
+.btn-xs{font-family:var(--font-sans);font-size:11px;padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text-muted);cursor:pointer;transition:background var(--dur)}
+.btn-xs:hover{background:var(--surface-raised)}
+/* Scenario "+ New" gets the dashed gold treatment */
+.btn-scen-new{font-family:var(--font-sans);font-size:11.5px;font-weight:500;padding:3px 10px;border:1.5px dashed var(--gold);border-radius:18px;background:transparent;color:var(--gold);cursor:pointer;transition:all var(--dur)}
+.btn-scen-new:hover{background:rgba(184,137,43,0.08)}
+
+/* ── EXPORT MENU ITEM (inside the Export & Save popover) ── */
+.export-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;padding:8px 6px;font-family:var(--font-sans);font-size:13px;cursor:pointer;border-radius:var(--radius);color:var(--text-primary);transition:background var(--dur)}
+.export-item:hover{background:var(--surface-raised)}
+.export-item-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;color:var(--text-muted)}
+.export-item-label{font-weight:500;font-size:13px;display:block;line-height:1.2}
+.export-item-desc{font-size:11px;color:var(--text-muted);display:block;margin-top:1px;line-height:1.3}
+.export-divider{height:1px;background:var(--border);margin:4px 0}
+
+/* ── LAYOUT ── */
+.split{display:flex;flex:1;overflow:hidden;min-height:0}
+.lpane{overflow-y:auto;background:var(--surf2);min-width:260px;flex-shrink:0;display:flex;flex-direction:column}
+.resizer{width:5px;background:var(--brd);cursor:col-resize;flex-shrink:0;position:relative;z-index:10;transition:background 0.12s}
+.resizer:hover,.resizer.active{background:var(--gold)}
+.resizer::after{content:'⋮';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--hi);font-size:12px;pointer-events:none}
+.rpane{flex:1;overflow-y:auto;background:var(--surf);padding:1rem 1.125rem;min-width:300px}
+
+/* ── LEFT PANE TABS ── */
+.ltab-bar{display:flex;background:var(--surf3);border-bottom:2px solid var(--brd);flex-shrink:0}
+.ltab{flex:1;padding:0.55rem 0.5rem;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:var(--fu);font-size:12px;font-weight:500;color:var(--mu);cursor:pointer;transition:all 0.12s;white-space:nowrap}
+.ltab:hover{color:var(--tx)}
+.ltab.act{color:var(--navy);border-bottom-color:var(--navy);background:var(--surf2)}
+.ltab-panel{display:none;flex:1;overflow-y:auto}
+.ltab-panel.open{display:block}
+
+/* ── ACCORDION ── */
+.accord{border-bottom:1px solid var(--brd)}
+.ac-btn{width:100%;background:none;border:none;padding:0.7rem 1rem;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--navy);transition:background 0.12s}
+.ac-btn:hover{background:rgba(0,0,0,0.015)}
+.ac-arr{font-size:9px;color:var(--hi);transition:transform 0.2s;display:inline-block}
+.ac-btn.open .ac-arr{transform:rotate(180deg)}
+.ac-body{padding:0.6rem 1rem 0.875rem;display:none}
+.ac-body.open{display:block}
+
+/* ── FORM ── */
+.f{margin-bottom:7px}
+.f>label{font-size:11px;color:var(--mu);display:block;margin-bottom:2px}
+.f input[type=number],.f input[type=text],.f select{width:100%;padding:4px 7px;border:1px solid var(--brd);border-radius:5px;font-family:var(--fu);font-size:12.5px;background:var(--surf);color:var(--tx);transition:border-color 0.12s}
+.f input:focus,.f select:focus{outline:none;border-color:var(--navy)}
+.mono{font-family:var(--fn)!important}
+.note{font-size:10.5px;color:var(--hi);font-style:italic;margin-top:2px;line-height:1.35}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.seclbl{font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;color:var(--mu);font-weight:500;margin:0.75rem 0 0.4rem;display:flex;align-items:center;gap:5px}
+.seclbl::after{content:'';flex:1;height:1px;background:var(--brd)}
+
+/* ── TOOLTIP ── */
+.tt{position:fixed;z-index:var(--z-tooltip);pointer-events:none;display:none;max-width:310px;background:var(--navy);color:rgba(255,255,255,0.92);padding:7px 10px;border-radius:7px;font-size:11.5px;line-height:1.5;font-family:var(--font-sans);box-shadow:0 4px 18px rgba(0,0,0,0.28)}
+[data-tip]{text-decoration:underline dotted var(--hi);cursor:help}
+[data-tip]:hover{text-decoration-color:var(--gold)}
+.has-qm[data-tip],.has-qm[data-help]{text-decoration:none}
+.qm{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:4px;border:1px solid var(--hi);border-radius:50%;font-size:9.5px;font-weight:600;line-height:1;color:var(--mu);background:transparent;cursor:help;vertical-align:1px;font-style:normal;text-transform:none;letter-spacing:0;flex:none;text-decoration:none}
+.qm:hover,.qm:focus-visible,.qm.on{background:var(--gold);border-color:var(--gold);color:#fff;outline:none}
+.tt b{display:block;margin-bottom:2px;color:#fff}
+.cmp{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:0.6rem}
+.cmp th{font-weight:500;color:var(--mu);text-align:right;padding:3px 6px;border-bottom:1px solid var(--brd)}
+.cmp td{text-align:right;padding:3px 6px;border-bottom:1px solid var(--brd);font-family:var(--fn)}
+.cmp th:first-child,.cmp td:first-child{text-align:left;font-family:inherit}
+.cmp tr.act td{background:rgba(184,137,43,0.10);font-weight:600}
+.cmp tr{cursor:pointer}
+.gl-item{margin-bottom:6px}.gl-item b{color:var(--navy)}
+
+/* ── PERSON BLOCK ── */
+.phead{display:flex;align-items:center;gap:7px;padding:0.6rem 0.875rem;background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2) var(--r2) 0 0;border-bottom:none}
+.pavi{width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:11px;flex-shrink:0}
+.pname{font-family:var(--fd);font-size:0.85rem;font-weight:500;color:var(--navy);border:none;background:transparent;padding:0;flex:1}
+.pname:focus{outline:none}
+.pblock{background:var(--surf);border:1px solid var(--brd);border-radius:0 0 var(--r2) var(--r2);padding:0.6rem 0.875rem;margin-bottom:6px}
+
+/* ── INCOME STREAM CARD ── */
+.inc-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem;margin-bottom:5px;border-left:3px solid var(--brd2)}
+.inc-card.type-ss{border-left-color:#1b2f4a}.inc-card.type-pension{border-left-color:#b8892b}
+.inc-card.type-annuity{border-left-color:#2d6a4f}.inc-card.type-rental{border-left-color:#b5620a}
+.inc-card.type-wages{border-left-color:#7366c8}.inc-card.type-other{border-left-color:#a8a098}
+.inc-head{display:flex;align-items:center;gap:5px;margin-bottom:0.5rem}
+.inc-type-badge{font-size:10px;padding:1px 6px;border-radius:9px;border:1px solid;font-weight:500;white-space:nowrap}
+.itb-ss{background:#e6eef7;color:#1b2f4a;border-color:#a8c0d8}
+.itb-pension{background:#fff8ec;color:#8a5e00;border-color:#f5d87a}
+.itb-annuity{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
+.itb-rental{background:#fff4ec;color:#b5620a;border-color:#f5c497}
+.itb-wages{background:#f0eeff;color:#5a50b0;border-color:#c0b8f0}
+.itb-other{background:var(--surf3);color:var(--mu);border-color:var(--brd2)}
+
+/* ── MONEY ROW ── */
+.mrow{display:grid;grid-template-columns:1fr 60px;gap:5px;align-items:end;margin-bottom:6px}
+.mrow .f{margin:0}
+.ftog{display:flex;border:1px solid var(--brd);border-radius:5px;overflow:hidden;height:26px;align-self:end}
+.ftb{flex:1;background:var(--surf);border:none;font-size:11px;cursor:pointer;font-family:var(--fu);color:var(--mu);padding:0 5px;transition:all 0.12s}
+.ftb.act{background:var(--navy);color:#fff}
+.ftb:hover:not(.act){background:var(--surf3)}
+
+/* ── ACCOUNT CARD ── */
+.acct-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem;margin-bottom:5px}
+.acct-card.prop-acct{border-left:3px solid var(--prop)}
+.acct-head{display:flex;align-items:center;gap:5px;margin-bottom:0.45rem;padding-bottom:0.4rem;border-bottom:1px solid var(--brd)}
+.acct-ord{width:20px;height:20px;border-radius:50%;background:var(--surf3);border:1px solid var(--brd2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mu);flex-shrink:0}
+.acct-ni{font-weight:500;font-size:12.5px;color:var(--navy);border:none;background:transparent;padding:0;flex:1}
+.acct-ni:focus{outline:none}
+.tbadge{font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;border:1px solid;white-space:nowrap}
+.trad{background:#fff8ec;color:#8a5e00;border-color:#f5d87a}
+.roth{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
+.taxb{background:#e6f1fb;color:#0c447c;border-color:#85b7eb}
+.prop{background:#f5ede4;color:#7a4f2e;border-color:#d4a97a}
+.rmd-chip{font-size:11px;color:var(--amb);margin-top:3px;padding:3px 7px;background:#fff8ec;border-radius:4px;display:inline-block}
+
+/* ── SCENARIO PILLS ── */
+.spills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center}
+.spill{padding:3px 10px;border-radius:18px;font-size:12px;border:1px solid var(--brd2);background:var(--surf);cursor:pointer;color:var(--mu);font-family:var(--fu);font-weight:500;display:flex;align-items:center;gap:4px;transition:all 0.12s}
+.spill.act{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sdel,.sdup{font-size:9.5px;opacity:0.55;cursor:pointer;padding:1px 2px;transition:opacity 0.1s}
+.sdel:hover,.sdup:hover{opacity:1}
+
+/* ── EXPENSE TABLE ── */
+.exp-wrap{overflow-x:auto;margin-bottom:4px}
+.etbl{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.etbl th{font-size:9.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--mu);padding:3px 4px;text-align:left;border-bottom:1px solid var(--brd);font-weight:500;white-space:nowrap}
+.etbl td{padding:3px 3px;border-bottom:1px solid var(--surf3);vertical-align:middle}
+.etbl tr:last-child td{border-bottom:none}
+.etbl input,.etbl select{padding:3px 5px;border:1px solid var(--brd);border-radius:4px;font-size:12px;background:var(--surf);width:100%;font-family:var(--fu)}
+
+/* ── CASH EVENT CARD ── */
+.ce-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem;margin-bottom:5px}
+.ce-head{display:flex;align-items:center;gap:6px;margin-bottom:0.45rem;padding-bottom:0.4rem;border-bottom:1px solid var(--brd)}
+.ce-type{font-size:10px;padding:1px 7px;border-radius:9px;border:1px solid;font-weight:500}
+.ce-in{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
+.ce-out{background:#fef2f2;color:var(--red);border-color:#f8d4d4}
+.ce-rows{display:grid;grid-template-columns:1fr 52px 105px 1fr 24px;gap:5px;align-items:end}
+.ce-rows .f{margin:0}
+.tnote{font-size:10.5px;padding:3px 7px;border-radius:4px;margin-top:3px;line-height:1.5}
+.tnote-y{background:#fff8ec;color:#8a5e00}
+.tnote-n{background:#eaf3de;color:#3b6d11}
+
+/* ── POPOVER — z-index must exceed the metrics cards ── */
+.popwrap{position:relative;display:inline-block}
+.popover{display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:0.625rem 0.75rem;z-index:var(--z-popover);min-width:215px;box-shadow:0 6px 24px rgba(0,0,0,0.13);max-height:70vh;overflow-y:auto}
+.popover.open{display:block}
+.pop-title{font-size:10px;font-weight:500;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+/* Standard checkbox/label row used in Metrics popover */
+.pop-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;cursor:pointer;border-radius:4px;transition:background var(--dur)}
+.pop-item:hover{background:var(--surface-raised)}
+.pop-item input[type=checkbox]{cursor:pointer;accent-color:var(--navy);flex-shrink:0}
+
+/* ── RESULTS ── */
+.met-grid{display:grid;gap:7px;margin-bottom:0.875rem}
+.met{background:var(--surf2);border:1px solid var(--brd);border-radius:var(--r2);padding:0.65rem 0.875rem;text-align:center}
+.met-l{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--mu);margin-bottom:4px}
+.met-v{font-family:var(--fn);font-size:1.1rem;color:var(--navy)}
+.met-v.g{color:var(--grn)}.met-v.r{color:var(--red)}.met-v.a{color:var(--amb)}
+.met-s{font-size:10px;color:var(--hi);margin-top:2px}
+.chart-wrap{background:var(--surf2);border:1px solid var(--brd);border-radius:var(--r2);padding:0.875rem;position:relative;height:240px;margin-bottom:0.75rem}
+.cleg{display:flex;gap:12px;margin-bottom:5px;font-size:11px;color:var(--mu);flex-wrap:wrap}
+.ld{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
+.resbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;gap:6px}
+.res-hd{font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--navy)}
+.rt-wrap{overflow-x:auto}
+/* Column headers wrap rather than truncate */
+.rt{width:100%;border-collapse:collapse;font-size:11px}
+.rt th{font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--mu);padding:3px 5px;text-align:right;border-bottom:1px solid var(--brd);background:var(--surf);font-weight:500;white-space:normal;min-width:68px;line-height:1.3}
+.rt th:first-child{text-align:left;min-width:80px}
+.rt td{padding:2.5px 5px;text-align:right;border-bottom:1px solid #f2ede4;font-family:var(--fn);font-size:10.5px}
+.rt td:first-child{text-align:left;font-family:var(--fu);font-size:11px}
+.rt tr.dep td{color:var(--red);background:#fef2f2}
+.rt tr.evt{background:#fefbf3}.rt tr.evtm{background:#f0f7ff}
+.neg{color:var(--red)}.pos{color:var(--grn)}.bk{font-weight:500}
+.badge{display:inline-block;padding:0 5px;border-radius:5px;font-size:9px;font-weight:500;vertical-align:middle;margin-left:2px;font-family:var(--fu)}
+.bw{background:#fff8e6;color:#8a5e00;border:1px solid #f5d87a}
+.disc{font-size:10px;color:var(--hi);margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--brd);line-height:1.65}
+
+/* ── PRINT ── */
+@media print{
+  @page{size:A4 portrait;margin:16mm 14mm}
+  @page landscape{size:A4 landscape;margin:12mm 10mm}
+  body,html{overflow:visible;height:auto;display:block;background:#fff}
+  header,.info-panel,.split,#app,.confirm-overlay{display:none!important}
+  #prpt{display:block!important}
+  a{color:inherit;text-decoration:none}
+}
+#prpt{display:none;font-family:'DM Sans',system-ui,sans-serif;font-size:12px;color:#1a1917;line-height:1.5}
+.rpt-cover{border-bottom:3px solid #1b2f4a;padding-bottom:12px;margin-bottom:20px}
+.rpt-cover h1{font-family:'Lora',Georgia,serif;font-size:22px;font-weight:400;color:#1b2f4a;margin-bottom:4px}
+.rpt-cover .rpt-meta{font-size:11px;color:#786f62;display:flex;gap:16px;flex-wrap:wrap}
+.rpt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.rpt-kpi{border:1px solid #e0d8cc;border-radius:6px;padding:8px 10px;text-align:center}
+.rpt-kpi-l{font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:#786f62;margin-bottom:3px}
+.rpt-kpi-v{font-size:15px;font-family:'DM Mono','Courier New',monospace;color:#1b2f4a}
+.rpt-kpi-v.g{color:#2d6a4f}.rpt-kpi-v.r{color:#b83232}.rpt-kpi-v.a{color:#b5620a}
+.rpt-sec{margin:16px 0;page-break-inside:avoid}
+.rpt-sec h2{font-family:'Lora',Georgia,serif;font-size:13px;font-weight:500;color:#1b2f4a;border-bottom:1px solid #e0d8cc;padding-bottom:4px;margin-bottom:8px}
+.rpt-assm{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.rpt-assm-row{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px dotted #e0d8cc;padding:2px 0;font-size:11px}
+.rpt-assm-row .al{color:#786f62}.rpt-assm-row .av{font-family:'DM Mono','Courier New',monospace;color:#1a1917}
+.rpt-people{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.rpt-person{border:1px solid #e0d8cc;border-radius:6px;padding:8px 10px}
+.rpt-person h3{font-size:11px;font-weight:500;color:#1b2f4a;margin-bottom:4px}
+.rt2{width:100%;border-collapse:collapse;font-size:10.5px}
+.rt2 th{text-align:left;padding:3px 6px;background:#f0ede6;border:1px solid #ddd;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;font-weight:500}
+.rt2 td{padding:2.5px 6px;border:1px solid #e8e2d8;font-family:'DM Mono','Courier New',monospace;font-size:10px;text-align:right}
+.rt2 td.tl,.rt2 th.tl{text-align:left;font-family:'DM Sans',system-ui,sans-serif}
+.rt2 tr.dep td{background:#fef2f2;color:#b83232}
+.rt2 tr.evt td{background:#fefbf3}
+.rt2 tr.tot td{background:#f0ede6;font-weight:600}
+.pb-before{page-break-before:always}
+.landscape-section{page:landscape}
+.rpt-disc{font-size:9px;color:#a8a098;margin-top:16px;padding-top:10px;border-top:1px solid #e0d8cc;line-height:1.6}
+
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.chip{display:inline-block;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:500}
+.chip.ok{background:#eaf3de;color:#3b6d11}.chip.warn{background:#fff8ec;color:#8a5e00}.chip.off{background:#eee9df;color:#786f62}
+.sch-box{margin-top:0.7rem;background:var(--surf2);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem}
+.sch-hd{font-family:var(--fd);font-size:0.8rem;color:var(--navy);margin-bottom:5px}
+.sch-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.sch-tbl td,.sch-tbl th{padding:3px 5px;border-bottom:1px solid var(--brd);text-align:left}
+.sch-tbl th{font-weight:500;color:var(--mu);font-size:10.5px}
+.sch-tbl.tm td,.sch-tbl.tm th{text-align:right;font-family:var(--fn);white-space:nowrap}
+.sch-tbl.tm td:first-child,.sch-tbl.tm th:first-child{text-align:left}
+.sch-tbl tr.mine td{background:rgba(184,137,43,0.12);font-weight:600}
+.info-list{margin:4px 0 0 16px;font-size:11px;line-height:1.55;color:rgba(255,255,255,0.65)}
+.info-list a{color:var(--gold-light)}
+</style>
+</head>
+<body>
+<div class="tt" id="tt"></div>
+<div id="prpt"><div id="rpt-body"></div></div>
+
+<div id="app" style="display:flex;flex-direction:column;flex:1;min-height:0">
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="app-title">Irish Household Planner<small>Saving for a home and for retirement · Irish tax rules</small></div>
+  <div class="hdr-mid"></div>
+  <div class="hdr-r">
+    <button class="btn btn-danger-ghost" onclick="startFresh()" data-tip="Reset to a blank slate. All data will be cleared. Save first using Export &amp; Save if needed.">↺ Fresh Start</button>
+    <div class="hdr-sep"></div>
+    <div class="popwrap">
+      <button class="btn btn-gold" onclick="togglePop('settings-pop')">⚙ Settings ▾</button>
+      <div class="popover settings-pop" id="settings-pop">
+        <div class="pop-title">Simulation settings</div>
+
+        <div class="settings-group">
+          <div class="sg-title">Household</div>
+          <div class="settings-row">
+            <label data-help="status">Tax status</label>
+            <select id="h-status" onchange="S.status=this.value;recalc()" style="font-size:12px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px">
+              <option value="married">Married / civil partners</option>
+              <option value="single">Single / cohabiting</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label data-help="startYear">Start year</label>
+            <input type="number" id="h-sy" step="1" min="2026" max="2040" oninput="S.startYear=+this.value;recalc()">
+          </div>
+          <div class="settings-row">
+            <label data-tip="The projection stops when the first person reaches this age, or earlier if everyone has passed.">End at age (first person)</label>
+            <input type="number" id="h-ea" min="60" max="110" oninput="S.endAge=+this.value;recalc()">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-title">Prices and pay</div>
+          <div class="settings-row">
+            <label data-help="genInfl">General inflation</label>
+            <input type="number" id="h-inf" value="2.5" step="0.1" min="0" max="10" oninput="S.genInfl=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+          <div class="settings-row">
+            <label data-help="wageGrowth">Wage growth</label>
+            <input type="number" id="h-wg" value="3" step="0.1" min="0" max="10" oninput="S.wageGrowth=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+          <div class="settings-row">
+            <label data-help="bandIndex">Rise in bands and credits after 2027</label>
+            <input type="number" id="h-bi" value="3" step="0.1" min="0" max="10" oninput="S.bandIndex=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-title">State Pension</div>
+          <div class="settings-row">
+            <label data-help="spWeekly">Full weekly rate</label>
+            <input type="number" id="h-spw" step="0.1" min="0" oninput="S.spWeekly=+this.value;recalc()">
+            <span class="unit">€/wk</span>
+          </div>
+          <div class="settings-row">
+            <label data-help="spGrowth">Yearly rise after 2027</label>
+            <input type="number" id="h-spg" step="0.1" min="0" max="10" oninput="S.spGrowth=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-title">Returns</div>
+          <div class="settings-row">
+            <label data-help="stress">Stress-test return</label>
+            <input type="number" id="h-str" value="3.0" step="0.1" min="-10" max="10" oninput="S.stressRate=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+          <div class="settings-row">
+            <label data-help="stress">Use stress-test return</label>
+            <button id="stress-btn" class="stress-pill sp-off" onclick="toggleStress()">off</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="sg-title">Gifts and schemes</div>
+          <div class="settings-row">
+            <label data-help="catUsed">CAT already used (Group A)</label>
+            <input type="number" id="h-cat" step="1000" min="0" oninput="S.catUsed=+this.value;recalc()">
+            <span class="unit">€</span>
+          </div>
+          <div class="settings-row">
+            <label data-help="fhsCharge">Scheme service charge after year 5</label>
+            <input type="number" id="h-fhsc" step="0.1" min="0" max="10" oninput="S.fhsCharge=+this.value;recalc()">
+            <span class="unit">%/yr</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-teal" onclick="toggleInfo()" id="info-btn">ℹ Info &amp; Assumptions Panel</button>
+    <div class="hdr-sep"></div>
+    <div class="popwrap">
+      <button class="btn btn-gold" onclick="togglePop('export-pop')">↓ Export &amp; Save ▾</button>
+      <div class="popover" id="export-pop" style="min-width:240px;padding:0.5rem">
+        <div class="pop-title">Export &amp; save options</div>
+        <button class="export-item" onclick="dlApp();togglePop('export-pop')">
+          <span class="export-item-icon">↓</span>
+          <span><span class="export-item-label">Save App</span><span class="export-item-desc">Download as a self-contained .html file with all current data baked in</span></span>
+        </button>
+        <div class="export-divider"></div>
+        <button class="export-item" onclick="printRpt();togglePop('export-pop')">
+          <span class="export-item-icon">⎙</span>
+          <span><span class="export-item-label">Print / PDF</span><span class="export-item-desc">Full report with inputs, assumptions, scheme status and the year-by-year projection</span></span>
+        </button>
+        <button class="export-item" onclick="exportXLSX();togglePop('export-pop')">
+          <span class="export-item-icon">⊞</span>
+          <span><span class="export-item-label">Excel (.xlsx)</span><span class="export-item-desc">Multi-sheet workbook with real numbers for charting and filtering</span></span>
+        </button>
+        <button class="export-item" onclick="exportCSV();togglePop('export-pop')">
+          <span class="export-item-icon">⊟</span>
+          <span><span class="export-item-label">CSV</span><span class="export-item-desc">Year-by-year projection of the active scenario as a spreadsheet file</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── INFO & ASSUMPTIONS PANEL ── -->
+<div class="info-panel" id="info-panel">
+  <div class="info-inner">
+    <div class="info-sec" id="info-tax"></div>
+
+    <div class="info-sec">
+      <h4>USC and PRSI</h4>
+      <div id="info-usc"></div>
+      <h4 style="margin-top:10px">Pensions</h4>
+      <table class="info-tbl">
+        <tr><th>Age</th><th>Relief limit (share of earnings up to €115,000)</th></tr>
+        <tr><td>Under 30</td><td>15%</td></tr>
+        <tr><td>30 to 39</td><td>20%</td></tr>
+        <tr><td>40 to 49</td><td>25%</td></tr>
+        <tr><td>50 to 54</td><td>30%</td></tr>
+        <tr><td>55 to 59</td><td>35%</td></tr>
+        <tr><td>60 and over</td><td>40%</td></tr>
+      </table>
+      <p style="margin-top:6px"><strong>Auto-enrolment (MyFutureFund)</strong> from 1 Jan 2026, employees 23 to 60 earning over €20,000. Employee and employer each pay 1.5% (2026 to 2028), 3% (2029 to 2031), 4.5% (2032 to 2034) and 6% (from 2035), on pay up to €80,000. The State adds €1 for every €3 the employee pays.</p>
+      <p><strong>Retirement:</strong> 25% of the pot is taken as a lump sum (first €200,000 free, next €300,000 at 20%, above €500,000 at the marginal rate). The rest becomes an ARF with a minimum yearly withdrawal of 4% to age 70, 5% from 71 and 6% above €2 million.</p>
+      <p><strong>State Pension</strong> starts at the age you set (66 by default) at the weekly rate in Settings. €10 a week more from age 80. A living alone increase of €25 a week applies once one partner has passed.</p>
+    </div>
+
+    <div class="info-sec">
+      <h4>Savings and investments</h4>
+      <table class="info-tbl">
+        <tr><th>Account type</th><th>How it is taxed in the planner</th></tr>
+        <tr><td>Deposit</td><td>DIRT at 33% on interest each year</td></tr>
+        <tr><td>Fund</td><td>Exit tax on growth each year: 38% in 2026, 35% from 2027</td></tr>
+        <tr><td>Investment Account ⚠</td><td>Opens 1 July 2027. 1% a year on the balance above €50,000, no tax on growth, and contributions limited to €12,000 a year. Announced, not yet law.</td></tr>
+        <tr><td>Pension</td><td>No tax on growth. Tax on withdrawals as income.</td></tr>
+        <tr><td>Property</td><td>Not taxed while held. Property tax and capital gains on sale are not modelled.</td></tr>
+      </table>
+      <h4 style="margin-top:10px">Gifts and inheritances (CAT at 33%)</h4>
+      <table class="info-tbl">
+        <tr><th>Group</th><th>Relationship to giver</th><th>Tax-free threshold</th></tr>
+        <tr><td>A</td><td>Child of the giver</td><td>€420,000</td></tr>
+        <tr><td>B</td><td>Sibling, niece, nephew, aunt, uncle, grandparent, grandchild</td><td>€44,000</td></tr>
+        <tr><td>C</td><td>Anyone else</td><td>€22,000</td></tr>
+      </table>
+      <p style="margin-top:6px">The first €3,000 of gifts from any one person each year is exempt and does not use the threshold. Gifts between spouses are free of tax. The thresholds are not indexed by law. The planner assumes they rise with the yearly rise in bands and credits (Settings) so that gifts entered in future euro are treated fairly. Set that rise to 0 for fixed thresholds.</p>
+    </div>
+
+    <div class="info-sec">
+      <h4>Housing schemes and dates</h4>
+      <table class="info-tbl">
+        <tr><th>Scheme</th><th>What it does</th><th>Window</th></tr>
+        <tr><td>Help to Buy</td><td>Refunds income tax and DIRT paid in the last 4 years, up to 10% of a new home's price and up to €35,000</td><td>Contracts 7 Oct 2026 to 31 Dec 2029</td></tr>
+        <tr><td>First Home Scheme</td><td>State and banks fund up to 30% of a new-build price (20% with Help to Buy) for a share of the home. Not available for second-hand homes.</td><td>To June 2027, no extension announced</td></tr>
+        <tr><td>Rent tax credit</td><td>20% of rent paid, up to €1,000 per renter (€1,150 in 2027 and 2028)</td><td>Tax years 2022 to 2028</td></tr>
+        <tr><td>Stamp duty</td><td>1% to €1m, 2% on €1m to €1.5m, 6% above</td><td>Ongoing</td></tr>
+        <tr><td>Central Bank rules</td><td>Mortgage up to 4 times gross income. Deposit at least 10% for first-time buyers.</td><td>Ongoing</td></tr>
+      </table>
+    </div>
+
+    <div class="info-sec">
+      <h4>Figures to check ⚠</h4>
+      <p>These come from news and budget summaries, not an official page, or are assumptions. Check them before relying on a result.</p>
+      <ul class="info-list">
+        <li>Budget 2027 figures are as announced and need the Finance Bill to pass.</li>
+        <li>The age credit for 2027 (€245 single, €490 married). Budget 2027 summaries do not mention a change, so the planner keeps it.</li>
+        <li>The Investment Account design. It is announced for 1 July 2027 and is not yet law. The planner does not enforce the €12,000 yearly contribution limit.</li>
+        <li>First Home Scheme: no extension past June 2027 has been announced, and ceilings change every six months.</li>
+        <li>An Employee PRSI rise of 0.2% reported from October 2028 is not modelled. The planner holds the rate at 4.5% from October 2027.</li>
+        <li>The 4% / 5% / 6% minimum ARF rule and the 4-year Help to Buy look-back are modelled in simplified form.</li>
+      </ul>
+      <h4 style="margin-top:10px">Not modelled</h4>
+      <p>Local Property Tax, rental income, capital gains tax on shares and property, Fair Deal nursing home costs, AMRF rules for smaller pots, mortgage interest rate changes, and tax on a survivor's inheritance.</p>
+    </div>
+
+    <div class="info-sec">
+      <h4>Glossary</h4>
+      <div id="glossary"></div>
+    </div>
+
+    <div class="info-sec">
+      <h4>Sources</h4>
+      <ul class="info-list">
+        <li><a href="https://www.revenue.ie" target="_blank" rel="noopener">Revenue</a>: tax rates, credits, bands, pension relief and ARF rules</li>
+        <li><a href="https://www.citizensinformation.ie" target="_blank" rel="noopener">Citizens Information</a>: State Pension, PRSI, Help to Buy, rent credit</li>
+        <li><a href="https://www.revenue.ie/en/personal-tax-credits-reliefs-and-exemptions/marital-and-civil-status/exemption-and-marginal-relief/exemption-limits.aspx" target="_blank" rel="noopener">Revenue</a>: age exemption limits</li>
+        <li><a href="https://www.citizensinformation.ie/en/housing/owning-a-home/help-with-buying-a-home/first-home-scheme/" target="_blank" rel="noopener">Citizens Information</a>: First Home Scheme ceilings, new builds only</li>
+        <li><a href="https://www.irishexaminer.com/news/politics/arid-41920831.html" target="_blank" rel="noopener">Irish Examiner</a>: Budget 2027 Help to Buy increase</li>
+        <li><a href="https://www.gov.ie/en/department-of-housing-local-government-and-heritage/press-releases/minister-james-browne-announces-additional-30-million-in-funding-and-extension-to-2027-of-first-home-scheme" target="_blank" rel="noopener">gov.ie</a>: First Home Scheme extended to 2027</li>
+        <li><a href="https://evara.ie/wp-content/uploads/2025/02/Evara_The_First_Home_Scheme_PDF-REV.pdf" target="_blank" rel="noopener">First Home Scheme guide</a>: equity share and price ceilings</li>
+        <li><a href="https://www.fssu.ie/app/uploads/2017/07/PRSI_Info.pdf" target="_blank" rel="noopener">PRSI classes</a>: no employee PRSI after 66</li>
+        <li><a href="https://www.centralbank.ie" target="_blank" rel="noopener">Central Bank of Ireland</a>: mortgage measures</li>
+        <li>Budget 2027 summaries from KPMG, Forvis Mazars and Davy</li>
+      </ul>
+    </div>
+
+    <div class="info-disc">
+      This is a planning aid, not tax or financial advice. The figures are illustrative and based on the rules as published in October 2026. Tax law changes often. Check with Revenue, a qualified tax adviser or a financial adviser before making decisions. Investment returns, house prices and rents are assumptions, not forecasts.
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM DIALOG ── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <h3>↺ Start fresh?</h3>
+    <p>This will clear all people, accounts, scenarios and events, and reset to a blank default state. <strong>This cannot be undone.</strong> If you want to keep your current data, use <em>↓ Export &amp; Save → Save App</em> first to download a copy.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" onclick="document.getElementById('confirm-overlay').classList.remove('open')">Cancel</button>
+      <button class="btn" style="background:var(--status-red);border-color:var(--status-red);color:#fff" onclick="doStartFresh()">Yes, reset everything</button>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+<div class="lpane" id="lpane" style="width:500px">
+
+  <div class="ltab-bar">
+    <button class="ltab act" onclick="showLTab(0,this)">People &amp; Money</button>
+    <button class="ltab" onclick="showLTab(1,this)">Home &amp; Scenarios</button>
+  </div>
+
+  <!-- Tab 0: people, income, accounts -->
+  <div class="ltab-panel open" id="ltab-0">
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">People <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <div id="ppl-list"></div>
+        <button class="btn-add" onclick="addPerson()">+ Add person</button>
+        <p class="note" style="margin-top:6px" id="status-note"></p>
+        <div class="seclbl" style="margin-top:0.875rem">Other income</div>
+        <div id="inc-list"></div>
+        <button class="btn-add" onclick="addInc()">+ Add income stream</button>
+      </div>
+    </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Accounts &amp; Assets <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <div id="accts-list"></div>
+        <button class="btn-add" onclick="addAcct()">+ Add account or asset</button>
+        <p class="note" style="margin-top:5px">Pension contributions come from the salary settings above. Use regular saving on a deposit or fund account for the deposit fund.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 1: scenarios, housing, expenses, events -->
+  <div class="ltab-panel" id="ltab-1">
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Scenarios &amp; Housing <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <div class="spills" id="scen-pills"></div>
+        <div id="hs-ed"></div>
+        <div id="sch-status"></div>
+      </div>
+    </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Living expenses <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Spending for <strong id="exp-scen-name">this scenario</strong>, not counting rent or mortgage, which come from the housing choice above.</p>
+        <div id="exp-ed"></div>
+      </div>
+    </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Cash Events for this Scenario <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">One-off inflows and outflows for <strong id="ce-scen-name">the active scenario</strong>, such as a gift from parents toward a deposit. Gifts and inheritances are checked against the CAT thresholds.</p>
+        <div id="ce-list"></div>
+        <div style="display:flex;gap:5px;margin-top:4px">
+          <button class="btn-add" style="width:50%" onclick="addCE('in')">+ Add inflow / gift</button>
+          <button class="btn-add" style="width:50%;border-color:#f8d4d4;color:var(--red)" onclick="addCE('out')">+ Add outflow</button>
+        </div>
+      </div>
+    </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Market Events for this Scenario <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the deposit account, or a property slump. With nothing ticked explicitly an event hits every financial account.</p>
+        <div id="me-list"></div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /lpane -->
+<div class="resizer" id="resizer"></div>
+<div class="rpane" id="rpane">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:8px">
+    <div class="res-hd" id="res-hd">Results</div>
+    <div class="popwrap">
+      <button class="btn-outline" onclick="togglePop('met-pop')">Metrics ▾</button>
+      <div class="popover" id="met-pop"><div class="pop-title">Show / hide metrics</div><div id="met-items"></div></div>
+    </div>
+  </div>
+  <div id="met-grid" class="met-grid"></div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:4px;font-size:11px;color:var(--mu)">
+    <label for="chart-view" data-help="chartView">Chart view</label>
+    <select id="chart-view" onchange="setChartView(this.value)" style="font-size:11.5px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px">
+      <option value="bars">Stacked bars</option>
+      <option value="area">Stacked area</option>
+      <option value="lines">Separate lines</option>
+    </select>
+  </div>
+  <div id="cmp-wrap" style="overflow-x:auto"></div>
+  <div class="cleg" id="cleg"></div>
+  <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
+  <div class="resbar">
+    <div style="font-size:0.85rem;font-family:var(--fd);color:var(--navy)" id="tbl-hd">Year-by-year projection</div>
+    <div class="popwrap">
+      <button class="btn-outline" onclick="togglePop('col-pop')" style="font-size:12px;padding:3px 9px">Adjust Columns ···</button>
+      <div class="popover" id="col-pop" style="min-width:230px"><div class="pop-title">Drag to reorder · check to show</div><div id="col-items"></div></div>
+    </div>
+  </div>
+  <div class="rt-wrap"><table class="rt"><thead id="rt-head"></thead><tbody id="rt-body"></tbody></table></div>
+</div>
+</div><!-- /split -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/* ══ HELP SYSTEM ══
+   Two ways to attach help to an element:
+   - data-help="key"  looks the text up in the HELP glossary below (title + explanation)
+   - data-tip="text"  plain text, used for one-off hints
+   A small "?" button is added automatically after any label or table heading that carries
+   either attribute, and qm('key') produces the same button inside templates.
+   The text shows on hover and on keyboard focus. Click or press Enter to pin it
+   (this is how touch screens open it), and press Escape or click elsewhere to close. */
+const ttEl=document.getElementById('tt');
+let ttT=null,ttPin=null;
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function qm(key){return `<span class="qm" tabindex="0" role="button" aria-label="Help" data-help="${key}">?</span>`;}
+function helpFor(el){
+  const h=el.dataset.help&&HELP[el.dataset.help];
+  return h?{t:h.t,d:h.d}:{t:'',d:el.dataset.tip||''};
+}
+function showTip(el){
+  const {t,d}=helpFor(el);if(!d)return;
+  ttEl.innerHTML=(t?'<b>'+esc(t)+'</b>':'')+esc(d);
+  ttEl.style.display='block';
+  const r=el.getBoundingClientRect(),tw=ttEl.offsetWidth,th=ttEl.offsetHeight;
+  let left=r.left+r.width/2-tw/2,top=r.top-th-10;
+  left=Math.max(6,Math.min(left,window.innerWidth-tw-6));
+  if(top<6)top=r.bottom+8;
+  ttEl.style.left=left+'px';ttEl.style.top=top+'px';
+}
+function hideTip(){clearTimeout(ttT);ttEl.style.display='none';if(ttPin){ttPin.classList.remove('on');ttPin=null;}}
+const TIP_SEL='[data-tip],[data-help]';
+document.addEventListener('mouseover',e=>{
+  const t=e.target.closest(TIP_SEL);if(!t||ttPin)return;
+  clearTimeout(ttT);ttT=setTimeout(()=>showTip(t),100);
+});
+document.addEventListener('mouseout',e=>{if(!ttPin&&e.target.closest(TIP_SEL)){clearTimeout(ttT);ttEl.style.display='none';}});
+document.addEventListener('focusin',e=>{const t=e.target.closest('.qm');if(t&&!ttPin)showTip(t);});
+document.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('.qm')&&!ttPin)ttEl.style.display='none';});
+function togglePin(q){
+  if(ttPin===q){hideTip();return;}
+  hideTip();ttPin=q;q.classList.add('on');showTip(q);
+}
+document.addEventListener('click',e=>{
+  const q=e.target.closest('.qm');
+  if(q){e.preventDefault();e.stopPropagation();togglePin(q);return;}
+  if(ttPin)hideTip();
+},true);
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&ttPin){hideTip();return;}
+  const q=e.target.closest&&e.target.closest('.qm');
+  if(q&&(e.key==='Enter'||e.key===' ')){e.preventDefault();togglePin(q);}
+});
+/* Add a "?" button after every label or heading that has help attached. */
+const QM_SEL='label[data-tip],th[data-tip],label[data-help],th[data-help]';
+function decorateOne(el){
+  if(el.classList.contains('has-qm')||el.querySelector(':scope > .qm'))return;
+  const q=document.createElement('span');
+  q.className='qm';q.tabIndex=0;q.setAttribute('role','button');q.setAttribute('aria-label','Help');
+  if(el.dataset.help)q.dataset.help=el.dataset.help;else q.dataset.tip=el.dataset.tip;
+  q.textContent='?';
+  el.appendChild(q);el.classList.add('has-qm');
+}
+function decorateTips(root){
+  if(root.matches&&root.matches(QM_SEL))decorateOne(root);
+  root.querySelectorAll&&root.querySelectorAll(QM_SEL).forEach(decorateOne);
+}
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)decorateTips(n);}))).observe(document.body,{childList:true,subtree:true});
+/* ══ HELP GLOSSARY ══
+   One entry per concept: t is the title, d the explanation. Entries with g:1 also appear in the
+   Glossary section of the Info panel, so the wording lives in one place. */
+const HELP={
+  nominalreal:{g:1,t:'Nominal and real values',d:'A nominal amount is the number of euro in a given year. A real amount is that number adjusted back to today\'s prices, so it shows what the money could buy. Prices rise every year, so a nominal total always looks larger than its real value. Over 50 years the gap is large.'},
+  paye:{g:1,t:'Income tax (PAYE)',d:'Income tax is charged at 20% up to the standard rate band and 40% above it. Tax credits are then taken off the bill, so a credit of €2,000 cuts the tax by €2,000. PAYE is the system that takes the tax from a salary before it is paid.'},
+  band:{g:1,t:'Standard rate band',d:'The slice of income taxed at 20%. A single person has one band. A married couple taxed jointly gets a larger band that can be shared, up to a limit for the second earner. Income above the band is taxed at 40%.'},
+  credits:{g:1,t:'Tax credits',d:'Fixed amounts taken off the tax bill. The planner includes the personal credit (single or married), the employee credit for people earning a salary, the age credit from 65 and the rent tax credit while it lasts. A credit cannot reduce tax below zero.'},
+  usc:{g:1,t:'Universal Social Charge (USC)',d:'A separate charge on gross income with its own bands. It does not allow pension relief, and it applies to pension income as well as salary. From age 70, or with a full medical card, a lower rate applies if income is under a limit. State Pension is not subject to USC.'},
+  prsi:{g:1,t:'PRSI',d:'Social insurance paid on employment income. It builds the entitlement to the State Pension. The planner charges the employee rate on salary until age 66, and nothing after that. PRSI is not charged on pension or investment income.'},
+  bandIndex:{t:'Yearly rise in bands and credits',d:'Budgets 2026 and 2027 are built in as published. After 2027 the bands, credits and USC limits are assumed to rise by this percentage each year. If they do not rise, wage growth pushes people into higher tax over time.'},
+  wageGrowth:{t:'Wage growth',d:'The yearly rise in salaries. Each salary rises by this rate until its person retires, and regular saving amounts rise with it.'},
+  genInfl:{t:'General inflation',d:'How fast everyday prices rise each year. The European Central Bank aims for 2%. Expenses, rent adjustments marked "general" and real-growth accounts use this rate.'},
+  startYear:{t:'Start year',d:'The calendar year of the first row of results. Tax rules, scheme dates and auto-enrolment steps depend on the calendar year, so keep this at the current year.'},
+  status:{t:'Tax status',d:'Married couples and civil partners can be taxed jointly, which shares the standard rate band. Couples who live together without marrying are taxed as two single people. If one partner dies, the survivor is taxed as a single person from that year.'},
+  stress:{g:1,t:'Stress-test return',d:'When switched on, each financial account earns the lower of its own return and this stress-test return. Property accounts do not change. Use it to see how the plan holds up through a long run of weak markets.'},
+  currentAge:{t:'Current age',d:'The age of this person today. The first person\'s age appears in the Age column of the results, and scenario ages (buy a home, cash events) use it.'},
+  retireAge:{t:'Retirement age',d:'The age at which salary stops. At this age the pension tax-free lump sum is paid out and the remaining pension becomes an ARF. The State Pension starts at its own age, set below.'},
+  deathAge:{t:'Predicted age at passing',d:'When this age is reached, that person\'s salary and pension stop, their accounts pass to the surviving partner, and tax moves to single status. The projection ends when the last person has passed or at the end age.'},
+  salary:{t:'Gross salary',d:'Yearly salary before tax, in today\'s euro. It rises with wage growth until retirement.'},
+  pensionMode:{t:'Pension contributions',d:'Auto-enrolment means the MyFutureFund scheme: the employee, the employer and the State all pay in. Own pension means a workplace pension or a PRSA with contribution rates you set. None means no contributions.'},
+  autoenrol:{g:1,t:'Auto-enrolment (MyFutureFund)',d:'Started on 1 January 2026 for employees aged 23 to 60 earning over €20,000 a year in jobs without a pension. Contributions start at 1.5% from the employee and 1.5% from the employer on pay up to €80,000, and the State adds €1 for every €3 the employee pays. The rates step up every three years to 6% each in year 10. The planner assumes you stay enrolled.'},
+  eePct:{t:'Employee contribution',d:'Percentage of gross salary you pay into the pension. Income tax relief is given up to an age-based limit, which is a percentage of earnings up to €115,000.'},
+  erPct:{t:'Employer contribution',d:'Percentage of gross salary the employer pays in. It is not taxed as income and it does not reduce what you take home in this model.'},
+  reliefAge:{g:1,t:'Pension tax relief',d:'Contributions to a personal pension or workplace scheme get income tax relief at your marginal rate, up to a percentage of earnings that rises with age: 15% under 30, 20% at 30 to 39, 25% at 40 to 49, 30% at 50 to 54, 35% at 55 to 59, and 40% from 60. Earnings above €115,000 are ignored. The relief does not reduce USC or PRSI.'},
+  card:{t:'Full medical card',d:'A full medical card gives the lower USC rate when income is below the limit, whatever your age.'},
+  spAge:{t:'State Pension age',d:'The age the contributory State Pension starts. It is 66 in Ireland at present.'},
+  spPct:{t:'State Pension entitlement',d:'The share of the full contributory rate this person receives. It depends on the PRSI record. Enter 100 for a full pension, and a lower figure if there are gaps in contributions.'},
+  statePension:{g:1,t:'State Pension (Contributory)',d:'A weekly payment from age 66 based on PRSI contributions. The rate for 2026 is built in and grows by the yearly increase in Settings. It rises by €10 a week at 80, and a living alone allowance applies once one partner has passed. It is taxed as income but not charged USC or PRSI.'},
+  spWeekly:{t:'State Pension, weekly rate',d:'The full personal weekly rate to start from. Update it each year as the Budget changes it.'},
+  spGrowth:{t:'Yearly rise in State Pension',d:'The percentage the State Pension is assumed to rise each year after 2027. The Government has not promised an automatic link to wages or prices.'},
+  lump:{g:1,t:'Retirement lump sum',d:'On retirement up to 25% of the pension pot can be taken tax-free as a lump sum, with the first €200,000 free of tax over a lifetime. The next €300,000 is taxed at 20%, and anything above €500,000 is taxed at your marginal rate. The planner takes the maximum 25%.'},
+  arf:{g:1,t:'ARF (Approved Retirement Fund)',d:'What the rest of a pension becomes after the lump sum. It stays invested, and money taken out is taxed as income. From age 60 the law treats a set percentage of the ARF as taken each year whether you withdraw it or not (4% to 70, 5% from 71, 6% if the ARF is over €2m), and that amount is taxed. The planner takes this minimum, and takes more from the ARF in drawdown order when it needs to.'},
+  dirt:{g:1,t:'DIRT',d:'Deposit Interest Retention Tax is taken by the bank at 33% of interest earned on deposits. The planner takes it from the growth of any account of the Deposit type each year.'},
+  exitTax:{g:1,t:'Exit tax',d:'Gains on most investment funds are taxed at 38% (35% from 2027) when money is taken out, and also as a deemed disposal every eight years. The planner approximates this as a tax on each year\'s growth, which is a little harsher than the real timing. Individual shares are taxed differently, at 33% capital gains tax with a yearly exemption, and are not modelled separately.'},
+  invacct:{g:1,t:'Investment Account (announced)',d:'A new savings product announced for 2027 to encourage investing in funds. The announced design charges a 1% yearly tax on the balance above €50,000, and no exit tax. The planner uses that design. It is not law yet, so treat results as a guess.'},
+  acctType:{t:'Account type',d:'Pension accounts are drawn on only after retirement, and they hold the ARF. Deposit accounts pay DIRT on interest. Fund accounts pay exit tax on growth. An Investment Account uses the announced 2027 design. Property is tracked in net worth but is not in the drawdown pool.'},
+  acctBalance:{t:'Balance',d:'The value of the account today. For property, enter the current market value.'},
+  acctReturn:{t:'Annual return',d:'The growth the account earns each year before tax and fees. With the Real growth basis, this figure is the growth above inflation.'},
+  acctFee:{t:'Fees',d:'Yearly charge as a percentage of the balance. Pension and fund charges are often 0.5% to 1.5%. They reduce growth every year and add up over decades.'},
+  acctRegular:{t:'Regular saving',d:'Yearly amount added to this account until the age below (default: retirement). It rises with wage growth and comes out of the household\'s spare cash. If the household cannot afford it, the shortfall is drawn from other accounts.'},
+  owner:{t:'Owner',d:'Whose account this is. A pension belongs to one person. When that person passes, the balance moves to the survivor. A joint account belongs to the household.'},
+  growthBasis:{g:1,t:'Growth basis',d:'Nominal uses the rate exactly as entered. Real treats the rate as growth above inflation, so the account keeps pace with prices and adds the rate on top.'},
+  drawOrder:{g:1,t:'Drawdown order',d:'When spending and tax are more than income, money is taken from the first account in the list until it is empty, then the second, and so on. A pension in the list is skipped until its owner has retired. Use the arrows to change the order.'},
+  incAmount:{t:'Income amount',d:'Enter the amount in today\'s money. Each year it grows by the adjustment on the right.'},
+  incType:{t:'Income type',d:'Other taxable income is taxed as income and charged USC. Pension income is taxed as income and charged USC. Tax-free income, such as a gift of regular support, is paid without tax.'},
+  scenario:{g:1,t:'Scenario',d:'A scenario keeps its own housing choice, expenses, cash events and market events, and shares the people and accounts. Use scenarios to compare renting with buying, or buying now with buying later.'},
+  housingMode:{t:'Housing',d:'Rent means paying rent for the whole projection. Buy means renting until the buying age, then buying a home with a deposit and a mortgage. Once the home is bought the rent stops.'},
+  rentMonthly:{t:'Monthly rent',d:'Rent in today\'s euro. It rises each year by the rent increase below.'},
+  rentInfl:{t:'Yearly rent increase',d:'How fast rent rises each year. Rent rules limit increases within a tenancy, but a new tenancy can start at a higher market rent, and the rules changed in 2026, so use a figure you believe.'},
+  rentCredit:{g:1,t:'Rent tax credit',d:'A tax credit for renters: 20% of rent paid, up to €1,000 per renter (€1,150 from 2027), so €2,000 or €2,300 for a couple. It runs for the tax years 2022 to 2028 and then ends, as the law stands. The planner includes it only for those years.'},
+  buyAge:{t:'Buying age',d:'The age of the first person in the year the home is bought. The purchase uses the house price grown to that year, so waiting costs more if house prices rise.'},
+  price:{t:'House price today',d:'The price of the home you want, at today\'s prices. It grows with house price growth until the year of purchase.'},
+  houseGrowth:{t:'House price growth',d:'The yearly rise in the home\'s price, before and after the purchase. This one number has a big effect on rent versus buy.'},
+  depositPct:{t:'Deposit',d:'The share of the price paid from savings. The Central Bank rule asks first-time buyers for at least 10%. Help to Buy and the First Home Scheme both count towards this.'},
+  newBuild:{t:'New build',d:'Help to Buy applies to newly built homes, and to self-builds, only. Tick this if the home is new.'},
+  htb:{g:1,t:'Help to Buy',d:'A refund of income tax and DIRT you have paid in the previous four years, up to 10% of the price of a newly built home and up to €35,000 (from Budget 2027, for contracts from 7 October 2026 to the end of 2029). The refund goes towards the deposit. The planner limits it to the tax you have paid, and assumes a price cap of €500,000.'},
+  fhs:{g:1,t:'First Home Scheme',d:'The State and the banks put in up to 30% of the price of a new-build home (20% if you also use Help to Buy) in return for a share of the home\'s value. You pay no rent on the share, but you repay the same percentage of the value later. The scheme runs to the end of 2027 as it now stands. It does not cover second-hand homes. Price ceilings depend on the area.'},
+  fhsPct:{t:'Equity share',d:'The percentage of the price the scheme pays. It is limited to 30%, and to 20% when you also use Help to Buy. The planner reduces the mortgage by this amount and keeps the share out of your equity.'},
+  fhsCharge:{t:'Scheme service charge',d:'After five years the First Home Scheme charges a yearly fee on the equity share. Enter the percentage if you want it included. Leave at 0 to ignore it.'},
+  ceiling:{t:'Price ceiling',d:'The most the First Home Scheme will fund. Ceilings differ by area: €500,000 in Dublin, Cork City and Wicklow, €475,000 in Galway City, Kildare and Meath, €450,000 in Cork County, Galway County and Limerick, and lower elsewhere down to €375,000. Waterford allows €450,000 for apartments. Ceilings are reviewed twice a year, so check the scheme\'s current table for your area.'},
+  mortRate:{t:'Mortgage rate',d:'The yearly interest rate. The planner keeps it fixed for the whole term.'},
+  mortTerm:{t:'Mortgage term',d:'Years to repay. The mortgage must usually be repaid by retirement, and lenders limit the term for older buyers.'},
+  costsPct:{t:'Legal and purchase costs',d:'Solicitor, valuation, surveys and the first year of mortgage protection insurance, as a percentage of the price. Stamp duty is added automatically at 1% of the price up to €1 million.'},
+  runPct:{t:'Running costs',d:'Yearly upkeep, insurance and local property tax as a percentage of the home\'s value. Many people use 1%.'},
+  centralBank:{g:1,t:'Central Bank mortgage rules',d:'First-time buyers can borrow up to four times gross household income, and must normally pay a deposit of at least 10%. The planner warns when a purchase breaks either rule. Banks can allow a few exceptions.'},
+  timing:{t:'Purchase timing',d:'Shows the same purchase in each of the next ten years. Prices rise with house price growth, so waiting costs more, but savings grow too. Help to Buy and the First Home Scheme work only inside their windows, so the table shows when each one is available. A year marked ready means savings cover the cash needed.'},
+  ready:{g:1,t:'Deposit ready',d:'The first year in which liquid savings (deposits, funds and investment accounts) cover the cash needed to buy: the deposit after Help to Buy, stamp duty and purchase costs. Pensions and property do not count. It shows when buying becomes possible, even in a renting scenario.'},
+  cashEvent:{g:1,t:'Cash event',d:'A one-off sum paid in or out in a single year, such as a gift from parents or a wedding. The amount is not adjusted for inflation, so enter it in the money of that future year.'},
+  ceAge:{t:'Age of the event',d:'The age of the first person in the year the event happens.'},
+  ceAmount:{t:'Event amount',d:'The amount in the money of that future year. It is not adjusted for inflation.'},
+  cat:{g:1,t:'Capital Acquisitions Tax (CAT)',d:'A 33% tax on gifts and inheritances above a lifetime tax-free threshold. The threshold depends on how you are related to the person giving: €420,000 from a parent to a child (Group A), €44,000 from a brother, sister, aunt or uncle (Group B) and €22,000 from anyone else (Group C). Amounts received since 5 December 1991 from the same group count together. Gifts between spouses and civil partners are free of tax.'},
+  catGroup:{t:'CAT group',d:'Group A is a gift or inheritance from a parent to a child. Group B is from a sibling, niece, nephew, aunt, uncle or grandparent. Group C is from anyone else. Each group has its own tax-free amount.'},
+  smallGift:{t:'Small gift exemption',d:'The first €3,000 of gifts a person receives from any one giver in a calendar year is free of tax and does not count against the threshold. It does not apply to inheritances. The planner applies it to each gift entered.'},
+  catUsed:{t:'CAT already used (Group A)',d:'The total of gifts and inheritances you have already received from parents. It uses up part of the Group A threshold. Leave at 0 if you have received nothing.'},
+  marketEvent:{g:1,t:'Market event',d:'A shock that hits chosen accounts only. The one-off change is applied to the balance at the start of the year. The optional return override then replaces the normal return for the number of years given, which lets you model a slow recovery.'},
+  meTargets:{t:'Accounts affected',d:'Tick the accounts the event hits. If you have not ticked any yourself, the event hits every financial account and leaves property alone.'},
+  sequence:{g:1,t:'Sequence of returns',d:'A fall just before or after retirement does more lasting damage than the same fall earlier, because withdrawals take money out while prices are low. Move a market event to different ages to see the effect.'},
+  chartView:{t:'Chart view',d:'Stacked bars and stacked area show how the accounts and home equity add up to net worth. Separate lines show each on its own, with a total line on top.'},
+  todayEuro:{t:'Wealth in today\'s euro',d:'Net worth divided by the inflation that has built up since the start, so it shows what the money would buy at today\'s prices.'},
+  eventLine:{t:'Event marker',d:'A dashed line marks the age of retirement, the home purchase and each market event.'},
+  compare:{t:'Scenario comparison',d:'Each row runs one scenario with the same people and accounts but its own housing, expenses and events. Click a row to switch to that scenario.'},
+  m_nw0:{t:'Net worth now',d:'The total of all accounts at the start, plus nothing for a home you do not own yet.'},
+  m_nwret:{t:'Net worth at retirement',d:'Net worth at the end of the year the first person retires, in that year\'s euro, including any home equity.'},
+  m_nwend:{t:'Net worth at the end',d:'Net worth in the last year of the projection, in that year\'s euro.'},
+  m_ready:{t:'Deposit ready',d:'The first year liquid savings cover the cash a purchase needs. See Deposit ready in the glossary.'},
+  m_mortfree:{t:'Mortgage-free',d:'The age of the first person when the mortgage is paid off. Only appears in a buying scenario.'},
+  m_tax:{t:'Total tax paid',d:'Income tax, USC, PRSI, DIRT, exit tax, CAT and tax on the lump sum, added up over the whole projection.'},
+  m_pensret:{t:'Pension just before retirement',d:'All pension accounts at the end of the year before the first person retires. After that, 25% leaves as a lump sum and the rest becomes an ARF.'},
+  m_short:{t:'Funded through',d:'The age at which all financial accounts are empty and spending cannot be met. If it never happens, the plan is funded to the end.'},
+  m_real:{t:'Net worth at the end in today\'s euro',d:'Final net worth adjusted for inflation, so it shows what the final balance would buy at today\'s prices.'},
+  c_salary:{t:'Salary',d:'Gross salaries for the year before tax and pension contributions.'},
+  c_sp:{t:'State Pension',d:'Contributory State Pension for those who have reached their State Pension age.'},
+  c_pens:{t:'Pension and other income',d:'ARF withdrawals (including the minimum the law assumes), pension income and other taxable income entered. The tax-free lump sum is shown separately.'},
+  c_lump:{t:'Lump sum',d:'The retirement lump sum after tax, in the year of retirement.'},
+  c_it:{t:'Income tax',d:'Income tax for the household after credits, including the rent credit while it lasts.'},
+  c_usc:{t:'USC',d:'Universal Social Charge on salary and pension income.'},
+  c_prsi:{t:'PRSI',d:'Employee PRSI on salary.'},
+  c_sav:{t:'DIRT and exit tax',d:'Tax taken from the growth of deposit and fund accounts, plus the Investment Account charge.'},
+  c_cat:{t:'CAT',d:'Capital Acquisitions Tax on gifts and inheritances received.'},
+  c_expenses:{t:'Expenses',d:'Household spending for the scenario, after inflation. Rent and mortgage are shown under Housing instead.'},
+  c_housing:{t:'Housing',d:'Rent before the purchase. After it, mortgage payments, running costs and any First Home Scheme charge.'},
+  c_ceio:{t:'Cash events',d:'One-off amounts paid in (green, after any CAT) or out (red) in this year.'},
+  c_draw:{t:'Extra draw or surplus',d:'When income does not cover spending, the shortfall is drawn from accounts in drawdown order. When it does, the surplus is added to the first deposit or fund account.'},
+  c_homeEq:{t:'Home equity',d:'The value of the home less the mortgage and any First Home Scheme share.'},
+  c_mortBal:{t:'Mortgage balance',d:'What is still owed on the mortgage at the end of the year.'},
+  c_realwealth:{t:'Net worth in today\'s euro',d:'Net worth adjusted for inflation.'},
+  c_cumtax:{t:'Cumulative tax',d:'All tax paid from the start to this year.'},
+  c_total:{t:'Net worth',d:'All accounts, cash and home equity at the end of the year, in that year\'s euro.'},
+};
+
+
+/* ══ RESIZER ══ */
+(()=>{
+  const r=document.getElementById('resizer'),l=document.getElementById('lpane');
+  let drag=false,sx=0,sw=0;
+  r.addEventListener('mousedown',e=>{drag=true;sx=e.clientX;sw=l.offsetWidth;r.classList.add('active');e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!drag)return;l.style.width=Math.max(260,Math.min(sw+e.clientX-sx,window.innerWidth-300))+'px';});
+  document.addEventListener('mouseup',()=>{drag=false;r.classList.remove('active');});
+})();
+
+/* ══ ACCORDION ══ */
+function togAc(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open');}
+
+/* ══ LEFT PANE TABS ══ */
+function showLTab(idx,btn){
+  document.querySelectorAll('.ltab').forEach(b=>b.classList.remove('act'));
+  document.querySelectorAll('.ltab-panel').forEach(p=>p.classList.remove('open'));
+  btn.classList.add('act');
+  document.getElementById('ltab-'+idx).classList.add('open');
+}
+
+/* ══ POPOVER ══ */
+function togglePop(id){
+  const p=document.getElementById(id);
+  const wasOpen=p.classList.contains('open');
+  document.querySelectorAll('.popover').forEach(x=>x.classList.remove('open'));
+  if(!wasOpen){p.classList.add('open');if(id==='met-pop')renderMetItems();if(id==='col-pop')renderColItems();}
+}
+/* ══ DEFAULT STATE ══
+   A sample couple in their early thirties, both working, saving for a deposit.
+   Every figure is a placeholder to be replaced with the household's own numbers. */
+const mkHousing=o=>Object.assign({
+  mode:'rent',
+  rentMonthly:2200,rentInfl:3,rtc:true,
+  buyAge:36,price:420000,newBuild:true,ceiling:500000,houseGrowth:3,
+  depositPct:10,useHTB:true,useFHS:false,fhsPct:20,
+  mortRate:4,mortTerm:30,costsPct:1.5,runPct:1,
+},o||{});
+const mkExpenses=()=>[
+  {id:1,label:'Food and household',amount:13200,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
+  {id:2,label:'Transport',amount:9000,prd:'yr',infl:'general',startAge:'',endAge:'',note:'Car, fuel, insurance, public transport'},
+  {id:3,label:'Health and insurance',amount:3000,prd:'yr',infl:'general',startAge:'',endAge:'',note:'Health insurance, GP, prescriptions'},
+  {id:4,label:'Leisure and travel',amount:12000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
+  {id:5,label:'Other',amount:6000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
+];
+const DEF={
+  startYear:2026,endAge:90,genInfl:2.5,wageGrowth:3,bandIndex:3,
+  spWeekly:309.3,spGrowth:3,status:'married',catUsed:0,fhsCharge:0,
+  useStress:false,stressRate:3,
+  people:[
+    {id:1,name:'Person 1',currentAge:33,retireAge:66,deathAge:88,salary:65000,pensionMode:'own',eePct:5,erPct:3,card:false,spAge:66,spPct:100},
+    {id:2,name:'Person 2',currentAge:31,retireAge:66,deathAge:90,salary:50000,pensionMode:'autoenrol',eePct:0,erPct:0,card:false,spAge:66,spPct:100},
+  ],_npid:3,
+  incomes:[],_niid:1,
+  accounts:[
+    {id:1,label:'Pension, Person 1',type:'pension',owner:1,balance:38000,rate:5.5,feePct:0.6,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:1},
+    {id:2,label:'Pension, Person 2',type:'pension',owner:2,balance:22000,rate:5.5,feePct:0.6,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:2},
+    {id:3,label:'Deposit savings',type:'deposit',owner:0,balance:9000,rate:2.5,feePct:0,regular:7200,saveTo:'',growth:'nominal',color:'',drawOrder:3},
+    {id:4,label:'Investment funds',type:'fund',owner:0,balance:5000,rate:6,feePct:0.2,regular:1200,saveTo:'',growth:'nominal',color:'',drawOrder:4},
+  ],_naid:5,
+  activeScenario:0,
+  scenarios:[
+    {id:1,name:'Rent',housing:mkHousing({mode:'rent'}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
+    {id:2,name:'Buy new build in 3 years, Help to Buy',housing:mkHousing({mode:'buy',buyAge:36}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
+    {id:3,name:'Buy in 2027 with Help to Buy and First Home Scheme',housing:mkHousing({mode:'buy',buyAge:34,useFHS:true,fhsPct:20}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
+    {id:4,name:'Buy second-hand, no schemes',housing:mkHousing({mode:'buy',buyAge:36,newBuild:false,useHTB:false}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
+  ],_nsid:5,_neid:6,_ncid:1,_nmid:1,
+  chartView:'bars',
+  cols:{salary:true,sp:true,pens:true,lump:false,it:true,usc:true,prsi:true,sav:false,cat:false,expenses:true,housing:true,ceio:true,draw:true,homeEq:true,mortBal:false,realwealth:true,cumtax:false,total:true},
+  colOrder:['salary','sp','pens','lump','it','usc','prsi','sav','cat','expenses','housing','ceio','draw','homeEq','mortBal','realwealth','cumtax','total'],
+  mets:{nw0:false,nwret:true,nwend:true,ready:true,mortfree:false,tax:true,pensret:true,short:true,real:false},
+};
+const BLANK={
+  startYear:2026,endAge:90,genInfl:2.5,wageGrowth:3,bandIndex:3,
+  spWeekly:309.3,spGrowth:3,status:'single',catUsed:0,fhsCharge:0,
+  useStress:false,stressRate:3,
+  people:[{id:1,name:'Person 1',currentAge:30,retireAge:66,deathAge:88,salary:0,pensionMode:'none',eePct:0,erPct:0,card:false,spAge:66,spPct:100}],_npid:2,
+  incomes:[],_niid:1,
+  accounts:[
+    {id:1,label:'Pension',type:'pension',owner:1,balance:0,rate:5.5,feePct:0.6,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:1},
+    {id:2,label:'Deposit savings',type:'deposit',owner:0,balance:0,rate:2.5,feePct:0,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:2},
+  ],_naid:3,
+  activeScenario:0,
+  scenarios:[{id:1,name:'Rent',housing:mkHousing({mode:'rent',rentMonthly:0}),expenses:[],cashEvents:[],marketEvents:[]}],
+  _nsid:2,_neid:1,_ncid:1,_nmid:1,
+  chartView:'bars',
+  cols:{salary:true,sp:true,pens:true,lump:false,it:true,usc:true,prsi:true,sav:false,cat:false,expenses:true,housing:true,ceio:true,draw:true,homeEq:true,mortBal:false,realwealth:true,cumtax:false,total:true},
+  colOrder:['salary','sp','pens','lump','it','usc','prsi','sav','cat','expenses','housing','ceio','draw','homeEq','mortBal','realwealth','cumtax','total'],
+  mets:{nw0:false,nwret:true,nwend:true,ready:true,mortfree:false,tax:true,pensret:true,short:true,real:false},
+};
+if(typeof module!=='undefined')module.exports={DEF,BLANK,mkHousing,mkExpenses};
+
+/* ══ IRISH RULES AND SIMULATION ENGINE ══════════════════════════════════════════
+   Pure functions that read the global state S. Nothing here touches the page, so the
+   same code runs in the browser and under Node for testing.
+
+   Sources for every figure are listed in the Info panel. Figures checked against Revenue, Citizens Information
+   and Budget 2027 summaries on 22 October 2026. Anything still unconfirmed is flagged in the interface.
+*/
+
+const DIRT_RATE=0.33;            // deposit interest retention tax
+const CAT_RATE=0.33;             // gift and inheritance tax
+const SMALL_GIFT=3000;           // exempt gifts per donor per calendar year (not inheritances)
+const LUMP_FREE=200000;          // lifetime tax-free retirement lump sum
+const LUMP_MID=500000;           // 20% band ends here, marginal rate above
+const HTB_MAX=35000;             // Help to Buy, contracts 7 Oct 2026 to 31 Dec 2029
+const HTB_FROM=2026,HTB_TO=2029; // calendar years the enhanced relief covers
+const HTB_PRICE_CAP=500000;      // property value limit (Citizens Information, mortgage guides 2026)
+const FHS_TO=2027;               // First Home Scheme runs to June 2027 (May 2025 extension); the planner allows the whole of 2027
+const AE_START=2026;             // auto-enrolment (MyFutureFund) started 1 January 2026
+const RTC_LAST=2028;             // Rent Tax Credit covers tax years 2022 to 2028
+const AGE_REL=[[30,.15],[40,.20],[50,.25],[55,.30],[60,.35],[999,.40]];
+const reliefPct=age=>{for(const[l,p]of AGE_REL)if(age<l)return p;return .40;};
+
+/* Tax-year tables. 2026 and 2027 are published figures (2027 is Budget 2027, pending the
+   Finance Bill). Later years scale from 2027 by the "bands and credits growth" setting. */
+const TY={
+  2026:{cut:{single:44000,m1:53000,incr:35000},
+        cr:{personal:2000,married:4000,employee:2000,age1:245,age2:490,rent1:1000,rent2:2000},
+        usc:[[12012,.005],[28700,.02],[70044,.03],[Infinity,.08]]},
+  2027:{cut:{single:46500,m1:55500,incr:37500},
+        cr:{personal:2125,married:4250,employee:2125,age1:245,age2:490,rent1:1150,rent2:2300},
+        usc:[[12012,.005],[30300,.02],[70044,.03],[Infinity,.08]]},
+};
+function tyParams(Y){
+  const base=TY[Y<=2026?2026:2027];
+  const f=Y>2027?Math.pow(1+(S.bandIndex||0)/100,Y-2027):1;
+  const sc=v=>v*f;
+  const rentOn=Y<=RTC_LAST;
+  return{
+    f,
+    cut:{single:sc(base.cut.single),m1:sc(base.cut.m1),incr:sc(base.cut.incr)},
+    cr:{personal:sc(base.cr.personal),married:sc(base.cr.married),employee:sc(base.cr.employee),
+        age1:sc(base.cr.age1),age2:sc(base.cr.age2),
+        rent1:rentOn?sc(base.cr.rent1):0,rent2:rentOn?sc(base.cr.rent2):0},
+    usc:base.usc.map(([l,r])=>[l===Infinity?l:sc(l),r]),
+    uscExempt:sc(13000),uscRedLimit:sc(60000),
+    prsi:Y<=2026?0.042375:Y===2027?0.043875:0.045,  // 4.2% to Sep 2026, 4.35% to Sep 2027, then 4.5%
+    prsiExempt:sc(352*52),
+    ageEx:{single:sc(18000),married:sc(36000)},      // €18,000 single and €36,000 married confirmed on Revenue's exemption limits page
+    earnCap:sc(115000),
+    exit:Y>=2027?0.35:0.38,                          // 38% in 2026, 35% announced for 2027
+    cat:{A:sc(420000),B:sc(44000),C:sc(22000)},
+  };
+}
+
+/* ── Income tax ── */
+function taxBands(t,band){return .20*Math.min(t,band)+.40*Math.max(0,t-band);}
+function ageRelief(tax,total,age,lim){
+  // Age exemption for 65 and over, with marginal relief at 40% of the excess
+  if(age<65)return tax;
+  if(total<=lim)return 0;
+  return Math.min(tax,.40*(total-lim));
+}
+function incomeTaxSingle(P,x){
+  let tax=taxBands(Math.max(0,x.taxable),P.cut.single);
+  let cr=P.cr.personal+(x.salary>0?Math.min(P.cr.employee,.2*x.salary):0)+(x.age>=65?P.cr.age1:0);
+  tax=Math.max(0,tax-cr);
+  return ageRelief(tax,Math.max(0,x.taxable),x.age,P.ageEx.single);
+}
+function incomeTaxJoint(P,a,b){
+  const lo=a.taxable>=b.taxable?b:a;
+  const band=P.cut.m1+Math.min(P.cut.incr,Math.max(0,lo.taxable));
+  const T=Math.max(0,a.taxable)+Math.max(0,b.taxable);
+  let cr=P.cr.married;
+  [a,b].forEach(x=>{if(x.salary>0)cr+=Math.min(P.cr.employee,.2*x.salary);});
+  const older=Math.max(a.age,b.age);
+  if(older>=65)cr+=P.cr.age2;
+  const tax=Math.max(0,taxBands(T,band)-cr);
+  return ageRelief(tax,T,older,P.ageEx.married);
+}
+
+/* ── USC and PRSI ── */
+function uscFor(P,base,reduced){
+  if(base<=P.uscExempt)return 0;
+  if(reduced&&base<=P.uscRedLimit)return .005*Math.min(base,P.usc[0][0])+.02*Math.max(0,base-P.usc[0][0]);
+  let t=0,prev=0;
+  for(const[l,r]of P.usc){if(base<=prev)break;t+=(Math.min(base,l)-prev)*r;prev=l;}
+  return t;
+}
+
+/* Household tax. ppl holds one entry per living person:
+   {age,salary,relief,sp,pens,other,card}
+   salary  employment income, liable to income tax, USC and PRSI
+   relief  pension contributions relieved against income tax (not against USC or PRSI)
+   sp      State Pension: income tax only
+   pens    pension, ARF and other pension-type income: income tax and USC
+   other   other taxable income: income tax and USC
+   card    full medical card, which gives the reduced USC rate under an income limit
+   rentCredit is applied against income tax and cannot take it below zero. */
+function householdTax(P,ppl,married,rentCredit){
+  const rows=ppl.map(x=>({
+    age:x.age,salary:x.salary,
+    taxable:x.salary-x.relief+x.sp+x.pens+x.other,
+    uscBase:x.salary+x.pens+x.other,
+    card:!!x.card,
+  }));
+  // A married couple is assessed jointly (the first two people). Anyone else is taxed as a single person.
+  let it=(married&&rows.length>=2)?incomeTaxJoint(P,rows[0],rows[1])+rows.slice(2).reduce((t,x)=>t+incomeTaxSingle(P,x),0):rows.reduce((t,x)=>t+incomeTaxSingle(P,x),0);
+  const rc=Math.min(it,rentCredit||0);
+  it-=rc;
+  let usc=0,prsi=0;
+  rows.forEach(x=>{
+    usc+=uscFor(P,x.uscBase,x.age>=70||x.card);
+    if(x.age<66&&x.salary>P.prsiExempt)prsi+=P.prsi*x.salary;
+  });
+  return{it,usc,prsi,rentCredit:rc,total:it+usc+prsi};
+}
+
+/* ── Auto-enrolment (MyFutureFund) ── */
+function aePhase(Y){
+  const i=Y-AE_START;
+  if(i<3)return{ee:.015,er:.015};
+  if(i<6)return{ee:.03,er:.03};
+  if(i<9)return{ee:.045,er:.045};
+  return{ee:.06,er:.06};
+}
+
+/* Contributions for one working person this year. */
+function pensionFlows(p,age,salary,Y,P){
+  const r={ee:0,er:0,st:0,relief:0};
+  if(salary<=0)return r;
+  if(p.pensionMode==='autoenrol'){
+    if(age>=23&&age<=60&&salary>=20000){
+      const base=Math.min(salary,80000),ph=aePhase(Y);
+      r.ee=ph.ee*base;r.er=ph.er*base;r.st=r.ee/3;   // State adds €1 for every €3 the employee pays
+    }
+  }else if(p.pensionMode==='own'){
+    r.ee=(p.eePct||0)/100*salary;
+    r.er=(p.erPct||0)/100*salary;
+    r.relief=Math.min(r.ee,reliefPct(age)*Math.min(salary,P.earnCap));
+  }
+  return r;
+}
+
+/* ── State Pension (Contributory) ── */
+function statePension(p,age,Y,aliveCount){
+  if(age<(p.spAge||66))return 0;
+  const g=Math.pow(1+(S.spGrowth||0)/100,Y-2027);
+  const pct=(p.spPct===undefined?100:p.spPct)/100;
+  const personal=(S.spWeekly+(age>=80?10:0))*pct;        // the €10 rise at 80 is part of the personal rate
+  const livingAlone=aliveCount===1?25:0;                  // living alone increase, paid in full
+  return (personal+livingAlone)*g*52;
+}
+
+/* ── Account growth with tax on the growth ── */
+function acctReturn(a,sc,age0,Y){
+  let r=a.rate;
+  if(S.useStress&&a.type!=='property')r=Math.min(r,S.stressRate);
+  for(const ev of (sc.marketEvents||[])){
+    if(ev.years>0&&ev.rate!==''&&ev.rate!==null&&ev.rate!==undefined&&age0>=ev.age&&age0<ev.age+ev.years&&evTargets(ev,a))r=+ev.rate;
+  }
+  r/=100;
+  if(a.growth==='real')r=(1+r)*(1+S.genInfl/100)-1;
+  return r;
+}
+function evTargets(ev,a){
+  if(ev.targets&&ev.targets.length)return ev.targets.includes(a.id);
+  return a.type!=='property';
+}
+function growOne(a,b,r,P,Y){
+  const g=b*r;
+  let dirt=0,exit=0,inv=0;
+  if(g>0){
+    if(a.type==='deposit')dirt=g*DIRT_RATE;
+    else if(a.type==='fund')exit=g*P.exit;
+  }
+  if(a.type==='invacct'&&Y>=2027)inv=.01*Math.max(0,b-50000)*(Y===2027?.5:1);  // announced design, 1 July 2027
+  const fee=b*((a.feePct||0)/100);
+  return{b:b+g-dirt-exit-inv-fee,dirt,exit,inv};
+}
+
+/* ── Housing helpers ── */
+function stampDuty(price){
+  return .01*Math.min(price,1e6)+.02*Math.max(0,Math.min(price,1.5e6)-1e6)+.06*Math.max(0,price-1.5e6);
+}
+function mortgagePayment(M,ratePct,years){
+  const i=ratePct/1200,n=Math.round(years*12);
+  if(M<=0||n<=0)return 0;
+  return i===0?M/n:M*i/(1-Math.pow(1+i,-n));
+}
+function htbEligible(hs,Y){return !!(hs.useHTB&&hs.newBuild&&Y>=HTB_FROM&&Y<=HTB_TO);}
+
+/* Cash needed from savings to buy in year offset y, assuming Help to Buy pays its
+   maximum. Used for the "deposit ready" measure. */
+function purchaseCashNeed(hs,y,Y){
+  const price=hs.price*Math.pow(1+hs.houseGrowth/100,y);
+  const dep=hs.depositPct/100*price;
+  const htb=htbEligible(hs,Y)&&price<=HTB_PRICE_CAP?Math.min(HTB_MAX,.1*price):0;
+  return Math.max(0,dep-htb)+stampDuty(price)+hs.costsPct/100*price;
+}
+
+/* ══ SIMULATION ═════════════════════════════════════════════════════════════════
+   One row per year. Order inside a year:
+   1. deaths, then market shocks
+   2. retirement: the tax-free lump sum leaves the pension and the rest becomes an ARF
+   3. growth, with DIRT, exit tax and fees taken from the growth
+   4. forced ARF withdrawal (the minimum imputed distribution)
+   5. income, housing, expenses and cash events
+   6. tax on the household
+   7. any gap is drawn from accounts in drawdown order, with tax grossed up on ARF draws
+   8. any surplus is saved, then pension contributions and the home are updated */
+function simulateIE(scIdx){
+  const sc=S.scenarios[scIdx===undefined?S.activeScenario:scIdx];
+  const hs=sc.housing;
+  const ppl=S.people,p0=ppl[0];
+  const accts=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
+  const n=accts.length;
+  let bals=accts.map(a=>+a.balance||0);
+  const owner=accts.map(a=>a.owner||0);
+  const dead={},vested={};
+  ppl.forEach(p=>{dead[p.id]=false;vested[p.id]=p.currentAge>=p.retireAge;});
+  const maxYears=Math.min(S.endAge-p0.currentAge,Math.max(...ppl.map(p=>p.deathAge-p.currentAge)))+1;
+  const rows=[];
+  let cumTax=0,overdraft=0,cashHold=0,home=null;
+  const cat={A:S.catUsed||0,B:0,C:0};
+  const taxHist=[];
+  let readyAge=null,readyYear=null,mortFreeAge=null;
+  const isPen=i=>accts[i].type==='pension';
+  const isLiquid=i=>['deposit','fund','invacct'].includes(accts[i].type);
+
+  for(let y=0;y<maxYears;y++){
+    const Y=S.startYear+y,P=tyParams(Y);
+    const age0=p0.currentAge+y;
+    const events=[];
+
+    // 1. deaths and market shocks
+    ppl.forEach(p=>{
+      if(!dead[p.id]&&p.currentAge+y>=p.deathAge){
+        dead[p.id]=true;events.push({type:'death',label:p.name+' passes'});
+        const surv=ppl.find(q=>!dead[q.id]);
+        if(surv)for(let i=0;i<n;i++)if(owner[i]===p.id)owner[i]=surv.id;   // passes to the surviving spouse
+      }
+    });
+    const alive=ppl.filter(p=>!dead[p.id]);
+    if(!alive.length)break;
+    const married=S.status==='married'&&alive.length>=2;
+    for(const ev of (sc.marketEvents||[])){
+      if(ev.age===age0&&ev.shockPct){
+        accts.forEach((a,i)=>{if(evTargets(ev,a))bals[i]*=(1+ev.shockPct/100);});
+        events.push({type:'market',label:ev.label});
+      }
+    }
+    const inf=Math.pow(1+S.genInfl/100,y),wg=Math.pow(1+S.wageGrowth/100,y);
+
+    // 2. retirement and lump sum
+    let lumpNet=0,lumpTax=0;
+    alive.forEach(p=>{
+      const age=p.currentAge+y;
+      if(!vested[p.id]&&age>=p.retireAge){
+        vested[p.id]=true;events.push({type:'retire',label:p.name+' retires'});
+        let tb=0;for(let i=0;i<n;i++)if(isPen(i)&&owner[i]===p.id)tb+=bals[i];
+        const ls=.25*tb;
+        const tax=.20*Math.max(0,Math.min(ls,LUMP_MID)-LUMP_FREE)+.40*Math.max(0,ls-LUMP_MID);
+        for(let i=0;i<n;i++)if(isPen(i)&&owner[i]===p.id)bals[i]*=.75;
+        lumpNet+=ls-tax;lumpTax+=tax;
+      }
+    });
+
+    // 3. growth
+    let dirt=0,exit=0,inv=0;
+    for(let i=0;i<n;i++){
+      const a=accts[i];
+      if(a.type==='property'){bals[i]=bals[i]*(1+acctReturn(a,sc,age0,Y))-(a.feePct||0)/100*bals[i];continue;}
+      const g=growOne(a,bals[i],acctReturn(a,sc,age0,Y),P,Y);
+      bals[i]=g.b;dirt+=g.dirt;exit+=g.exit;inv+=g.inv;
+    }
+
+    // 4. person-level income and the forced ARF withdrawal
+    const pp=alive.map(p=>{
+      const age=p.currentAge+y;
+      const working=age<p.retireAge;
+      const salary=working?p.salary*wg:0;
+      const pf=pensionFlows(p,age,salary,Y,P);
+      const o={p,age,salary,relief:pf.relief,ee:pf.ee,er:pf.er,st:pf.st,
+        sp:statePension(p,age,Y,alive.length),pens:0,other:0,card:p.card,forced:0};
+      if(vested[p.id]&&age>=60){
+        let ab=0;for(let i=0;i<n;i++)if(isPen(i)&&owner[i]===p.id)ab+=Math.max(0,bals[i]);
+        const rate=ab>2e6?.06:(age>=71?.05:.04);   // 4% to age 70, 5% from 71, 6% on ARFs over €2m
+        const f=rate*ab;
+        if(f>0){
+          for(let i=0;i<n;i++)if(isPen(i)&&owner[i]===p.id)bals[i]-=Math.max(0,bals[i])*(f/ab);
+          o.forced=f;o.pens+=f;
+        }
+      }
+      return o;
+    });
+    let exempt=0;
+    for(const inc of S.incomes){
+      const person=ppl.find(q=>q.id===inc.pid);
+      if(inc.pid!==0&&(!person||dead[inc.pid]))continue;
+      const age=person?person.currentAge+y:age0;
+      const sa=inc.startAge===''||inc.startAge==null?null:+inc.startAge;
+      const ea=inc.endAge===''||inc.endAge==null?null:+inc.endAge;
+      if(sa!==null&&age<sa)continue;
+      if(ea!==null&&age>ea)continue;
+      const adj=inc.adjType==='general'?inf:inc.adjType==='wage'?wg:inc.adjType==='fixed'?Math.pow(1+(inc.adj||0)/100,y):1;
+      const amt=inc.amount*adj;
+      if(inc.type==='exempt'){exempt+=amt;continue;}
+      const targets=inc.pid===0?pp:pp.filter(o=>o.p.id===inc.pid);
+      targets.forEach(o=>{if(inc.type==='pension')o.pens+=amt/targets.length;else o.other+=amt/targets.length;});
+    }
+
+    // 5. housing, expenses, cash events
+    let rentPaid=0,rentCap=0,mortPay=0,runCost=0,fhsCharge=0,purchaseOut=0,htb=0,newMort=0;
+    let boughtNow=false;
+    if(hs.mode==='buy'&&!home&&age0===hs.buyAge){
+      boughtNow=true;
+      const price=hs.price*Math.pow(1+hs.houseGrowth/100,y);
+      const dep=hs.depositPct/100*price;
+      const fhsOk=hs.useFHS&&hs.newBuild&&Y<=FHS_TO&&price<=hs.ceiling;   // new builds only
+      home={price,value:price,mort:0,pay:0,rate:hs.mortRate,fhsPct:0,buyY:Y,htb:0,fhsOk,price0:price};
+      home.dep=dep;
+      home.stamp=stampDuty(price);
+      home.fees=hs.costsPct/100*price;
+    }else if(!home){
+      rentPaid=hs.rentMonthly*12*Math.pow(1+hs.rentInfl/100,y);
+      if(hs.rtc!==false&&P.cr.rent1>0)rentCap=married?P.cr.rent2:P.cr.rent1*alive.length;
+    }
+
+    // 6. tax, first without any extra ARF draws
+    const rc=rentPaid>0?Math.min(rentCap,.2*rentPaid):0;
+    const mk=()=>pp.map(o=>({age:o.age,salary:o.salary,relief:o.relief,sp:o.sp,pens:o.pens,other:o.other,card:o.card}));
+    let T=householdTax(P,mk(),married,rc);
+
+    // Help to Buy and the mortgage need this year's tax, so they come after it
+    if(boughtNow){
+      const price=home.price;
+      if(htbEligible(hs,Y)&&price<=HTB_PRICE_CAP){
+        const est=T.it+dirt;
+        let prior=0;const k=Math.min(4,taxHist.length);
+        for(let j=0;j<k;j++)prior+=taxHist[taxHist.length-1-j];
+        prior+=(4-k)*est;
+        htb=Math.min(HTB_MAX,.1*price,prior);
+      }
+      const fhsMax=htb>0?.20:.30;          // 30%, or 20% when combined with Help to Buy
+      const e=home.fhsOk?Math.min(hs.fhsPct/100,fhsMax):0;
+      if(hs.useFHS&&!home.fhsOk)events.push({type:'warn',label:!hs.newBuild?'First Home Scheme covers new builds only':Y>FHS_TO?'First Home Scheme not available after '+FHS_TO+' (as currently legislated)':'Price above First Home Scheme ceiling'});
+      if(hs.useHTB&&htb===0)events.push({type:'warn',label:'Help to Buy not applied (needs a new build, a price within the cap and tax paid in the last 4 years)'});
+      home.fhsPct=e;home.htb=htb;
+      newMort=Math.max(0,price-home.dep-e*price);
+      home.mort=newMort;home.mort0=newMort;
+      home.pay=mortgagePayment(newMort,hs.mortRate,hs.mortTerm);
+      purchaseOut=home.dep+home.stamp+home.fees;
+      const gross=pp.reduce((t,o)=>t+o.salary,0);
+      if(newMort>4*gross&&gross>0)events.push({type:'warn',label:'Mortgage above 4 times income'});
+      if(hs.depositPct+e*100<10)events.push({type:'warn',label:'Deposit under 10%'});
+      events.push({type:'buy',label:'Buys home'+(htb>0?' with Help to Buy':'')});
+    }
+    let intPaid=0;
+    if(home){
+      runCost=hs.runPct/100*home.value;
+      let m=home.mort;
+      for(let k=0;k<12&&m>0;k++){
+        const i=home.rate/1200,interest=m*i,pay=Math.min(home.pay,m+interest);
+        intPaid+=interest;m-=pay-interest;mortPay+=pay;
+      }
+      home.mortEnd=Math.max(0,m);
+      if(home.mort>0&&home.mortEnd<=0.5&&mortFreeAge===null)mortFreeAge=age0;
+      if(S.fhsCharge>0&&home.fhsPct>0&&Y-home.buyY>=5)fhsCharge=S.fhsCharge/100*home.fhsPct*home.value;
+    }
+
+    let expenses=0;
+    for(const e of sc.expenses){
+      const sa=e.startAge===''||e.startAge==null?null:+e.startAge;
+      const ea=e.endAge===''||e.endAge==null?null:+e.endAge;
+      if((sa===null||age0>=sa)&&(ea===null||age0<=ea))
+        expenses+=e.amount*(e.infl==='wage'?wg:e.infl==='none'?1:inf);
+    }
+
+    let ceIn=0,ceOut=0,catTax=0;
+    for(const ce of sc.cashEvents){
+      if(ce.age!==age0)continue;
+      if(ce.dir==='out'){ceOut+=ce.amount;continue;}
+      let t=0;
+      if(ce.type==='gift'||ce.type==='inheritance'){
+        const g=ce.group||'A',thr=P.cat[g];
+        const benefit=ce.type==='gift'?Math.max(0,ce.amount-SMALL_GIFT*P.f):ce.amount;
+        const before=cat[g],after=before+benefit;
+        t=CAT_RATE*(Math.max(0,after-thr)-Math.max(0,before-thr));
+        cat[g]=after;catTax+=t;
+      }
+      ceIn+=ce.amount-t;
+    }
+
+    let regular=0;const regAdd=new Array(n).fill(0);
+    for(let i=0;i<n;i++){
+      const a=accts[i];
+      if(!a.regular||a.type==='pension'||a.type==='property')continue;
+      const until=a.saveTo===''||a.saveTo==null?p0.retireAge:+a.saveTo;
+      if(age0<until){const amt=a.regular*wg;regular+=amt;regAdd[i]=amt;}
+    }
+
+    // 7. cash flow, draws and surplus
+    const sum=k=>pp.reduce((t,o)=>t+o[k],0);
+    const cashIn=pp.reduce((t,o)=>t+o.salary-o.ee,0)+sum('sp')+sum('pens')+sum('other')+exempt+lumpNet+ceIn+htb;
+    let cashOut=expenses+rentPaid+mortPay+runCost+fhsCharge+purchaseOut+regular+ceOut;
+    let net=cashIn-T.total-cashOut;
+    let arfExtra=0,draw=0,surplus=0,shortfall=0;
+
+    if(net<0){
+      let need=-net;
+      for(let i=0;i<n&&need>0.5;i++){
+        const a=accts[i];
+        if(a.type==='property')continue;
+        if(isPen(i)){
+          const o=pp.find(q=>q.p.id===owner[i]);
+          if(!o||!vested[o.p.id]||bals[i]<=0)continue;
+          const base=householdTax(P,mk(),married,rc).total;
+          const gain=e=>{o.pens+=e;const t=householdTax(P,mk(),married,rc).total;o.pens-=e;return e-(t-base);};
+          let take;
+          if(gain(bals[i])<=need)take=bals[i];
+          else{let lo=0,hi=bals[i];for(let k=0;k<50;k++){const mid=(lo+hi)/2;if(gain(mid)<need)lo=mid;else hi=mid;}take=hi;}
+          const got=gain(take);
+          o.pens+=take;bals[i]-=take;arfExtra+=take;need-=got;draw+=take;
+        }else{
+          const d=Math.min(need,Math.max(0,bals[i]));
+          bals[i]-=d;need-=d;draw+=d;
+        }
+      }
+      if(need>0.5){shortfall=need;overdraft+=need;}
+      T=householdTax(P,mk(),married,rc);
+    }else{
+      let s=net;
+      if(overdraft>0){const r=Math.min(overdraft,s);overdraft-=r;s-=r;}
+      if(s>0){
+        const fi=accts.findIndex((a,i)=>isLiquid(i));
+        if(fi>=0)bals[fi]+=s;else cashHold+=s;
+        surplus=s;
+      }
+    }
+    cumTax+=T.total;
+    if(boughtNow&&(shortfall>0.5||overdraft>0.5))events.push({type:'warn',label:'Savings do not cover the purchase'});
+
+    // 8. contributions, regular saving, home update
+    for(let i=0;i<n;i++)bals[i]+=regAdd[i];
+    pp.forEach(o=>{
+      const add=o.ee+o.er+o.st;
+      if(add<=0)return;
+      const i=accts.findIndex((a,idx)=>isPen(idx)&&owner[idx]===o.p.id);
+      if(i>=0)bals[i]+=add;
+    });
+
+    let homeValue=0,homeEquity=0,mortBal=0,fhsShare=0;
+    if(home){
+      home.value*=(1+hs.houseGrowth/100);
+      home.mort=home.mortEnd;
+      homeValue=home.value;mortBal=home.mort;fhsShare=home.fhsPct*home.value;
+      homeEquity=Math.max(0,homeValue-mortBal-fhsShare);
+    }
+
+    // deposit-ready measure: first year liquid savings cover the cash a purchase needs
+    let liquid=0;for(let i=0;i<n;i++)if(isLiquid(i))liquid+=Math.max(0,bals[i]);
+    if(!home&&readyAge===null){
+      const needCash=purchaseCashNeed(hs,y,Y);
+      if(liquid>=needCash){readyAge=age0;readyYear=Y;}
+    }
+
+    const snap=bals.map(b=>Math.round(Math.max(0,b)));
+    snap.push(Math.round(homeEquity));
+    snap.push(Math.round(Math.max(0,cashHold)));
+    const total=snap.reduce((t,v)=>t+v,0)-Math.round(overdraft);
+    const deflator=inf;
+    taxHist.push(T.it+dirt);
+
+    rows.push({
+      age:age0,yr:Y,ages:ppl.map(p=>p.currentAge+y),
+      salary:Math.round(sum('salary')),
+      sp:Math.round(sum('sp')),
+      pens:Math.round(sum('pens')+sum('other')+exempt),
+      lump:Math.round(lumpNet),
+      it:Math.round(T.it),usc:Math.round(T.usc),prsi:Math.round(T.prsi),
+      rentCredit:Math.round(T.rentCredit),
+      sav:Math.round(dirt+exit+inv),dirt:Math.round(dirt),exit:Math.round(exit),inv:Math.round(inv),
+      cat:Math.round(catTax),lumpTax:Math.round(lumpTax),
+      tax:Math.round(T.total+dirt+exit+inv+catTax+lumpTax),
+      cumTax:Math.round(cumTax),
+      contrib:Math.round(pp.reduce((t,o)=>t+o.ee+o.er+o.st,0)),
+      expenses:Math.round(expenses),
+      housing:Math.round(rentPaid+mortPay+runCost+fhsCharge),
+      rent:Math.round(rentPaid),mortPay:Math.round(mortPay),
+      purchaseOut:Math.round(purchaseOut),htb:Math.round(htb),
+      regular:Math.round(regular),
+      ceIn:Math.round(ceIn),ceOut:Math.round(ceOut),
+      draw:Math.round(draw),arfExtra:Math.round(arfExtra),surplus:Math.round(surplus),
+      shortfall:Math.round(shortfall),overdraft:Math.round(overdraft),
+      homeValue:Math.round(homeValue),homeEquity:Math.round(homeEquity),mortBal:Math.round(mortBal),
+      liquid:Math.round(liquid),
+      snap,total,realTotal:Math.round(total/deflator),
+      events,depleted:overdraft>0.5,
+    });
+  }
+  rows.readyAge=readyAge;rows.readyYear=readyYear;rows.mortFreeAge=mortFreeAge;
+  rows.bought=home?{price:home.price0,buyY:home.buyY,htb:home.htb,fhsPct:home.fhsPct,mort:home.mort0||0}:null;
+  return rows;
+}
+
+if(typeof module!=='undefined')module.exports={tyParams,householdTax,incomeTaxSingle,incomeTaxJoint,uscFor,pensionFlows,statePension,simulateIE,stampDuty,mortgagePayment,purchaseCashNeed,htbEligible,reliefPct,aePhase,growOne};
+
+/* ══ STATE LOAD AND MIGRATION ══
+   The saved state sits in <script id="istate">. A page saved by an older version may lack newer
+   fields, so every field the code reads is given a default here. */
+let S=(()=>{
+  try{const t=document.getElementById('istate').textContent.trim();if(t&&t!=='null')return JSON.parse(t);}catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+})();
+function migrate(){
+  for(const k of ['startYear','endAge','genInfl','wageGrowth','bandIndex','spWeekly','spGrowth','status','catUsed','fhsCharge','useStress','stressRate','chartView','activeScenario'])
+    if(S[k]===undefined)S[k]=DEF[k];
+  S.mets=Object.assign({},DEF.mets,S.mets||{});
+  S.cols=Object.assign({},DEF.cols,S.cols||{});
+  S.colOrder=(S.colOrder||[]).filter(k=>k in DEF.cols);
+  DEF.colOrder.forEach(k=>{if(!S.colOrder.includes(k))S.colOrder.push(k);});
+  S.people.forEach(p=>{
+    if(p.retireAge===undefined)p.retireAge=66;
+    if(p.salary===undefined)p.salary=0;
+    if(!p.pensionMode)p.pensionMode='none';
+    if(p.eePct===undefined)p.eePct=0;if(p.erPct===undefined)p.erPct=0;
+    if(p.card===undefined)p.card=false;
+    if(p.spAge===undefined)p.spAge=66;if(p.spPct===undefined)p.spPct=100;
+  });
+  S.accounts.forEach(a=>{
+    if(!a.growth)a.growth='nominal';if(a.color===undefined)a.color='';
+    if(a.owner===undefined)a.owner=0;if(a.feePct===undefined)a.feePct=0;
+    if(a.regular===undefined)a.regular=0;if(a.saveTo===undefined)a.saveTo='';
+  });
+  S.scenarios.forEach(sc=>{
+    sc.housing=Object.assign(mkHousing(),sc.housing||{});
+    if(!sc.marketEvents)sc.marketEvents=[];if(!sc.cashEvents)sc.cashEvents=[];if(!sc.expenses)sc.expenses=[];
+  });
+  S.activeScenario=Math.min(Math.max(0,S.activeScenario|0),S.scenarios.length-1);
+  ['_npid','_niid','_naid','_nsid','_neid','_ncid','_nmid'].forEach(k=>{if(!S[k])S[k]=100;});
+}
+migrate();
+
+/* ══ COLOURS AND FORMAT ══ */
+const ACCT_CLR=['#1b2f4a','#b8892b','#2d6a4f','#7366c8','#0c7c84','#b83232'];
+const PROP_CLR=['#8B5E3C','#A67850','#C49368'];
+const HOME_CLR='#6b4a2e',CASH_CLR='#9aa5b1';
+const fmt=n=>n==null||isNaN(n)?'—':(n<0?'−':'')+'€'+Math.abs(Math.round(n)).toLocaleString('en-IE');
+const fmtK=n=>{if(n==null||isNaN(n))return'—';const a=Math.abs(n),s=n<0?'−':'';if(a>=1e6)return s+'€'+(a/1e6).toFixed(2)+'M';if(a>=1e3)return s+'€'+Math.round(a/1e3)+'k';return s+'€'+Math.round(a);};
+const toAnn=(v,p)=>p==='mo'?v*12:v;
+const disp=(a,p)=>p==='mo'?+(a/12).toFixed(2):a;
+const num=v=>v===''||v==null?0:+v;
+const sortedAccts=()=>[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
+const sc0=()=>S.scenarios[S.activeScenario];
+function acctColor(a){
+  if(a.color)return a.color;
+  const sorted=sortedAccts(),isP=a.type==='property';
+  const idx=sorted.filter(x=>(x.type==='property')===isP).indexOf(a);
+  return isP?PROP_CLR[idx%PROP_CLR.length]:ACCT_CLR[idx%ACCT_CLR.length];
+}
+function setAcctColor(id,v){const a=S.accounts.find(x=>x.id===id);if(a){a.color=v;renderME();recalc();}}
+
+/* ══ ACCOUNT, INCOME AND EVENT TYPES ══ */
+const ACCT_T={
+  pension:{label:'Pension / ARF',cls:'trad',tip:'Pension: no tax on growth. Used only after its owner retires, when 25% leaves as a tax-free lump sum and the rest becomes an ARF. Withdrawals are taxed as income.'},
+  deposit:{label:'Deposit',cls:'taxb',tip:'Deposit or savings account: DIRT at 33% is taken from the interest each year.'},
+  fund:{label:'Fund',cls:'roth',tip:'Investment fund: exit tax is taken from the growth each year (38% in 2026, 35% from 2027).'},
+  invacct:{label:'Investment Account',cls:'trad',tip:'The Investment Account announced for 2027: 1% a year on the balance above €50,000, no tax on growth. Not yet law.'},
+  property:{label:'Property',cls:'prop',tip:'Property other than a home you buy in a scenario: tracked in net worth, grows at its rate, and is not in the drawdown pool.'},
+};
+const INC_T={
+  other:{label:'Other taxable income',badge:'itb-other',tip:'Taxed as income and charged USC.'},
+  pension:{label:'Pension income',badge:'itb-pension',tip:'A private or occupational pension already in payment. Taxed as income and charged USC.'},
+  exempt:{label:'Tax-free income',badge:'itb-ss',tip:'Paid without any tax.'},
+};
+const CE_T={
+  gift:{dir:'in',label:'Gift received',tax:'CAT applies above the threshold for the group chosen. The first €3,000 a year from one giver is exempt.',cat:1},
+  inheritance:{dir:'in',label:'Inheritance',tax:'CAT applies above the threshold for the group chosen. The small gift exemption does not apply.',cat:1},
+  sale:{dir:'in',label:'Sale of an asset',tax:'Enter the amount you receive after any capital gains tax. The planner does not add tax.'},
+  windfall:{dir:'in',label:'Windfall, after tax',tax:'Enter the amount after tax. The planner does not add tax.'},
+  otherin:{dir:'in',label:'Other inflow',tax:'Enter the amount after tax. The planner does not add tax.'},
+  purchase:{dir:'out',label:'Large purchase',tax:'No tax effect. Comes out of savings.'},
+  wedding:{dir:'out',label:'Wedding or family event',tax:'No tax effect. Comes out of savings.'},
+  education:{dir:'out',label:'Education costs',tax:'No tax effect. Comes out of savings.'},
+  renovation:{dir:'out',label:'Home improvement',tax:'No tax effect. Comes out of savings.'},
+  otherout:{dir:'out',label:'Other outflow',tax:'No tax effect. Comes out of savings.'},
+};
+const ME_PRESETS={
+  crash:{label:'Stock market crash',shockPct:-35,years:2,rate:'3'},
+  slump:{label:'Property slump',shockPct:-20,years:0,rate:''},
+  lost:{label:'Lost decade (no growth)',shockPct:0,years:10,rate:'0'},
+};
+const p0age=()=>S.people[0].currentAge;
+
+/* ══ PEOPLE ══ */
+function renderPeople(){
+  document.getElementById('status-note').textContent=S.people.length>2?'Joint assessment uses the first two people. Others are taxed as single people.':
+    (S.status==='single'&&S.people.length>1?'Tax status is single or cohabiting, so each person is taxed separately.':'');
+  document.getElementById('ppl-list').innerHTML=S.people.map(p=>{
+    const avi=(p.name||'?').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    return `<div style="margin-bottom:6px">
+      <div class="phead">
+        <div class="pavi">${avi}</div>
+        <input class="pname" value="${esc(p.name)}" placeholder="Name" oninput="pName(${p.id},this.value)">
+        ${S.people.length>1?`<button class="btn-del" onclick="delPerson(${p.id})">✕</button>`:''}
+      </div>
+      <div class="pblock">
+        <div class="g3">
+          <div class="f"><label data-help="currentAge">Current age</label><input type="number" value="${p.currentAge}" min="16" max="100" oninput="pF(${p.id},'currentAge',+this.value)"></div>
+          <div class="f"><label data-help="retireAge">Retires at</label><input type="number" value="${p.retireAge}" min="40" max="90" oninput="pF(${p.id},'retireAge',+this.value)"></div>
+          <div class="f"><label data-help="deathAge">Age at passing</label><input type="number" value="${p.deathAge}" min="${p.currentAge+1}" max="115" oninput="pF(${p.id},'deathAge',+this.value)"></div>
+        </div>
+        <div class="g3" style="margin-top:5px">
+          <div class="f"><label data-help="salary">Gross salary (€/yr)</label><input type="number" class="mono" value="${p.salary}" step="1000" min="0" oninput="pF(${p.id},'salary',+this.value)"></div>
+          <div class="f"><label data-help="pensionMode">Pension</label>
+            <select onchange="pMode(${p.id},this.value)">
+              <option value="autoenrol" ${p.pensionMode==='autoenrol'?'selected':''}>Auto-enrolment</option>
+              <option value="own" ${p.pensionMode==='own'?'selected':''}>Own / PRSA</option>
+              <option value="none" ${p.pensionMode==='none'?'selected':''}>None</option>
+            </select></div>
+          <div class="f"><label data-help="card">Medical card</label><label style="display:flex;gap:5px;align-items:center;font-size:12px;margin-top:5px"><input type="checkbox" ${p.card?'checked':''} onchange="pF(${p.id},'card',this.checked)"> Full card</label></div>
+        </div>
+        ${p.pensionMode==='own'?`<div class="g3" style="margin-top:5px">
+          <div class="f"><label data-help="eePct">Your %</label><input type="number" value="${p.eePct}" step="0.5" min="0" max="60" oninput="pF(${p.id},'eePct',+this.value)"></div>
+          <div class="f"><label data-help="erPct">Employer %</label><input type="number" value="${p.erPct}" step="0.5" min="0" max="30" oninput="pF(${p.id},'erPct',+this.value)"></div>
+          <div></div></div>`:''}
+        <div class="g3" style="margin-top:5px">
+          <div class="f"><label data-help="spAge">State Pension from</label><input type="number" value="${p.spAge}" min="60" max="80" oninput="pF(${p.id},'spAge',+this.value)"></div>
+          <div class="f"><label data-help="spPct">Entitlement %</label><input type="number" value="${p.spPct}" min="0" max="100" step="5" oninput="pF(${p.id},'spPct',+this.value)"></div>
+          <div style="padding-top:18px;font-size:11px;color:var(--mu);line-height:1.45">${S.incomes.filter(i=>i.pid===p.id).length} other income${S.incomes.filter(i=>i.pid===p.id).length===1?'':'s'} linked</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pF(id,f,v){const p=S.people.find(x=>x.id===id);if(p){p[f]=v;recalc();if(f==='currentAge'||f==='deathAge')renderScensLight();}}
+function pName(id,v){const p=S.people.find(x=>x.id===id);if(p){p.name=v;renderIncomes();renderAccts();recalc();}}
+function pMode(id,v){const p=S.people.find(x=>x.id===id);if(p){p.pensionMode=v;renderPeople();recalc();}}
+function addPerson(){
+  S.people.push({id:S._npid++,name:'Person '+(S.people.length+1),currentAge:30,retireAge:66,deathAge:88,salary:0,pensionMode:'none',eePct:0,erPct:0,card:false,spAge:66,spPct:100});
+  renderPeople();renderIncomes();renderAccts();recalc();
+}
+function delPerson(id){
+  if(S.people.length<=1)return;
+  S.people=S.people.filter(x=>x.id!==id);
+  S.incomes=S.incomes.filter(i=>i.pid!==id);
+  S.accounts.forEach(a=>{if(a.owner===id)a.owner=0;});
+  renderPeople();renderIncomes();renderAccts();recalc();
+}
+
+/* ══ OTHER INCOME ══ */
+function renderIncomes(){
+  document.getElementById('inc-list').innerHTML=S.incomes.length===0?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No other income yet. Salary and State Pension are set under each person.</p>':S.incomes.map(inc=>{
+    const td=INC_T[inc.type]||INC_T.other;
+    const pOpts=`<option value="0" ${inc.pid===0?'selected':''}>Household / Joint</option>`+S.people.map(p=>`<option value="${p.id}" ${inc.pid===p.id?'selected':''}>${esc(p.name)} (age ${p.currentAge})</option>`).join('');
+    const adjOpts=[['none','No adjustment'],['general','General inflation'],['wage','Wage growth'],['fixed','Fixed %/yr']].map(([v,l])=>`<option value="${v}" ${inc.adjType===v?'selected':''}>${l}</option>`).join('');
+    return `<div class="inc-card type-${inc.type}">
+      <div class="inc-head">
+        <span class="inc-type-badge ${td.badge}" data-tip="${esc(td.tip)}">${td.label}</span>
+        <select onchange="incF(${inc.id},'type',this.value)" style="font-size:11px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;flex:1" data-help="incType">
+          ${Object.entries(INC_T).map(([k,v])=>`<option value="${k}" ${inc.type===k?'selected':''}>${v.label}</option>`).join('')}
+        </select>
+        <button class="btn-del" onclick="delInc(${inc.id})">✕</button>
+      </div>
+      <div class="g2" style="margin-bottom:5px">
+        <div class="f"><label>Description</label><input type="text" value="${esc(inc.label)}" oninput="incF(${inc.id},'label',this.value)"></div>
+        <div class="f"><label>Linked to person</label><select onchange="incF(${inc.id},'pid',+this.value)">${pOpts}</select></div>
+      </div>
+      <div class="g2">
+        <div>
+          <div class="mrow">
+            <div class="f"><label data-help="incAmount">Amount</label><input type="number" class="mono" value="${disp(inc.amount,inc.prd)}" step="${inc.prd==='mo'?50:500}" oninput="incAmt(${inc.id},+this.value)"></div>
+            <div class="ftog"><button class="ftb ${inc.prd==='mo'?'act':''}" onclick="incPrd(${inc.id},'mo')">mo</button><button class="ftb ${inc.prd==='yr'?'act':''}" onclick="incPrd(${inc.id},'yr')">yr</button></div>
+          </div>
+          <div class="g2">
+            <div class="f"><label>From age</label><input type="number" value="${inc.startAge}" placeholder="—" oninput="incF(${inc.id},'startAge',this.value)"></div>
+            <div class="f"><label>To age</label><input type="number" value="${inc.endAge}" placeholder="—" oninput="incF(${inc.id},'endAge',this.value)"></div>
+          </div>
+        </div>
+        <div>
+          <div class="f"><label>Adjustment type</label><select onchange="incF(${inc.id},'adjType',this.value)">${adjOpts}</select></div>
+          <div class="f"><label>Fixed %/yr</label><input type="number" value="${inc.adj}" step="0.1" min="-5" max="15" oninput="incF(${inc.id},'adj',+this.value)"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function incF(id,f,v){const i=S.incomes.find(x=>x.id===id);if(!i)return;i[f]=v;if(f!=='label')recalc();if(f==='type')renderIncomes();}
+function incAmt(id,v){const i=S.incomes.find(x=>x.id===id);if(i){i.amount=toAnn(v,i.prd);recalc();}}
+function incPrd(id,prd){const i=S.incomes.find(x=>x.id===id);if(i){i.prd=prd;renderIncomes();recalc();}}
+function addInc(){S.incomes.push({id:S._niid++,pid:S.people[0].id,label:'New income',type:'other',amount:0,prd:'yr',adjType:'none',adj:0,startAge:'',endAge:''});renderIncomes();renderPeople();}
+function delInc(id){S.incomes=S.incomes.filter(x=>x.id!==id);renderIncomes();renderPeople();recalc();}
+
+/* ══ ACCOUNTS ══ */
+function renderAccts(){
+  const own=a=>`<option value="0" ${!a.owner?'selected':''}>Household</option>`+S.people.map(p=>`<option value="${p.id}" ${a.owner===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
+  document.getElementById('accts-list').innerHTML=S.accounts.map((a,i)=>{
+    const isP=a.type==='property',isPen=a.type==='pension',t=ACCT_T[a.type]||ACCT_T.deposit;
+    return `<div class="acct-card${isP?' prop-acct':''}">
+      <div class="acct-head">
+        <div class="acct-ord" data-tip="${isP?'Property account: tracked separately, not in drawdown order.':'Drawdown priority '+(i+1)+'.'}">${isP?'P':i+1}</div>
+        <input class="acct-ni" value="${esc(a.label)}" oninput="acctF(${a.id},'label',this.value)">
+        <span class="tbadge ${t.cls}" data-tip="${esc(t.tip)}">${t.label}</span>
+        ${S.accounts.length>1?`<button class="btn-del" onclick="delAcct(${a.id})">✕</button>`:''}
+      </div>
+      <div class="g3">
+        <div class="f"><label data-help="acctBalance">Balance (€)</label><input type="number" class="mono" value="${a.balance}" step="1000" oninput="acctF(${a.id},'balance',+this.value)"></div>
+        <div class="f"><label data-help="acctReturn">${(isP?'Growth %':'Return %')+(a.growth==='real'?' (above inflation)':'')}</label><input type="number" value="${a.rate}" step="0.1" min="-5" max="20" oninput="acctF(${a.id},'rate',+this.value)"></div>
+        <div class="f"><label data-help="acctFee">Fees %</label><input type="number" value="${a.feePct}" step="0.1" min="0" max="5" oninput="acctF(${a.id},'feePct',+this.value)"></div>
+      </div>
+      <div class="g2" style="margin-top:4px">
+        <div class="f"><label data-help="acctType">Type</label>
+          <select onchange="acctF(${a.id},'type',this.value)">${Object.entries(ACCT_T).map(([k,v])=>`<option value="${k}" ${a.type===k?'selected':''}>${v.label}</option>`).join('')}</select></div>
+        <div class="f"><label data-help="owner">Owner</label><select onchange="acctF(${a.id},'owner',+this.value)">${own(a)}</select></div>
+      </div>
+      ${(!isP&&!isPen)?`<div class="g2" style="margin-top:4px">
+        <div class="f"><label data-help="acctRegular">Regular saving (€/yr)</label><input type="number" class="mono" value="${a.regular}" step="500" min="0" oninput="acctF(${a.id},'regular',+this.value)"></div>
+        <div class="f"><label data-tip="The age of the first person until which the saving continues. Leave blank to save until the first person retires.">Save until age</label><input type="number" value="${a.saveTo}" placeholder="retirement" oninput="acctF(${a.id},'saveTo',this.value)"></div>
+      </div>`:''}
+      <div class="g2" style="margin:4px 0 3px">
+        <div class="f"><label data-help="growthBasis">Growth basis</label>
+          <select onchange="acctF(${a.id},'growth',this.value)">
+            <option value="nominal" ${a.growth!=='real'?'selected':''}>Nominal (rate as entered)</option>
+            <option value="real" ${a.growth==='real'?'selected':''}>Real (inflation + rate)</option>
+          </select></div>
+        <div class="f"><label>Chart colour</label>
+          <input type="color" value="${acctColor(a)}" style="height:28px;padding:1px 3px" oninput="setAcctColor(${a.id},this.value)">
+          ${a.color?`<button class="btn-xs" style="margin-top:2px" onclick="setAcctColor(${a.id},'');renderAccts()">reset</button>`:''}</div>
+      </div>
+      ${!isP?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span style="font-size:10.5px;color:var(--mu)">Drawdown order: ${i+1}${qm('drawOrder')}</span>
+        <div style="display:flex;gap:3px">${i>0?`<button class="btn-xs" onclick="moveAcct(${a.id},-1)">↑</button>`:''}${i<S.accounts.length-1?`<button class="btn-xs" onclick="moveAcct(${a.id},1)">↓</button>`:''}</div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+function acctF(id,f,v){
+  const a=S.accounts.find(x=>x.id===id);if(!a)return;
+  a[f]=v;
+  if(f==='type'||f==='growth'||f==='owner'){renderAccts();renderME();}
+  if(f==='label')renderME();
+  recalc();
+}
+function addAcct(){
+  S.accounts.push({id:S._naid++,label:'New account',type:'deposit',owner:0,balance:0,rate:2.5,feePct:0,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:S.accounts.length+1});
+  renderAccts();renderME();recalc();
+}
+function delAcct(id){
+  if(S.accounts.length<=1)return;
+  S.accounts=S.accounts.filter(x=>x.id!==id);
+  S.scenarios.forEach(sc=>(sc.marketEvents||[]).forEach(ev=>{
+    if(ev.targets&&ev.targets.length){ev.targets=ev.targets.filter(t=>t!==id);if(!ev.targets.length)ev.targets=[-1];}
+  }));
+  S.accounts.forEach((a,i)=>a.drawOrder=i+1);renderAccts();renderME();recalc();
+}
+function moveAcct(id,d){
+  const i=S.accounts.findIndex(x=>x.id===id),ni=i+d;
+  if(ni<0||ni>=S.accounts.length)return;
+  [S.accounts[i],S.accounts[ni]]=[S.accounts[ni],S.accounts[i]];
+  S.accounts.forEach((a,idx)=>a.drawOrder=idx+1);
+  renderAccts();renderME();recalc();
+}
+
+/* ══ SCENARIOS AND HOUSING ══ */
+function renderScens(){
+  document.getElementById('scen-pills').innerHTML=S.scenarios.map((sc,i)=>`
+    <span class="spill ${i===S.activeScenario?'act':''}">
+      <span onclick="switchScen(${i})">${esc(sc.name)}</span>
+      <span class="sdup" onclick="dupScen(${i})" title="Duplicate scenario">⧉</span>
+      ${S.scenarios.length>1?`<span class="sdel" onclick="delScen(${i})" title="Delete">✕</span>`:''}
+    </span>`).join('')+`<button class="btn-scen-new" onclick="addScen()">+ New scenario</button>`;
+  renderHousing();renderExp();renderCE();renderME();
+  renderScensLight();
+}
+function renderScensLight(){
+  const n=sc0().name;
+  document.getElementById('ce-scen-name').textContent='"'+n+'"';
+  document.getElementById('exp-scen-name').textContent='"'+n+'"';
+  document.getElementById('tbl-hd').textContent='Year-by-year · '+n;
+}
+function switchScen(i){S.activeScenario=i;renderScens();recalc();}
+function addScen(){
+  const n=prompt('Scenario name:','New scenario');if(!n)return;
+  S.scenarios.push({id:S._nsid++,name:n,housing:mkHousing(),expenses:mkExpenses().map(e=>({...e,id:S._neid++})),cashEvents:[],marketEvents:[]});
+  S.activeScenario=S.scenarios.length-1;renderScens();recalc();
+}
+function dupScen(i){
+  const clone=JSON.parse(JSON.stringify(S.scenarios[i]));
+  clone.id=S._nsid++;clone.name=S.scenarios[i].name+' (copy)';
+  clone.expenses.forEach(e=>e.id=S._neid++);clone.cashEvents.forEach(c=>c.id=S._ncid++);clone.marketEvents.forEach(m=>m.id=S._nmid++);
+  S.scenarios.splice(i+1,0,clone);S.activeScenario=i+1;renderScens();recalc();
+}
+function delScen(i){
+  if(!confirm('Delete "'+S.scenarios[i].name+'"?'))return;
+  S.scenarios.splice(i,1);S.activeScenario=Math.min(S.activeScenario,S.scenarios.length-1);renderScens();recalc();
+}
+function renameScen(v){
+  sc0().name=v;
+  document.querySelectorAll('.spill.act span:first-child').forEach(s=>s.textContent=v);
+  renderScensLight();
+}
+
+function renderHousing(){
+  const sc=sc0(),hs=sc.housing,buy=hs.mode==='buy';
+  const nf=(f,lab,help,step,extra='')=>`<div class="f"><label data-help="${help}">${lab}</label><input type="number" class="mono" value="${hs[f]}" step="${step}" ${extra} oninput="hF('${f}',+this.value)"></div>`;
+  const ck=(f,lab,help)=>`<label style="display:flex;gap:5px;align-items:center;font-size:12px" data-help="${help}"><input type="checkbox" ${hs[f]?'checked':''} onchange="hF('${f}',this.checked)"> ${lab}</label>`;
+  document.getElementById('hs-ed').innerHTML=`
+    <div style="background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:0.5rem">
+        <input style="font-family:var(--fd);font-size:0.85rem;font-weight:500;color:var(--navy);border:none;border-bottom:1px dashed var(--brd2);background:transparent;padding:1px 0;flex:1" value="${esc(sc.name)}" oninput="renameScen(this.value)">
+        <span style="font-size:10px;color:var(--hi)">← rename</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:0.5rem">
+        <span style="font-size:11px;color:var(--mu)">Housing${qm('housingMode')}</span>
+        <div class="ftog"><button class="ftb ${!buy?'act':''}" onclick="hMode('rent')">Rent</button><button class="ftb ${buy?'act':''}" onclick="hMode('buy')">Buy</button></div>
+      </div>
+      <div class="g3">
+        ${nf('rentMonthly','Rent (€/mo)','rentMonthly',50)}
+        ${nf('rentInfl','Rent increase %','rentInfl',0.5)}
+        <div style="padding-top:18px">${ck('rtc','Claim rent credit','rentCredit')}</div>
+      </div>
+      ${buy?`
+      <div class="seclbl" style="margin-top:0.7rem">The home</div>
+      <div class="g3">
+        ${nf('buyAge','Buy at age','buyAge',1,'min="16" max="90"')}
+        ${nf('price','Price today (€)','price',5000)}
+        ${nf('houseGrowth','House price growth %','houseGrowth',0.5)}
+      </div>
+      <div class="g3" style="margin-top:4px">
+        ${nf('depositPct','Deposit %','depositPct',1)}
+        ${nf('costsPct','Legal and fees %','costsPct',0.1)}
+        ${nf('runPct','Running costs %','runPct',0.1)}
+      </div>
+      <div class="g3" style="margin-top:4px">
+        ${nf('mortRate','Mortgage rate %','mortRate',0.1)}
+        ${nf('mortTerm','Term (years)','mortTerm',1,'min="5" max="40"')}
+        <div style="padding-top:18px">${ck('newBuild','New build','newBuild')}</div>
+      </div>
+      <div class="seclbl" style="margin-top:0.7rem">Schemes</div>
+      <div class="g2">
+        <div style="padding-top:4px">${ck('useHTB','Help to Buy','htb')}</div>
+        <div style="padding-top:4px">${ck('useFHS','First Home Scheme','fhs')}</div>
+      </div>
+      ${hs.useFHS?`<div class="g3" style="margin-top:4px">
+        ${nf('fhsPct','Scheme share %','fhsPct',1,'min="0" max="30"')}
+        ${nf('ceiling','Area price ceiling (€)','ceiling',5000)}
+        <div></div></div>`:''}`:''}
+    </div>`;
+}
+function hMode(m){sc0().housing.mode=m;renderHousing();recalc();}
+function hF(f,v){sc0().housing[f]=v;recalc();}
+
+/* ══ EXPENSES ══ */
+function renderExp(){
+  const si=S.activeScenario,sc=sc0();
+  const tot=sc.expenses.reduce((t,e)=>t+e.amount,0);
+  document.getElementById('exp-ed').innerHTML=`
+    <div style="background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem">
+      <div style="text-align:right;font-size:11.5px;color:var(--mu);margin-bottom:0.4rem">Total: <strong style="font-family:var(--fn);color:var(--tx)">${fmt(tot)}/yr</strong> · <strong style="font-family:var(--fn)">${fmt(tot/12)}/mo</strong></div>
+      <div class="exp-wrap"><table class="etbl">
+        <thead><tr><th style="min-width:120px">Item</th><th style="min-width:78px" data-tip="Amount in today's euro. It rises with the inflation type chosen.">Amount</th><th style="width:56px">Period</th><th style="width:72px" data-tip="General follows general inflation. Wage follows wage growth. Fixed stays the same.">Rises with</th>
+          <th style="width:54px" data-tip="Leave blank to apply from the start. Set an age to model costs that begin later.">From age</th><th style="width:54px" data-tip="Leave blank to apply to the end. Set an age to model costs that stop.">To age</th><th style="min-width:110px">Notes</th><th style="width:54px">Reorder</th><th style="width:24px"></th></tr></thead>
+        <tbody>${sc.expenses.map((e,ei)=>`<tr>
+          <td><input type="text" value="${esc(e.label)}" oninput="expF(${si},${ei},'label',this.value)"></td>
+          <td><input type="number" class="mono" value="${disp(e.amount,e.prd)}" step="${e.prd==='mo'?50:500}" oninput="expAmt(${si},${ei},+this.value)"></td>
+          <td><div class="ftog" style="height:24px"><button class="ftb ${e.prd==='mo'?'act':''}" onclick="expPrd(${si},${ei},'mo')">mo</button><button class="ftb ${e.prd==='yr'?'act':''}" onclick="expPrd(${si},${ei},'yr')">yr</button></div></td>
+          <td><select onchange="expF(${si},${ei},'infl',this.value)" style="font-size:11px"><option value="general" ${e.infl==='general'?'selected':''}>General</option><option value="wage" ${e.infl==='wage'?'selected':''}>Wages</option><option value="none" ${e.infl==='none'?'selected':''}>Fixed</option></select></td>
+          <td><input type="number" value="${e.startAge}" placeholder="—" oninput="expF(${si},${ei},'startAge',this.value)" style="font-size:11.5px"></td>
+          <td><input type="number" value="${e.endAge}" placeholder="—" oninput="expF(${si},${ei},'endAge',this.value)" style="font-size:11.5px"></td>
+          <td><input type="text" value="${esc(e.note||'')}" placeholder="What's included…" oninput="expF(${si},${ei},'note',this.value)" style="font-size:11px"></td>
+          <td style="white-space:nowrap">${ei>0?`<button class="btn-xs" onclick="moveExp(${si},${ei},-1)" style="padding:1px 5px">↑</button>`:'<span style="display:inline-block;width:24px"></span>'}${ei<sc.expenses.length-1?`<button class="btn-xs" onclick="moveExp(${si},${ei},1)" style="padding:1px 5px">↓</button>`:''}</td>
+          <td><button class="btn-del" onclick="delExp(${si},${ei})">✕</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <button class="btn-add" onclick="addExp(${si})">+ Add expense row</button>
+    </div>`;
+}
+function expF(si,ei,f,v){S.scenarios[si].expenses[ei][f]=v;if(f!=='label'&&f!=='note')recalc();if(f==='infl')renderExp();}
+function expAmt(si,ei,v){const e=S.scenarios[si].expenses[ei];e.amount=toAnn(v,e.prd);recalc();}
+function expPrd(si,ei,p){S.scenarios[si].expenses[ei].prd=p;renderExp();recalc();}
+function addExp(si){S.scenarios[si].expenses.push({id:S._neid++,label:'New expense',amount:0,prd:'yr',infl:'general',startAge:'',endAge:'',note:''});renderExp();}
+function delExp(si,ei){S.scenarios[si].expenses.splice(ei,1);renderExp();recalc();}
+function moveExp(si,ei,d){const x=S.scenarios[si].expenses,ni=ei+d;if(ni<0||ni>=x.length)return;[x[ei],x[ni]]=[x[ni],x[ei]];renderExp();recalc();}
+
+/* ══ CASH EVENTS ══ */
+function renderCE(){
+  const si=S.activeScenario,ces=sc0().cashEvents;
+  document.getElementById('ce-list').innerHTML=ces.length===0?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No cash events for this scenario yet.</p>':ces.map(ce=>{
+    const t=CE_T[ce.type]||(ce.dir==='in'?CE_T.otherin:CE_T.otherout);
+    return `<div class="ce-card">
+      <div class="ce-head">
+        <span class="ce-type ${ce.dir==='in'?'ce-in':'ce-out'}">${ce.dir==='in'?'↑ Inflow':'↓ Outflow'}</span>
+        <select onchange="ceF(${si},${ce.id},'type',this.value)" style="font-size:11.5px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;flex:1">
+          <optgroup label="Inflows">${Object.entries(CE_T).filter(([,v])=>v.dir==='in').map(([k,v])=>`<option value="${k}" ${ce.type===k?'selected':''}>${v.label}</option>`).join('')}</optgroup>
+          <optgroup label="Outflows">${Object.entries(CE_T).filter(([,v])=>v.dir==='out').map(([k,v])=>`<option value="${k}" ${ce.type===k?'selected':''}>${v.label}</option>`).join('')}</optgroup>
+        </select>
+        <button class="btn-del" onclick="delCE(${si},${ce.id})">✕</button>
+      </div>
+      <div class="ce-rows">
+        <div class="f" style="margin:0"><label>Description</label><input type="text" value="${esc(ce.label)}" oninput="ceF(${si},${ce.id},'label',this.value)"></div>
+        <div class="f" style="margin:0"><label data-help="ceAge">At age</label><input type="number" value="${ce.age}" min="16" max="115" oninput="ceF(${si},${ce.id},'age',+this.value)"></div>
+        <div class="f" style="margin:0"><label data-help="ceAmount">Amount (€)</label><input type="number" class="mono" value="${ce.amount}" step="1000" oninput="ceF(${si},${ce.id},'amount',+this.value)"></div>
+        ${t.cat?`<div class="f" style="margin:0"><label data-help="catGroup">CAT group</label><select onchange="ceF(${si},${ce.id},'group',this.value)"><option value="A" ${(ce.group||'A')==='A'?'selected':''}>A: from a parent</option><option value="B" ${ce.group==='B'?'selected':''}>B: relative</option><option value="C" ${ce.group==='C'?'selected':''}>C: other</option></select></div>`:`<div class="f" style="margin:0"><label>Notes</label><input type="text" value="${esc(ce.note||'')}" oninput="ceF(${si},${ce.id},'note',this.value)"></div>`}
+        <div></div>
+      </div>
+      <div class="tnote ${ce.dir==='in'?'tnote-n':'tnote-y'}">${t.tax}</div>
+    </div>`;
+  }).join('');
+}
+function ceF(si,id,f,v){
+  const ce=S.scenarios[si].cashEvents.find(x=>x.id===id);if(!ce)return;
+  ce[f]=v;
+  if(f==='type'){const t=CE_T[v];if(t){ce.dir=t.dir;if(t.cat&&!ce.group)ce.group='A';}renderCE();}
+  if(f!=='label'&&f!=='note')recalc();
+}
+function addCE(dir){
+  sc0().cashEvents.push({id:S._ncid++,dir,label:dir==='in'?'Gift from parents':'New outflow',type:dir==='in'?'gift':'purchase',group:'A',age:p0age()+2,amount:20000,note:''});
+  renderCE();recalc();
+}
+function delCE(si,id){S.scenarios[si].cashEvents=S.scenarios[si].cashEvents.filter(x=>x.id!==id);renderCE();recalc();}
+
+/* ══ MARKET EVENTS ══ */
+function renderME(){
+  const si=S.activeScenario,mes=sc0().marketEvents,accts=sortedAccts();
+  document.getElementById('me-list').innerHTML=mes.length===0?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>':mes.map(ev=>{
+    const allOn=!(ev.targets&&ev.targets.length);
+    const chips=accts.map(a=>{
+      const on=allOn?a.type!=='property':ev.targets.includes(a.id);
+      return `<label class="pop-item" style="display:inline-flex;gap:4px;margin-right:8px;font-size:11.5px"><input type="checkbox" ${on?'checked':''} onchange="meTarget(${si},${ev.id},${a.id},this.checked)"><span class="ld" style="background:${acctColor(a)}"></span>${esc(a.label)}</label>`;
+    }).join('');
+    return `<div class="ce-card">
+      <div class="ce-head"><span class="ce-type ce-out">⚡ Market event</span>
+        <input type="text" value="${esc(ev.label)}" style="flex:1;font-size:11.5px" oninput="meF(${si},${ev.id},'label',this.value)">
+        <button class="btn-del" onclick="delME(${si},${ev.id})">✕</button></div>
+      <div class="g3">
+        <div class="f" style="margin:0"><label>At age</label><input type="number" value="${ev.age}" min="16" max="115" oninput="meF(${si},${ev.id},'age',+this.value)"></div>
+        <div class="f" style="margin:0"><label data-tip="One-off change to the balance at the start of that year. -35 is a 35% fall.">One-off change %</label><input type="number" value="${ev.shockPct}" step="1" oninput="meF(${si},${ev.id},'shockPct',+this.value)"></div>
+        <div class="f" style="margin:0"><label data-tip="For this many years from the event age, the affected accounts earn the return below instead of their normal rate. 0 means no override.">Then, for N yrs</label><input type="number" value="${ev.years}" min="0" max="40" oninput="meF(${si},${ev.id},'years',+this.value)"></div>
+      </div>
+      <div class="g3" style="margin-top:5px"><div class="f" style="margin:0"><label data-tip="Annual return used during those years. Blank leaves the account's own rate in place.">Return % in that time</label><input type="number" value="${ev.rate}" step="0.5" placeholder="unchanged" oninput="meF(${si},${ev.id},'rate',this.value===''?'':+this.value)"></div></div>
+      <div style="margin-top:6px;font-size:10.5px;color:var(--mu)">Affects:${qm('meTargets')}</div>
+      <div style="margin-top:2px">${chips}</div>
+    </div>`;
+  }).join('');
+}
+function meF(si,id,f,v){const ev=S.scenarios[si].marketEvents.find(x=>x.id===id);if(!ev)return;ev[f]=v;if(f!=='label')recalc();}
+function meTarget(si,id,acctId,on){
+  const ev=S.scenarios[si].marketEvents.find(x=>x.id===id);if(!ev)return;
+  if(!(ev.targets&&ev.targets.length))ev.targets=S.accounts.filter(a=>a.type!=='property').map(a=>a.id);
+  const has=ev.targets.includes(acctId);
+  if(on&&!has)ev.targets.push(acctId);
+  if(!on&&has)ev.targets=ev.targets.filter(t=>t!==acctId);
+  if(ev.targets.length===0)ev.targets=[-1];
+  renderME();recalc();
+}
+function addME(kind){
+  const p=ME_PRESETS[kind]||ME_PRESETS.crash;
+  sc0().marketEvents.push({id:S._nmid++,label:p.label,age:p0age()+3,shockPct:p.shockPct,years:p.years,rate:p.rate===''?'':+p.rate,
+    targets:kind==='slump'?(S.accounts.some(a=>a.type==='property')?S.accounts.filter(a=>a.type==='property').map(a=>a.id):[-1]):[]});
+  renderME();recalc();
+}
+function delME(si,id){S.scenarios[si].marketEvents=S.scenarios[si].marketEvents.filter(x=>x.id!==id);renderME();recalc();}
+
+/* ══ SCHEME STATUS AND PURCHASE TIMING ══
+   renderSchemes shows, for the active scenario, which schemes apply in the year of purchase.
+   The timing table shows what changes if the purchase moves a year earlier or later:
+   prices rise, scheme windows close, and savings grow. */
+function renderSchemes(rows){
+  const hs=sc0().housing,buy=hs.mode==='buy',p0=S.people[0];
+  const chip=(c,t)=>`<span class="chip ${c}">${t}</span>`;
+  const line=(name,c,t,help)=>`<tr><td>${name}${help?qm(help):''}</td><td>${chip(c,t)}</td></tr>`;
+  const items=[];
+  items.push(line('Deposit ready',rows.readyAge!=null?'ok':'warn',rows.readyAge!=null?`From ${rows.readyYear} (age ${rows.readyAge})`:(buy&&rows.bought?'Not ready by the purchase year':'Not within the projection'),'ready'));
+  if(!buy){
+    const left=RTC_LAST-S.startYear+1;
+    items.push(line('Rent tax credit',hs.rtc===false?'off':left>0?'ok':'off',hs.rtc===false?'Not claimed':left>0?`Available to ${RTC_LAST}`:'Ended','rentCredit'));
+  }else{
+    const b=rows.bought,y=hs.buyAge-p0.currentAge,Y=S.startYear+y;
+    if(!b){items.push(line('Purchase','warn','Buying age is outside the projection'));}
+    else{
+      const price=b.price;
+      items.push(line('Purchase','ok',`${Y}, age ${hs.buyAge}, ${fmt(price)}`));
+      // Help to Buy
+      let hc='off',ht='Not used';
+      if(b.htb>0){hc='ok';ht=`Refund ${fmt(b.htb)} toward the deposit`;}
+      else if(hs.useHTB){hc='warn';ht=!hs.newBuild?'Needs a new build':(Y<HTB_FROM||Y>HTB_TO)?`Closed: window is ${HTB_FROM} to ${HTB_TO}`:price>HTB_PRICE_CAP?`Price above the ${fmt(HTB_PRICE_CAP)} cap`:'No tax paid in the last 4 years to refund';}
+      items.push(line('Help to Buy',hc,ht,'htb'));
+      // First Home Scheme
+      let fc='off',ft='Not used';
+      if(b.fhsPct>0){fc='ok';ft=`Scheme funds ${Math.round(b.fhsPct*100)}% (${fmt(b.fhsPct*price)})`;}
+      else if(hs.useFHS){fc='warn';ft=!hs.newBuild?'Covers new builds only':Y>FHS_TO?`Closed: ended ${FHS_TO}`:price>hs.ceiling?`Price above the ${fmt(hs.ceiling)} ceiling`:'Not applied';}
+      items.push(line('First Home Scheme',fc,ft,'fhs'));
+      // Central Bank rules
+      const row=rows.find(r=>r.yr===Y);
+      const gross=row?row.salary:0;
+      const mult=gross>0?b.mort/gross:0;
+      const dep=hs.depositPct+b.fhsPct*100;
+      const cb=[];
+      if(gross>0)cb.push(`${mult.toFixed(1)}× income`+(mult>4?' (limit 4×)':''));
+      cb.push(`deposit ${dep.toFixed(0)}%`+(dep<10?' (min 10%)':''));
+      items.push(line('Central Bank rules',(mult>4||dep<10)?'warn':'ok',cb.join(', '),'centralBank'));
+      if(rows.mortFreeAge!=null)items.push(line('Mortgage-free','ok',`Age ${rows.mortFreeAge}`));
+    }
+  }
+  document.getElementById('sch-status').innerHTML=`<div class="sch-box"><div class="sch-hd">What applies in this scenario</div><table class="sch-tbl"><tbody>${items.join('')}</tbody></table>${timingTable(rows)}</div>`;
+}
+function timingTable(rows){
+  const hs=sc0().housing,p0=S.people[0];
+  if(!(hs.price>0))return'';
+  const n=Math.min(11,rows.length);
+  const body=[];
+  for(let y=0;y<n;y++){
+    const Y=S.startYear+y,age=p0.currentAge+y;
+    const price=hs.price*Math.pow(1+hs.houseGrowth/100,y);
+    const htb=htbEligible(hs,Y)&&price<=HTB_PRICE_CAP?Math.min(HTB_MAX,.1*price):0;
+    const fhs=hs.useFHS&&hs.newBuild&&Y<=FHS_TO&&price<=hs.ceiling;
+    const need=purchaseCashNeed(hs,y,Y);
+    const liq=rows[y].liquid;
+    const ready=liq>=need;
+    const mine=hs.mode==='buy'&&age===hs.buyAge;
+    const owned=rows.bought&&Y>=rows.bought.buyY;   // savings after a purchase no longer show what was available to buy
+    body.push(`<tr class="${mine?'mine':''}"><td>${Y} <span style="color:var(--hi)">(${age})</span></td><td>${fmtK(price)}</td><td>${htb>0?fmtK(htb):'—'}</td><td>${fhs?'yes':'—'}</td><td>${fmtK(need)}</td><td>${owned?'—':fmtK(liq)}</td><td>${owned?(mine?'bought':''):ready?'<span class="pos">ready</span>':'<span class="neg">short '+fmtK(need-liq)+'</span>'}</td></tr>`);
+  }
+  return `<div class="sch-hd" style="margin-top:0.7rem">If you bought in a different year${qm('timing')}</div>
+    <div class="exp-wrap"><table class="sch-tbl tm"><thead><tr><th>Year (age)</th><th>Price</th><th>Help to Buy</th><th>Scheme</th><th>Cash needed</th><th>Savings</th><th></th></tr></thead><tbody>${body.join('')}</tbody></table></div>
+    <p class="note">Cash needed is the deposit after Help to Buy, plus stamp duty and purchase costs. Savings count deposits, funds and investment accounts at the end of that year. The highlighted row is the year in this scenario.</p>`;
+}
+
+/* ══ METRICS ══ */
+const MET_DEFS=[
+  {key:'nw0',label:'Net worth now',fn:rows=>({v:fmtK(S.accounts.reduce((t,a)=>t+(+a.balance||0),0)),c:'',s:'All accounts at the start'})},
+  {key:'nwret',label:'At retirement',fn:rows=>{const r=rows.find(x=>x.age>=S.people[0].retireAge)||rows[rows.length-1];return{v:fmtK(r.total),c:'',s:'Age '+r.age+', in that year\'s €'};}},
+  {key:'nwend',label:'At the end',fn:rows=>{const l=rows[rows.length-1];return{v:fmtK(l.total),c:l.total>0?'g':'r',s:'Age '+l.age+', in that year\'s €'};}},
+  {key:'real',label:'End, in today\'s €',fn:rows=>{const l=rows[rows.length-1];return{v:fmtK(l.realTotal),c:l.realTotal>0?'g':'r',s:'Inflation-adjusted'};}},
+  {key:'ready',label:'Deposit ready',fn:rows=>rows.readyAge!=null?{v:String(rows.readyYear),c:'g',s:'Age '+rows.readyAge}:{v:'Not yet',c:'a',s:'Within the projection'}},
+  {key:'mortfree',label:'Mortgage-free',fn:rows=>rows.mortFreeAge!=null?{v:'Age '+rows.mortFreeAge,c:'g',s:'Mortgage paid off'}:{v:'—',c:'',s:sc0().housing.mode==='buy'?'Not paid off':'Renting'}},
+  {key:'pensret',label:'Pension before retiring',fn:rows=>{
+      const i=rows.findIndex(x=>x.age>=S.people[0].retireAge),r=rows[i>0?i-1:0],sorted=sortedAccts();
+      return{v:fmtK(sorted.reduce((t,a,k)=>t+(a.type==='pension'?(r.snap[k]||0):0),0)),c:'',s:'All pensions, age '+r.age};}},
+  {key:'tax',label:'Total tax paid',fn:rows=>({v:fmtK(rows[rows.length-1].cumTax),c:'a',s:'Over the projection'})},
+  {key:'short',label:'Funded through',fn:rows=>{const d=rows.find(r=>r.depleted),l=rows[rows.length-1];return d?{v:'Age '+d.age,c:'r',s:'Money runs out'}:{v:'Age '+l.age+'+',c:'g',s:'Projection ends'};}},
+];
+function renderMetItems(){document.getElementById('met-items').innerHTML=MET_DEFS.map(m=>`<label class="pop-item"><input type="checkbox" ${S.mets[m.key]?'checked':''} onchange="S.mets['${m.key}']=this.checked;renderMetrics(lastRows)">${m.label}</label>`).join('');}
+function renderMetrics(rows){
+  if(!rows.length)return;
+  const active=MET_DEFS.filter(m=>S.mets[m.key]),n=active.length;
+  document.getElementById('met-grid').style.gridTemplateColumns=`repeat(${n<=4?Math.max(n,1):n<=6?3:4},minmax(0,1fr))`;
+  document.getElementById('met-grid').innerHTML=active.map(m=>{const d=m.fn(rows);return`<div class="met"><div class="met-l">${m.label}${HELP['m_'+m.key]?qm('m_'+m.key):''}</div><div class="met-v ${d.c||''}">${d.v}</div><div class="met-s">${d.s}</div></div>`;}).join('');
+}
+
+/* ══ COLUMNS ══ */
+const COL_DEFS=[
+  {key:'salary',label:'Salary',h:'Salary'},{key:'sp',label:'State Pension',h:'State Pension'},
+  {key:'pens',label:'Pension and other income',h:'Pension & Other'},{key:'lump',label:'Retirement lump sum (net)',h:'Lump Sum'},
+  {key:'it',label:'Income tax',h:'Income Tax'},{key:'usc',label:'USC',h:'USC'},{key:'prsi',label:'PRSI',h:'PRSI'},
+  {key:'sav',label:'DIRT and exit tax',h:'DIRT / Exit'},{key:'cat',label:'CAT',h:'CAT'},
+  {key:'expenses',label:'Living expenses',h:'Expenses'},{key:'housing',label:'Housing (rent or mortgage)',h:'Housing'},
+  {key:'ceio',label:'Cash event inflows / outflows',h:'Cash Events'},{key:'draw',label:'Extra draw / surplus',h:'Extra Draw'},
+  {key:'homeEq',label:'Home equity',h:'Home Equity'},{key:'mortBal',label:'Mortgage balance',h:'Mortgage'},
+  {key:'realwealth',label:'Net worth (today\'s €)',h:'Worth Today\'s €'},{key:'cumtax',label:'Cumulative tax paid',h:'Cumul. Tax'},{key:'total',label:'Net worth (nominal)',h:'Net Worth'},
+];
+const COL_MAP=Object.fromEntries(COL_DEFS.map(c=>[c.key,c]));
+let dragColSrc=null;
+function renderColItems(){
+  document.getElementById('col-items').innerHTML=S.colOrder.map(key=>{
+    const col=COL_MAP[key];if(!col)return'';
+    return`<div class="col-drag-item" draggable="true" data-key="${key}"
+      ondragstart="dragColSrc='${key}';this.classList.add('dragging')"
+      ondragend="this.classList.remove('dragging');document.querySelectorAll('.col-drag-item').forEach(i=>i.classList.remove('drag-over'))"
+      ondragover="event.preventDefault();document.querySelectorAll('.col-drag-item').forEach(i=>i.classList.remove('drag-over'));this.classList.add('drag-over')"
+      ondrop="event.preventDefault();this.classList.remove('drag-over');dropCol('${key}')">
+      <span class="drag-handle">⠿</span><input type="checkbox" ${S.cols[key]?'checked':''} onclick="S.cols['${key}']=this.checked;renderTable(lastRows)"><span>${col.label}</span></div>`;
+  }).join('');
+}
+function dropCol(t){
+  if(!dragColSrc||dragColSrc===t)return;
+  const o=[...S.colOrder],a=o.indexOf(dragColSrc),b=o.indexOf(t);
+  if(a<0||b<0)return;
+  o.splice(a,1);o.splice(b,0,dragColSrc);S.colOrder=o;renderColItems();renderTable(lastRows);
+}
+
+/* ══ RESULTS ══ */
+let lastRows=[],chart=null;
+function setChartView(v){S.chartView=v;renderChart(lastRows);}
+function renderChart(rows){
+  if(!rows.length)return;
+  const sorted=sortedAccts(),view=S.chartView||'bars',n=sorted.length;
+  const labels=rows.map(r=>String(r.age));
+  const hex2rgba=(h,al)=>{const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?`rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${al})`:h;};
+  const series=sorted.map((a,i)=>({label:a.label,color:acctColor(a),data:rows.map(r=>r.snap[i]||0)}));
+  series.push({label:'Home equity',color:HOME_CLR,data:rows.map(r=>r.snap[n]||0)});
+  if(rows.some(r=>(r.snap[n+1]||0)>0))series.push({label:'Cash',color:CASH_CLR,data:rows.map(r=>r.snap[n+1]||0)});
+  const sets=series.map(s=>{
+    if(view==='bars')return{label:s.label,data:s.data,backgroundColor:s.color,stack:'s'};
+    if(view==='area')return{type:'line',label:s.label,data:s.data,borderColor:s.color,backgroundColor:hex2rgba(s.color,0.75),borderWidth:1.5,pointRadius:0,tension:0.25,fill:true};
+    return{type:'line',label:s.label,data:s.data,borderColor:s.color,backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.25};
+  });
+  const totalLine=view==='lines'?{type:'line',label:'Net worth',data:rows.map(r=>r.total),borderColor:'#333',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:0.25}:null;
+  const realLine={label:"Net worth in today's €",data:rows.map(r=>r.realTotal),type:'line',borderColor:'#6B48FF',backgroundColor:'transparent',borderWidth:2,borderDash:[5,3],pointRadius:0,tension:0.3};
+  document.getElementById('cleg').innerHTML=series.map(s=>`<span><span class="ld" style="background:${s.color}"></span>${esc(s.label)}</span>`).join('')+
+    (totalLine?`<span><span style="display:inline-block;width:14px;height:0;border-top:2.5px solid #333;vertical-align:middle;margin-right:3px"></span>Net worth</span>`:'')+
+    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's €${qm('todayEuro')}</span>`+
+    `<span><span style="display:inline-block;width:0;height:11px;border-left:2px dashed rgba(184,50,50,0.7);vertical-align:middle;margin-right:4px"></span>Events${qm('eventLine')}</span>`;
+  const sel=document.getElementById('chart-view');if(sel&&sel.value!==view)sel.value=view;
+  const sc=sc0(),p0=S.people[0],evt={};
+  S.people.forEach(p=>{
+    evt[p0.currentAge+(p.retireAge-p.currentAge)]=evt[p0.currentAge+(p.retireAge-p.currentAge)]||'retire';
+    const da=p0.currentAge+(p.deathAge-p.currentAge);if(!evt[da])evt[da]='death';
+  });
+  if(rows.bought)evt[sc.housing.buyAge]='buy';
+  sc.cashEvents.forEach(ce=>{if(!evt[ce.age])evt[ce.age]='ce';});
+  sc.marketEvents.forEach(ev=>{evt[ev.age]='market';});
+  const colour={market:'rgba(184,50,50,0.75)',death:'rgba(184,50,50,0.3)',ce:'rgba(184,137,43,0.4)',retire:'rgba(45,106,79,0.55)',buy:'rgba(27,47,74,0.6)'};
+  const plugin={id:'evtLines',afterDraw(c){
+    const ctx=c.ctx,xs=c.scales.x,ys=c.scales.y;
+    Object.entries(evt).forEach(([age,t])=>{
+      const idx=labels.indexOf(String(+age));if(idx<0)return;
+      const x=xs.getPixelForValue(idx);
+      ctx.save();ctx.strokeStyle=colour[t];ctx.lineWidth=(t==='market'||t==='buy'||t==='retire')?1.5:1;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(x,ys.top);ctx.lineTo(x,ys.bottom);ctx.stroke();ctx.restore();
+    });
+  }};
+  if(chart){chart.destroy();chart=null;}
+  chart=new Chart(document.getElementById('main-chart'),{
+    type:view==='bars'?'bar':'line',
+    data:{labels,datasets:[...sets,...(totalLine?[totalLine]:[]),realLine]},
+    plugins:[plugin],
+    options:{responsive:true,maintainAspectRatio:false,animation:false,
+      interaction:view==='bars'?undefined:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{x:{stacked:view!=='lines',grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
+              y:{stacked:view!=='lines',grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+  });
+}
+function renderTable(rows){
+  lastRows=rows;
+  const sorted=sortedAccts(),c=S.cols;
+  let ths='<th style="text-align:left">Age / Year</th>';
+  for(const key of S.colOrder){
+    if(!c[key]||!COL_MAP[key])continue;
+    ths+=`<th ${HELP['c_'+key]?`data-help="c_${key}"`:''}>${COL_MAP[key].h}</th>`;
+  }
+  sorted.forEach(a=>{ths+=`<th>${esc(a.label.length>14?a.label.slice(0,13)+'…':a.label)}</th>`;});
+  document.getElementById('rt-head').innerHTML='<tr>'+ths+'</tr>';
+  document.getElementById('rt-body').innerHTML=rows.map(r=>{
+    const evs=r.events.map(e=>e.type==='warn'?`<span class="badge" style="background:#fef2f2;color:var(--red)" title="${esc(e.label)}">⚠ ${esc(e.label.length>38?e.label.slice(0,36)+'…':e.label)}</span>`:`<span class="badge bw">${esc(e.label)}</span>`).join('');
+    let tds=`<td>${r.age}<span style="color:var(--text-hint);font-size:9px;margin-left:3px">${r.yr}</span>${evs}</td>`;
+    const neg=v=>v>0?`<td class="neg">(${fmt(v)})</td>`:'<td>—</td>';
+    const pos=v=>v>0?`<td>${fmt(v)}</td>`:'<td>—</td>';
+    for(const key of S.colOrder){
+      if(!c[key])continue;
+      switch(key){
+        case 'salary':tds+=pos(r.salary);break;
+        case 'sp':tds+=pos(r.sp);break;
+        case 'pens':tds+=pos(r.pens);break;
+        case 'lump':tds+=pos(r.lump);break;
+        case 'it':tds+=neg(r.it);break;
+        case 'usc':tds+=neg(r.usc);break;
+        case 'prsi':tds+=neg(r.prsi);break;
+        case 'sav':tds+=neg(r.sav);break;
+        case 'cat':tds+=neg(r.cat);break;
+        case 'expenses':tds+=neg(r.expenses);break;
+        case 'housing':tds+=neg(r.housing);break;
+        case 'ceio':tds+=`<td>${r.ceIn>0?`<span class="pos">+${fmt(r.ceIn)}</span>`:''}${r.ceOut>0?`<span class="neg">(${fmt(r.ceOut)})</span>`:''}${r.ceIn>0||r.ceOut>0?'':'—'}</td>`;break;
+        case 'draw':tds+=`<td class="${r.draw>0?'neg':r.surplus>0?'pos':''}">${r.draw>0?'('+fmt(r.draw)+')':r.surplus>0?'+'+fmt(r.surplus):'—'}</td>`;break;
+        case 'homeEq':tds+=pos(r.homeEquity);break;
+        case 'mortBal':tds+=pos(r.mortBal);break;
+        case 'realwealth':tds+=`<td class="bk">${fmt(r.realTotal)}</td>`;break;
+        case 'cumtax':tds+=neg(r.cumTax);break;
+        case 'total':tds+=`<td class="bk">${fmt(r.total)}</td>`;break;
+      }
+    }
+    sorted.forEach((_,i)=>{tds+=`<td>${fmt(r.snap[i]||0)}</td>`;});
+    return`<tr class="${r.depleted?'dep':r.events.length?'evt':''}">${tds}</tr>`;
+  }).join('');
+}
+function renderCompare(){
+  const wrap=document.getElementById('cmp-wrap');
+  if(S.scenarios.length<2){wrap.innerHTML='';return;}
+  wrap.innerHTML=`<table class="cmp"><thead><tr><th>Scenario${qm('compare')}</th><th>Home</th><th>Deposit ready</th><th>Mortgage-free</th><th>Funded</th><th>Net worth at end</th><th>In today's €</th><th>Total tax</th></tr></thead><tbody>`+
+    S.scenarios.map((sc,i)=>{
+      const r=simulateIE(i),l=r[r.length-1],d=r.find(x=>x.depleted),b=r.bought;
+      const home=sc.housing.mode==='buy'?(b?`Buys ${b.buyY}`+(b.htb>0?', HTB':'')+(b.fhsPct>0?', FHS':''):'Not bought'):'Rents';
+      return `<tr class="${i===S.activeScenario?'act':''}" onclick="switchScen(${i})"><td>${esc(sc.name)}</td><td>${home}</td><td>${r.readyYear||'—'}</td><td>${r.mortFreeAge!=null?'Age '+r.mortFreeAge:'—'}</td><td class="${d?'neg':''}">${d?'Out at '+d.age:'To '+l.age}</td><td>${fmtK(l.total)}</td><td>${fmtK(l.realTotal)}</td><td>${fmtK(l.cumTax)}</td></tr>`;
+    }).join('')+'</tbody></table>';
+}
+function recalc(){
+  const rows=simulateIE();
+  renderMetrics(rows);renderCompare();renderSchemes(rows);renderChart(rows);renderTable(rows);
+}
+function toggleStress(){
+  S.useStress=!S.useStress;
+  const b=document.getElementById('stress-btn');
+  b.textContent=S.useStress?'ON — pessimistic':'off';b.className='stress-pill '+(S.useStress?'sp-on':'sp-off');
+  recalc();
+}
+
+/* ══ INFO PANEL, FRESH START, SAVE, CSV ══ */
+function toggleInfo(){
+  const p=document.getElementById('info-panel'),b=document.getElementById('info-btn'),o=p.classList.contains('open');
+  p.classList.toggle('open',!o);b.classList.toggle('active',!o);b.textContent=o?'ℹ Info & Assumptions Panel':'✕ Close Info Panel';
+}
+function startFresh(){document.getElementById('confirm-overlay').classList.add('open');}
+function doStartFresh(){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  S=JSON.parse(JSON.stringify(BLANK));migrate();
+  syncInputs();renderPeople();renderIncomes();renderAccts();renderScens();recalc();
+  document.querySelectorAll('.ltab').forEach((b,i)=>b.classList.toggle('act',i===0));
+  document.querySelectorAll('.ltab-panel').forEach((p,i)=>p.classList.toggle('open',i===0));
+}
+document.addEventListener('click',e=>{const o=document.getElementById('confirm-overlay');if(e.target===o)o.classList.remove('open');});
+function download(name,type,text){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
+}
+function dlApp(){
+  let html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  const j=JSON.stringify(S).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
+  html=html.replace(/<script id="istate" type="application\/json">[\s\S]*?<\/script>/,()=>`<script id="istate" type="application/json">${j}<\/script>`);
+  download('irish-household-planner.html','text/html',html);
+}
+function exportCSV(){
+  const rows=simulateIE(),sorted=sortedAccts();
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  const H=['Age','Year','Events','Salary','State Pension','Pension and other','Lump sum (net)','Income tax','USC','PRSI','DIRT and exit tax','CAT','Living expenses','Housing','Cash inflows','Cash outflows','Extra draw','Surplus','Home equity','Mortgage balance',...sorted.map(a=>a.label),'Net worth','Net worth today\'s EUR','Cumulative tax'].map(q);
+  const R=rows.map(r=>[r.age,r.yr,q(r.events.map(e=>e.label).join('; ')),r.salary,r.sp,r.pens,r.lump,r.it,r.usc,r.prsi,r.sav,r.cat,r.expenses,r.housing,r.ceIn,r.ceOut,r.draw,r.surplus,r.homeEquity,r.mortBal,...sorted.map((_,i)=>r.snap[i]||0),r.total,r.realTotal,r.cumTax].join(','));
+  download('irish-household-projection.csv','text/csv',[H.join(','),...R].join('\n'));
+}
+
+/* ══ SHARED TEXT HELPERS FOR PRINT AND EXCEL ══ */
+const PEN_MODE_L={autoenrol:'Auto-enrolment',own:'Own pension / PRSA',none:'None'};
+const growthL=a=>a.growth==='real'?'Real (above inflation)':'Nominal';
+const ownerName=a=>{const p=S.people.find(x=>x.id===a.owner);return p?p.name:'Household';};
+const evText=e=>e.label;
+const tgtNames=ev=>{
+  const acc=S.accounts.filter(a=>ev.targets&&ev.targets.length?ev.targets.includes(a.id):a.type!=='property');
+  return acc.length?acc.map(a=>a.label).join(', '):'No accounts';
+};
+function housingText(hs){
+  if(hs.mode!=='buy')return `Rent ${fmt(hs.rentMonthly)}/mo, rising ${hs.rentInfl}%/yr${hs.rtc===false?'':', rent tax credit claimed'}`;
+  return `Rent ${fmt(hs.rentMonthly)}/mo until buying at age ${hs.buyAge}. Price ${fmt(hs.price)} today (growing ${hs.houseGrowth}%/yr), deposit ${hs.depositPct}%, mortgage ${hs.mortRate}% over ${hs.mortTerm} years. ${hs.newBuild?'New build':'Second-hand'}${hs.useHTB?', Help to Buy':''}${hs.useFHS?', First Home Scheme '+hs.fhsPct+'%':''}.`;
+}
+function summaryFor(i){
+  const r=simulateIE(i),l=r[r.length-1],d=r.find(x=>x.depleted),b=r.bought;
+  return{sc:S.scenarios[i],r,l,d,b,home:S.scenarios[i].housing.mode==='buy'?(b?`Buys ${b.buyY} for ${fmt(b.price)}`+(b.htb>0?`, Help to Buy ${fmt(b.htb)}`:'')+(b.fhsPct>0?`, First Home Scheme ${Math.round(b.fhsPct*100)}%`:''):'Not bought'):'Rents'};
+}
+
+/* ══ PRINT / PDF REPORT ══ */
+function printRpt(){
+  const rows=simulateIE(),sc=sc0(),hs=sc.housing,last=rows[rows.length-1],dep=rows.find(r=>r.depleted),sorted=sortedAccts();
+  const n=v=>Math.round(v).toLocaleString('en-IE'),sym='€';
+  const dateStr=new Date().toLocaleDateString('en-IE',{day:'numeric',month:'long',year:'numeric'});
+  const ret=rows.find(x=>x.age>=S.people[0].retireAge)||last;
+  const start=S.accounts.reduce((t,a)=>t+(+a.balance||0),0);
+  const sums=S.scenarios.map((_,i)=>summaryFor(i));
+  const evList=rows.map(r=>r.events.map(evText));
+  document.getElementById('rpt-body').innerHTML=`
+  <div class="rpt-cover"><h1>Irish Household Financial Forecast</h1>
+    <div class="rpt-meta"><span>Scenario: <strong>${esc(sc.name)}</strong></span><span>Ages ${S.people[0].currentAge}–${last.age} (${esc(S.people[0].name)})</span><span>EUR</span><span>Generated: ${dateStr}</span><span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Returns set per account'}</span></div></div>
+  <div class="rpt-kpis">
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Net worth now</div><div class="rpt-kpi-v">${sym}${n(start)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">At retirement (age ${ret.age})</div><div class="rpt-kpi-v">${sym}${n(ret.total)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">At the end (age ${last.age})</div><div class="rpt-kpi-v ${last.total>0?'g':'r'}">${sym}${n(last.total)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">End, in today's €</div><div class="rpt-kpi-v a">${sym}${n(last.realTotal)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">${dep?'Runs out at':'Funded through'}</div><div class="rpt-kpi-v ${dep?'r':'g'}">Age ${dep?dep.age:last.age+'+'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Deposit ready</div><div class="rpt-kpi-v">${rows.readyYear||'Not yet'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Mortgage-free</div><div class="rpt-kpi-v">${rows.mortFreeAge!=null?'Age '+rows.mortFreeAge:'—'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Total tax paid</div><div class="rpt-kpi-v">${sym}${n(last.cumTax)}</div></div>
+  </div>
+  <div class="rpt-sec"><h2>Assumptions</h2><div class="rpt-assm">
+    <div class="rpt-assm-row"><span class="al">Tax status</span><span class="av">${S.status==='married'?'Married or civil partners, joint assessment':'Single or cohabiting'}</span></div>
+    <div class="rpt-assm-row"><span class="al">Start year</span><span class="av">${S.startYear}</span></div>
+    <div class="rpt-assm-row"><span class="al">General inflation</span><span class="av">${S.genInfl}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">Wage growth</span><span class="av">${S.wageGrowth}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">Bands and credits after 2027</span><span class="av">+${S.bandIndex}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">State Pension</span><span class="av">${sym}${S.spWeekly}/week, +${S.spGrowth}%/yr after 2027</span></div>
+    <div class="rpt-assm-row"><span class="al">Stress-test return</span><span class="av">${S.stressRate}%/yr (${S.useStress?'active':'inactive'})</span></div>
+    <div class="rpt-assm-row"><span class="al">CAT already used (Group A)</span><span class="av">${sym}${n(S.catUsed||0)}</span></div>
+  </div></div>
+  <div class="rpt-sec"><h2>People</h2>
+    <table class="rt2"><tr><th class="tl">Name</th><th>Age</th><th>Retires</th><th>Passes</th><th>Salary</th><th class="tl">Pension</th><th>State Pension from</th><th>Entitlement</th></tr>
+    ${S.people.map(p=>`<tr><td class="tl">${esc(p.name)}</td><td>${p.currentAge}</td><td>${p.retireAge}</td><td>${p.deathAge}</td><td>${sym}${n(p.salary)}</td><td class="tl">${PEN_MODE_L[p.pensionMode]}${p.pensionMode==='own'?` (${p.eePct}% + ${p.erPct}%)`:''}</td><td>${p.spAge}</td><td>${p.spPct}%</td></tr>`).join('')}</table></div>
+  ${S.incomes.length?`<div class="rpt-sec"><h2>Other income</h2>
+    <table class="rt2"><tr><th class="tl">Label</th><th class="tl">Person</th><th class="tl">Type</th><th>Annual</th><th class="tl">Adjustment</th><th>From</th><th>To</th></tr>
+    ${S.incomes.map(i=>{const p=S.people.find(x=>x.id===i.pid);return`<tr><td class="tl">${esc(i.label)}</td><td class="tl">${p?esc(p.name):'Household'}</td><td class="tl">${INC_T[i.type]?INC_T[i.type].label:i.type}</td><td>${sym}${n(i.amount)}</td><td class="tl">${{none:'None',general:'General inflation',wage:'Wage growth',fixed:(i.adj||0)+'%/yr'}[i.adjType]||''}</td><td>${i.startAge||'—'}</td><td>${i.endAge||'—'}</td></tr>`;}).join('')}</table></div>`:''}
+  <div class="rpt-sec"><h2>Accounts &amp; assets</h2>
+    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th class="tl">Owner</th><th>Balance</th><th>Return %</th><th class="tl">Growth basis</th><th>Fees %</th><th>Regular saving</th><th>Draw order</th></tr>
+    ${sorted.map(a=>`<tr><td class="tl">${esc(a.label)}</td><td class="tl">${ACCT_T[a.type]?ACCT_T[a.type].label:a.type}</td><td class="tl">${esc(ownerName(a))}</td><td>${sym}${n(a.balance)}</td><td>${a.rate}</td><td class="tl">${growthL(a)}</td><td>${a.feePct||0}</td><td>${a.regular>0?sym+n(a.regular):'—'}</td><td>${a.type==='property'?'—':a.drawOrder}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl" colspan="3">Total</td><td>${sym}${n(start)}</td><td colspan="5"></td></tr></table></div>
+  <div class="rpt-sec"><h2>Housing — ${esc(sc.name)}</h2>
+    <p style="font-size:11px;line-height:1.55;margin-bottom:6px">${esc(housingText(hs))}</p>
+    ${hs.mode==='buy'&&rows.bought?`<table class="rt2"><tr><th class="tl">Item</th><th>Value</th></tr>
+      <tr><td class="tl">Purchase year</td><td>${rows.bought.buyY}</td></tr><tr><td class="tl">Price in that year</td><td>${sym}${n(rows.bought.price)}</td></tr>
+      <tr><td class="tl">Help to Buy refund</td><td>${rows.bought.htb>0?sym+n(rows.bought.htb):'—'}</td></tr>
+      <tr><td class="tl">First Home Scheme share</td><td>${rows.bought.fhsPct>0?Math.round(rows.bought.fhsPct*100)+'% ('+sym+n(rows.bought.fhsPct*rows.bought.price)+')':'—'}</td></tr>
+      <tr><td class="tl">Mortgage at purchase</td><td>${sym}${n(rows.bought.mort)}</td></tr>
+      <tr><td class="tl">Deposit ready from</td><td>${rows.readyYear||'—'}</td></tr></table>`:''}
+    <p style="font-size:9px;color:#786f62;margin-top:5px">Deposit ready is the first year liquid savings cover the deposit (after Help to Buy), stamp duty and purchase costs.</p></div>
+  <div class="rpt-sec pb-before"><h2>Expenses — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Item</th><th>Annual</th><th>Monthly</th><th class="tl">Rises with</th><th>From</th><th>To</th><th class="tl">Notes</th></tr>
+    ${sc.expenses.map(e=>`<tr><td class="tl">${esc(e.label)}</td><td>${sym}${n(e.amount)}</td><td>${sym}${n(e.amount/12)}</td><td class="tl">${{general:'General inflation',wage:'Wage growth',none:'Fixed'}[e.infl]}</td><td>${e.startAge||'—'}</td><td>${e.endAge||'—'}</td><td class="tl" style="font-size:9px">${esc(e.note||'')}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl">Total</td><td>${sym}${n(sc.expenses.reduce((t,e)=>t+e.amount,0))}</td><td>${sym}${n(sc.expenses.reduce((t,e)=>t+e.amount,0)/12)}</td><td class="tl" colspan="4">Today's euro, not including rent or mortgage</td></tr></table></div>
+  ${sc.cashEvents.length?`<div class="rpt-sec"><h2>Cash events — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Direction</th><th class="tl">Category</th><th class="tl">Description</th><th>At age</th><th>Amount</th><th>CAT group</th></tr>
+    ${sc.cashEvents.map(c=>`<tr><td class="tl">${c.dir==='in'?'Inflow':'Outflow'}</td><td class="tl">${CE_T[c.type]?CE_T[c.type].label:c.type}</td><td class="tl">${esc(c.label)}</td><td>${c.age}</td><td>${sym}${n(c.amount)}</td><td>${CE_T[c.type]&&CE_T[c.type].cat?(c.group||'A'):'—'}</td></tr>`).join('')}</table></div>`:''}
+  ${sc.marketEvents.length?`<div class="rpt-sec"><h2>Market events — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
+    ${sc.marketEvents.map(ev=>`<tr><td class="tl">${esc(ev.label)}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${esc(tgtNames(ev))}</td></tr>`).join('')}</table></div>`:''}
+  ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
+    <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Home</th><th>Deposit ready</th><th>Mortgage-free</th><th class="tl">Funded</th><th>End net worth</th><th>In today's €</th><th>Total tax</th></tr>
+    ${sums.map(x=>`<tr><td class="tl">${esc(x.sc.name)}${x.sc===sc?' (shown here)':''}</td><td class="tl" style="font-size:9px">${esc(x.home)}</td><td>${x.r.readyYear||'—'}</td><td>${x.r.mortFreeAge!=null?'Age '+x.r.mortFreeAge:'—'}</td><td class="tl">${x.d?'Runs out at '+x.d.age:'To age '+x.l.age}</td><td>${sym}${n(x.l.total)}</td><td>${sym}${n(x.l.realTotal)}</td><td>${sym}${n(x.l.cumTax)}</td></tr>`).join('')}</table></div>`:''}
+  <div class="rpt-sec pb-before landscape-section"><h2>Year-by-year projection — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Age</th><th class="tl">Year</th><th class="tl">Events</th><th>Salary</th><th>State Pension</th><th>Pension &amp; Other</th><th>Lump Sum</th><th>Income Tax</th><th>USC</th><th>PRSI</th><th>DIRT / Exit</th><th>CAT</th><th>Expenses</th><th>Housing</th><th>Cash Events</th><th>Extra Draw</th>
+      ${sorted.map(a=>`<th>${esc(a.label.length>12?a.label.slice(0,11)+'…':a.label)}</th>`).join('')}<th>Home Equity</th><th>Mortgage</th><th>Net Worth</th><th>Today's €</th><th>Cumul. Tax</th></tr>
+    ${rows.map((r,ri)=>{const ev=evList[ri];const ce=r.ceIn-r.ceOut;const d=v=>v>0?sym+n(v):'—';const c=v=>v>0?'('+sym+n(v)+')':'—';
+      return`<tr class="${r.depleted?'dep':ev.length?'evt':''}"><td class="tl">${r.age}</td><td class="tl">${r.yr}</td><td class="tl" style="font-size:9px">${esc(ev.join('; '))||'—'}</td>
+      <td>${d(r.salary)}</td><td>${d(r.sp)}</td><td>${d(r.pens)}</td><td>${d(r.lump)}</td><td>${c(r.it)}</td><td>${c(r.usc)}</td><td>${c(r.prsi)}</td><td>${c(r.sav)}</td><td>${c(r.cat)}</td><td>${c(r.expenses)}</td><td>${c(r.housing)}</td>
+      <td>${ce>0?'+'+sym+n(ce):ce<0?'('+sym+n(-ce)+')':'—'}</td><td>${r.draw>0?'('+sym+n(r.draw)+')':r.surplus>0?'+'+sym+n(r.surplus):'—'}</td>
+      ${sorted.map((_,i)=>`<td>${sym}${n(r.snap[i]||0)}</td>`).join('')}<td>${d(r.homeEquity)}</td><td>${d(r.mortBal)}</td><td><strong>${sym}${n(r.total)}</strong></td><td>${sym}${n(r.realTotal)}</td><td>(${sym}${n(r.cumTax)})</td></tr>`;}).join('')}
+    </table>
+    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a retirement, purchase, passing or market event happens that year; red rows = money has run out. Today's € = net worth adjusted for ${S.genInfl}%/yr general inflation.</p></div>
+  <div class="rpt-disc"><strong>Disclaimer:</strong> A planning aid, not tax or financial advice. Figures follow the rules published in October 2026, including Budget 2027 as announced. Several figures are assumptions or come from news summaries: the 2027 age credit (assumed unchanged), the Investment Account design (announced, not yet law) and the First Home Scheme, which runs to June 2027 with no extension announced. Investment returns, house prices and rents are assumptions, not forecasts. Check with Revenue or a qualified adviser before making decisions.</div>`;
+  window.print();
+}
+
+/* ══ EXCEL EXPORT ══ */
+function exportXLSX(){
+  function doExport(){
+    const XLSX=window.XLSX,wb=XLSX.utils.book_new();
+    const rows=simulateIE(),sc=sc0(),sorted=sortedAccts(),last=rows[rows.length-1],dep=rows.find(r=>r.depleted);
+    const ret=rows.find(x=>x.age>=S.people[0].retireAge)||last;
+    const add=(name,aoa,cols)=>{const ws=XLSX.utils.aoa_to_sheet(aoa);if(cols)ws['!cols']=cols.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,name);};
+    add('Summary',[
+      ['Irish Household Financial Forecast','',''],['Generated',new Date().toLocaleDateString('en-IE'),'Currency','EUR'],['Active scenario',sc.name,'Tax status',S.status],['','',''],
+      ['KEY METRICS','',''],['Net worth now',S.accounts.reduce((t,a)=>t+(+a.balance||0),0),''],['Net worth at retirement (age '+ret.age+')',ret.total,''],
+      ['Net worth at the end (age '+last.age+')',last.total,''],['End net worth, today\'s EUR',last.realTotal,''],[dep?'Money runs out at age':'Funded through age',dep?dep.age:last.age+'+',''],
+      ['Deposit ready',rows.readyYear||'Not within projection',''],['Mortgage-free age',rows.mortFreeAge!=null?rows.mortFreeAge:'',''],['Total tax paid',last.cumTax,''],['','',''],
+      ['ASSUMPTIONS','',''],['General inflation %',S.genInfl,'Wage growth %',S.wageGrowth],['Bands and credits rise after 2027 %',S.bandIndex,'State Pension weekly EUR',S.spWeekly],
+      ['State Pension rise after 2027 %',S.spGrowth,'Stress-test return %',S.stressRate+(S.useStress?' (active)':' (inactive)')],['Start year',S.startYear,'CAT already used (Group A)',S.catUsed||0],
+      ['','',''],['HOUSING',housingText(sc.housing),'']],[44,60,28,22]);
+    const yyH=['Age','Year','Events','Salary','State Pension','Pension and other','Lump sum (net)','Income tax','USC','PRSI','DIRT and exit tax','CAT','Living expenses','Housing','Cash inflows','Cash outflows','Extra draw','Surplus',...sorted.map(a=>a.label),'Home equity','Mortgage balance','Net worth','Net worth today\'s EUR','Cumulative tax'];
+    add('Year by Year',[yyH,...rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; '),r.salary,r.sp,r.pens,r.lump,r.it,r.usc,r.prsi,r.sav,r.cat,r.expenses,r.housing,r.ceIn,r.ceOut,r.draw,r.surplus,...sorted.map((_,i)=>r.snap[i]||0),r.homeEquity,r.mortBal,r.total,r.realTotal,r.cumTax])],[5,6,26,...Array(yyH.length-3).fill(16)]);
+    add('People',[['Name','Current age','Retires at','Age at passing','Gross salary','Pension','Employee %','Employer %','Medical card','State Pension from','Entitlement %'],...S.people.map(p=>[p.name,p.currentAge,p.retireAge,p.deathAge,p.salary,PEN_MODE_L[p.pensionMode],p.pensionMode==='own'?p.eePct:'',p.pensionMode==='own'?p.erPct:'',p.card?'Yes':'No',p.spAge,p.spPct])],[16,12,11,14,13,22,11,11,12,16,13]);
+    add('Accounts',[['Account','Type','Owner','Balance','Return %','Growth basis','Fees %','Regular saving','Save until age','Draw order'],...sorted.map(a=>[a.label,ACCT_T[a.type]?ACCT_T[a.type].label:a.type,ownerName(a),a.balance,a.rate,growthL(a),a.feePct||0,a.regular||0,a.saveTo===''?'retirement':a.saveTo,a.type==='property'?'N/A':a.drawOrder])],[28,20,14,14,10,22,8,14,14,10]);
+    if(S.incomes.length)add('Other Income',[['Label','Person','Type','Annual','Adjustment','Adj %/yr','From age','To age'],...S.incomes.map(i=>{const p=S.people.find(x=>x.id===i.pid);return[i.label,p?p.name:'Household',INC_T[i.type]?INC_T[i.type].label:i.type,i.amount,i.adjType,i.adj,i.startAge||'',i.endAge||''];})],[24,14,22,12,12,9,9,9]);
+    add('Housing',[['Scenario','Mode','Rent/mo','Rent rise %','Rent credit','Buy at age','Price today','House growth %','Deposit %','New build','Help to Buy','First Home Scheme','Scheme share %','Mortgage rate %','Term','Costs %','Running %'],
+      ...S.scenarios.map(s=>{const h=s.housing,b=h.mode==='buy';return[s.name,h.mode,h.rentMonthly,h.rentInfl,h.rtc===false?'No':'Yes',b?h.buyAge:'',b?h.price:'',b?h.houseGrowth:'',b?h.depositPct:'',b?(h.newBuild?'Yes':'No'):'',b?(h.useHTB?'Yes':'No'):'',b?(h.useFHS?'Yes':'No'):'',b&&h.useFHS?h.fhsPct:'',b?h.mortRate:'',b?h.mortTerm:'',b?h.costsPct:'',b?h.runPct:''];})],[28,8,10,11,11,10,12,13,10,10,12,16,14,14,7,9,10]);
+    const exR=[];S.scenarios.forEach(s=>{s.expenses.forEach(e=>exR.push([s.name,e.label,e.amount,e.amount/12,{general:'General inflation',wage:'Wage growth',none:'Fixed'}[e.infl],e.startAge||'',e.endAge||'',e.note||'']));exR.push([s.name,'TOTAL',s.expenses.reduce((t,e)=>t+e.amount,0),s.expenses.reduce((t,e)=>t+e.amount,0)/12,'','','','']);exR.push([]);});
+    add('Expenses',[['Scenario','Item','Annual','Monthly','Rises with','From age','To age','Notes'],...exR],[26,28,12,12,18,9,9,30]);
+    const ceR=[];S.scenarios.forEach(s=>s.cashEvents.forEach(c=>ceR.push([s.name,c.dir==='in'?'Inflow':'Outflow',CE_T[c.type]?CE_T[c.type].label:c.type,c.label,c.age,c.amount,CE_T[c.type]&&CE_T[c.type].cat?(c.group||'A'):'',c.note||''])));
+    if(ceR.length)add('Cash Events',[['Scenario','Direction','Category','Description','At age','Amount','CAT group','Notes'],...ceR],[26,10,24,28,8,12,10,30]);
+    const meR=[];S.scenarios.forEach(s=>s.marketEvents.forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
+    if(meR.length)add('Market Events',[['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'],...meR],[26,26,8,16,18,10,44]);
+    add('Scenario Comparison',[['Scenario','Home','Deposit ready','Mortgage-free age','Funded','End net worth','End net worth today\'s EUR','Total tax'],
+      ...S.scenarios.map((_,i)=>{const x=summaryFor(i);return[x.sc.name,x.home,x.r.readyYear||'',x.r.mortFreeAge!=null?x.r.mortFreeAge:'',x.d?'Runs out at '+x.d.age:'To age '+x.l.age,x.l.total,x.l.realTotal,x.l.cumTax];})],[30,44,13,17,18,16,24,14]);
+    XLSX.writeFile(wb,'irish-household-projection.xlsx');
+  }
+  if(window.XLSX){doExport();}
+  else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=doExport;s.onerror=()=>alert('Could not load the Excel library. Please check your internet connection.');document.head.appendChild(s);}
+}
+
+/* ══ INFO CONTENT BUILT FROM THE ENGINE'S OWN FIGURES ══ */
+function buildInfo(){
+  const a=TY[2026],b=TY[2027],px=tyParams(2027),e=n=>'€'+Math.round(n).toLocaleString('en-IE');
+  const tr=(l,x,y)=>`<tr><td>${l}</td><td>${x}</td><td>${y}</td></tr>`;
+  document.getElementById('info-tax').innerHTML=`<h4>Income tax, 2026 and 2027</h4>
+    <p>20% up to the standard rate band, 40% above it, less credits. The 2027 figures are from Budget 2027 and need the Finance Bill to pass. Later years scale 2027 by the rise set in Settings.</p>
+    <table class="info-tbl"><tr><th></th><th>2026</th><th>2027</th></tr>
+    ${tr('Band, single person',e(a.cut.single),e(b.cut.single))}
+    ${tr('Band, married, one income',e(a.cut.m1),e(b.cut.m1))}
+    ${tr('Extra band for a second income, up to',e(a.cut.incr),e(b.cut.incr))}
+    ${tr('Personal credit, single',e(a.cr.personal),e(b.cr.personal))}
+    ${tr('Personal credit, married',e(a.cr.married),e(b.cr.married))}
+    ${tr('Employee credit, each',e(a.cr.employee),e(b.cr.employee))}
+    ${tr('Age credit from 65, single / married',e(a.cr.age1)+' / '+e(a.cr.age2),e(b.cr.age1)+' / '+e(b.cr.age2)+' (unchanged)')}
+    ${tr('Rent credit, per renter',e(a.cr.rent1),e(b.cr.rent1))}
+    </table>
+    <p style="margin-top:6px">From age 65 income tax can be reduced to nil by the age exemption: income up to ${e(px.ageEx.single)} for a single person and ${e(px.ageEx.married)} for a couple. Above that, marginal relief limits the tax to 40% of the excess.</p>`;
+  const u=(x,i)=>x.usc[i];
+  document.getElementById('info-usc').innerHTML=`<table class="info-tbl"><tr><th>Income band (USC)</th><th>Rate</th></tr>
+    <tr><td>Up to ${e(a.usc[0][0])}</td><td>0.5%</td></tr>
+    <tr><td>${e(a.usc[0][0])} to ${e(a.usc[1][0])} (2026) or ${e(b.usc[1][0])} (2027)</td><td>2%</td></tr>
+    <tr><td>Up to ${e(a.usc[2][0])}</td><td>3%</td></tr>
+    <tr><td>Above ${e(a.usc[2][0])}</td><td>8%</td></tr></table>
+    <p style="margin-top:5px">No USC if income is ${e(13000)} or less. From age 70, or with a full medical card, income up to ${e(60000)} pays 0.5% then 2%. State Pension is not charged USC.</p>
+    <p><strong>PRSI</strong> on employee pay: 4.2% to September 2026, 4.35% to September 2027, then 4.5% (blended by month). None on weekly pay up to €352, and none after age 66.</p>`;
+}
+
+/* ══ INIT ══ */
+function syncInputs(){
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  set('h-inf',S.genInfl);set('h-wg',S.wageGrowth);set('h-bi',S.bandIndex);set('h-spw',S.spWeekly);set('h-spg',S.spGrowth);
+  set('h-str',S.stressRate);set('h-sy',S.startYear);set('h-ea',S.endAge);set('h-status',S.status);set('h-cat',S.catUsed);set('h-fhsc',S.fhsCharge);
+  const b=document.getElementById('stress-btn');
+  if(b){b.textContent=S.useStress?'ON — pessimistic':'off';b.className='stress-pill '+(S.useStress?'sp-on':'sp-off');}
+}
+function init(){
+  document.getElementById('glossary').innerHTML=Object.values(HELP).filter(h=>h.g).map(h=>`<div class="gl-item"><b>${esc(h.t)}.</b> ${esc(h.d)}</div>`).join('');
+  buildInfo();
+  decorateTips(document.body);
+  syncInputs();
+  renderPeople();renderIncomes();renderAccts();renderScens();
+  recalc();
+}
+init();
+
+</script>
+</body>
+</html>

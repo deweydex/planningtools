@@ -176,9 +176,20 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .seclbl::after{content:'';flex:1;height:1px;background:var(--brd)}
 
 /* ── TOOLTIP ── */
-.tt{position:fixed;z-index:var(--z-tooltip);pointer-events:none;display:none;max-width:270px;background:var(--navy);color:rgba(255,255,255,0.92);padding:7px 10px;border-radius:7px;font-size:11.5px;line-height:1.5;font-family:var(--font-sans);box-shadow:0 4px 18px rgba(0,0,0,0.28)}
+.tt{position:fixed;z-index:var(--z-tooltip);pointer-events:none;display:none;max-width:310px;background:var(--navy);color:rgba(255,255,255,0.92);padding:7px 10px;border-radius:7px;font-size:11.5px;line-height:1.5;font-family:var(--font-sans);box-shadow:0 4px 18px rgba(0,0,0,0.28)}
 [data-tip]{text-decoration:underline dotted var(--hi);cursor:help}
 [data-tip]:hover{text-decoration-color:var(--gold)}
+.has-qm[data-tip],.has-qm[data-help]{text-decoration:none}
+.qm{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:4px;border:1px solid var(--hi);border-radius:50%;font-size:9.5px;font-weight:600;line-height:1;color:var(--mu);background:transparent;cursor:help;vertical-align:1px;font-style:normal;text-transform:none;letter-spacing:0;flex:none;text-decoration:none}
+.qm:hover,.qm:focus-visible,.qm.on{background:var(--gold);border-color:var(--gold);color:#fff;outline:none}
+.tt b{display:block;margin-bottom:2px;color:#fff}
+.cmp{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:0.6rem}
+.cmp th{font-weight:500;color:var(--mu);text-align:right;padding:3px 6px;border-bottom:1px solid var(--brd)}
+.cmp td{text-align:right;padding:3px 6px;border-bottom:1px solid var(--brd);font-family:var(--fn)}
+.cmp th:first-child,.cmp td:first-child{text-align:left;font-family:inherit}
+.cmp tr.act td{background:rgba(184,137,43,0.10);font-weight:600}
+.cmp tr{cursor:pointer}
+.gl-item{margin-bottom:6px}.gl-item b{color:var(--navy)}
 
 /* ── PERSON BLOCK ── */
 .phead{display:flex;align-items:center;gap:7px;padding:0.6rem 0.875rem;background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2) var(--r2) 0 0;border-bottom:none}
@@ -348,17 +359,17 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <div class="settings-group">
           <div class="sg-title">Returns</div>
           <div class="settings-row">
-            <label data-tip="Expected annual return on investment and savings accounts. Diversified stocks-and-bonds portfolios typically target 5–7%. S&P 500 historical average is ~10% before inflation.">Base return</label>
+            <label data-help="baseReturn">Default return for new accounts</label>
             <input type="number" id="h-ret" value="6.5" step="0.1" min="-5" max="20" oninput="S.retRate=+this.value;recalc()">
             <span class="unit">%/yr</span>
           </div>
           <div class="settings-row">
-            <label data-tip="Pessimistic return for poor markets or very conservative portfolios. Toggle ON to replace the base return throughout the simulation.">Stress-test return</label>
+            <label data-help="stress">Stress-test return</label>
             <input type="number" id="h-str" value="3.0" step="0.1" min="-10" max="10" oninput="S.stressRate=+this.value;recalc()">
             <span class="unit">%/yr</span>
           </div>
           <div class="settings-row">
-            <label>Use stress-test return</label>
+            <label data-help="stress">Use stress-test return</label>
             <button id="stress-btn" class="stress-pill sp-off" onclick="toggleStress()">off</button>
           </div>
         </div>
@@ -385,7 +396,11 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
             <span class="unit">%</span>
           </div>
           <div class="settings-row" style="color:var(--text-hint);font-size:11px;justify-content:flex-start">
-            Federal tax calculated automatically · 2024/25 brackets
+            Federal tax calculated automatically · 2026 brackets
+          </div>
+          <div class="settings-row">
+            <label data-help="indexTax">Brackets rise with inflation</label>
+            <input type="checkbox" id="h-ix" onchange="S.indexTax=this.checked;recalc()">
           </div>
         </div>
 
@@ -400,7 +415,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <div class="settings-group">
           <div class="sg-title">Currency</div>
           <div class="settings-row">
-            <label>Show EUR equivalent</label>
+            <label data-help="eur">Show EUR equivalent</label>
             <label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-primary)">
               <input type="checkbox" id="h-eur" onchange="S.showEur=this.checked;recalc()"> EUR
             </label>
@@ -446,51 +461,49 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 <!-- ── INFO & ASSUMPTIONS PANEL ── -->
 <div class="info-panel" id="info-panel">
   <div class="info-inner">
+    <div class="info-sec" id="info-tax"></div>
+
     <div class="info-sec">
-      <h4>2024/25 Federal Income Tax Brackets</h4>
-      <p>Married Filing Jointly (MFJ) — used when 2+ people alive</p>
+      <h4>Account types and what the letters mean</h4>
       <table class="info-tbl">
-        <tr><th>Taxable income</th><th>Rate</th></tr>
-        <tr><td>$0 – $23,200</td><td>10%</td></tr>
-        <tr><td>$23,201 – $94,300</td><td>12%</td></tr>
-        <tr><td>$94,301 – $201,050</td><td>22%</td></tr>
-        <tr><td>$201,051 – $383,900</td><td>24%</td></tr>
-        <tr><td>$383,901 – $487,450</td><td>32%</td></tr>
-        <tr><td>$487,451 – $731,200</td><td>35%</td></tr>
-        <tr><td>Over $731,200</td><td>37%</td></tr>
+        <tr><th>Account</th><th>What it is and how the planner taxes it</th></tr>
+        <tr><td>Traditional IRA</td><td>Individual Retirement Account. Money went in before tax, so every dollar withdrawn is ordinary income. Required minimum distributions (RMDs) start at 73.</td></tr>
+        <tr><td>401(k), 403(b), 457(b)</td><td>Retirement plans run by an employer: private companies (401k), schools and nonprofits (403b), and government bodies (457b). Taxed like a Traditional IRA, with RMDs from 73.</td></tr>
+        <tr><td>SEP-IRA</td><td>Simplified Employee Pension, a retirement account for self-employed people. Taxed like a Traditional IRA.</td></tr>
+        <tr><td>Roth IRA</td><td>Funded with money already taxed. Qualified withdrawals are tax-free and there are no RMDs for the owner. The planner never taxes it.</td></tr>
+        <tr><td>HSA</td><td>Health Savings Account for medical costs. Tax-free in, tax-free growth, tax-free out for medical spending. The planner never taxes it.</td></tr>
+        <tr><td>Brokerage (stocks and funds)</td><td>An ordinary investment account. Dividends are taxed each year at the capital gains rates. A gain is taxed only when shares are sold, and only the part above the cost basis counts.</td></tr>
+        <tr><td>Savings account</td><td>Interest is taxed each year as ordinary income. Selling or withdrawing creates no further tax.</td></tr>
+        <tr><td>CD (Certificate of Deposit) and bonds</td><td>A CD is a bank deposit locked for a fixed term. Bonds are loans you make to a company or government. Both pay interest, taxed each year as ordinary income. Interest on municipal bonds can be tax-free, which the planner does not model.</td></tr>
+        <tr><td>Trust account</td><td>Investments held in a trust. The planner taxes it like a brokerage account. Real trusts can face higher rates.</td></tr>
+        <tr><td>Property</td><td>Tracked in net worth only. It is not drawn on until you add a house sale as a cash event.</td></tr>
       </table>
-      <p style="margin-top:5px">Single filer — used after one person passes</p>
+      <h4 style="margin-top:10px">Other abbreviations</h4>
       <table class="info-tbl">
-        <tr><th>Taxable income</th><th>Rate</th></tr>
-        <tr><td>$0 – $11,600</td><td>10%</td></tr>
-        <tr><td>$11,601 – $47,150</td><td>12%</td></tr>
-        <tr><td>$47,151 – $100,525</td><td>22%</td></tr>
-        <tr><td>$100,526 – $191,950</td><td>24%</td></tr>
-        <tr><td>Over $191,950</td><td>32–37%</td></tr>
+        <tr><td>AGI</td><td>Adjusted Gross Income, the total taxable income before the standard deduction.</td></tr>
+        <tr><td>MFJ</td><td>Married Filing Jointly, the status used while both people are alive.</td></tr>
+        <tr><td>LTCG</td><td>Long-term capital gain, profit on an investment held more than a year.</td></tr>
+        <tr><td>NIIT</td><td>Net Investment Income Tax, an extra 3.8% for higher incomes.</td></tr>
+        <tr><td>RMD</td><td>Required Minimum Distribution, the amount you must take from tax-deferred accounts each year.</td></tr>
+        <tr><td>COLA</td><td>Cost-of-Living Adjustment, the yearly rise in Social Security.</td></tr>
+        <tr><td>RSU</td><td>Restricted Stock Unit, shares an employer grants that count as wages when they vest.</td></tr>
+        <tr><td>IRMAA</td><td>Medicare surcharge for higher incomes. Not modelled.</td></tr>
       </table>
     </div>
 
     <div class="info-sec">
-      <h4>Social Security Taxation (IRS Pub. 915)</h4>
-      <p>Up to 85% of Social Security income is taxable depending on total "provisional income" = (non-SS income) + SS × 50%.</p>
-      <table class="info-tbl">
-        <tr><th>Provisional income</th><th>SS taxable</th></tr>
-        <tr><td>Under $32k (MFJ) / $25k (Single)</td><td>0%</td></tr>
-        <tr><td>$32k–$44k (MFJ) / $25k–$34k (Single)</td><td>Up to 50%</td></tr>
-        <tr><td>Over $44k (MFJ) / $34k (Single)</td><td>Up to 85%</td></tr>
-      </table>
-      <h4 style="margin-top:10px">Standard Deductions 2024</h4>
-      <table class="info-tbl">
-        <tr><td>Married Filing Jointly</td><td>$30,000</td></tr>
-        <tr><td>Single filer</td><td>$15,000</td></tr>
-      </table>
-      <p style="margin-top:5px">Additional $1,550 deduction per person age 65+. This planner uses the base figures as a conservative estimate.</p>
+      <h4>How interest, dividends and gains are taxed here</h4>
+      <p><strong>Each year.</strong> Interest and dividends earned in a taxable account are added to income and taxed, even when they stay invested. The tax is paid from your cash flow, and the money stays in the account.</p>
+      <p><strong>When you sell.</strong> The planner tracks each account's cost basis. If spending forces a sale, the share of the sale above the basis is a gain, taxed at 0%, 15% or 20% depending on total taxable income. It draws a little extra to cover that tax.</p>
+      <p><strong>Stacking.</strong> Gains sit on top of ordinary income. Ordinary income fills the 0% gain band first, so a retiree with little other income can often sell shares at a 0% federal rate.</p>
+      <p><strong>Social Security.</strong> Dividends and gains raise provisional income, so they can make more of the Social Security taxable.</p>
+      <p><strong>Not modelled.</strong> The stepped-up basis at death, losses used to offset gains, state tax on gains different from the flat state rate, the alternative minimum tax, tax-free municipal bond interest, Medicare IRMAA surcharges, and the 3.8% tax on rental income.</p>
     </div>
 
     <div class="info-sec">
-      <h4>Gift Tax Rules (2024)</h4>
-      <p><strong>Annual exclusion:</strong> $18,000 per recipient per year. Gifts up to this amount require no reporting.</p>
-      <p><strong>Lifetime exemption:</strong> $13,610,000 per person. Gift tax is rarely owed below this cumulative threshold.</p>
+      <h4>Gift Tax Rules (2026)</h4>
+      <p><strong>Annual exclusion:</strong> $19,000 per recipient per year. Gifts up to this amount require no reporting.</p>
+      <p><strong>Lifetime exemption:</strong> $15,000,000 per person (2026). Gift tax is rarely owed below this cumulative threshold.</p>
       <p><strong>Direct tuition payments</strong> to educational institutions are excluded from gift tax entirely (any amount).</p>
       <p><strong>Medical payments</strong> directly to providers are also excluded.</p>
       <h4 style="margin-top:10px">Required Minimum Distributions</h4>
@@ -514,7 +527,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <tr><td>Business sale</td><td>Capital gains if stock sale; ordinary income if asset sale. Get a CPA involved.</td></tr>
         <tr><td>RSU / equity vesting</td><td>Taxed as ordinary income (W-2) in the year received.</td></tr>
         <tr><td>Insurance payout</td><td>Life insurance death benefits are usually tax-free.</td></tr>
-        <tr><td>Gift received</td><td>Not taxable to recipient. Giver files a return if over $18k/person/year.</td></tr>
+        <tr><td>Gift received</td><td>Not taxable to recipient. Giver files a return if over $19k/person/year.</td></tr>
         <tr><td>Charitable donation</td><td>Deductible up to 60% of AGI for cash gifts to qualifying charities when itemising.</td></tr>
         <tr><td>Legal settlement</td><td>Physical injury awards generally tax-free; punitive/employment awards taxable.</td></tr>
         <tr><td>Large purchases</td><td>No deduction. Directly reduces account balances.</td></tr>
@@ -523,8 +536,13 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
       </table>
     </div>
 
+    <div class="info-sec">
+      <h4>Glossary</h4>
+      <div id="glossary"></div>
+    </div>
+
     <div class="info-disc">
-      These figures are illustrative and based on 2024/25 US tax law. Tax law changes frequently — always verify with a qualified CPA or financial planner before making decisions. This planner uses simplified tax estimates; actual liability will vary based on deductions, credits, filing status, state law, and other factors. Investment returns are assumptions, not guarantees. Sequence-of-returns risk (poor early returns permanently damaging the portfolio) is not modelled.
+      These figures are illustrative and based on 2026 US tax law. Tax law changes frequently — always verify with a qualified CPA or financial planner before making decisions. This planner uses simplified tax estimates; actual liability will vary based on deductions, credits, filing status, state law, and other factors. Investment returns are assumptions, not guarantees. Sequence-of-returns risk (poor early returns permanently damaging the portfolio) is not modelled.
     </div>
   </div>
 </div>
@@ -593,6 +611,18 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <p class="note" style="margin-top:8px">Tax guidance for each event type is shown on each card below. For full details on tax brackets, gift limits, and required minimum distributions, open the <button onclick="toggleInfo()" style="background:none;border:none;padding:0;font-size:10.5px;color:var(--navy);cursor:pointer;text-decoration:underline;font-family:var(--font-sans);font-style:italic">Info &amp; Assumptions Panel</button> in the header.</p>
       </div>
     </div>
+    <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Market Events for this Scenario <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the savings account, or a property slump. Each scenario has its own list. Tick the accounts an event affects; with nothing ticked explicitly it hits every financial account.</p>
+        <div id="me-list"></div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div><!-- /lpane -->
@@ -606,6 +636,15 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
     </div>
   </div>
   <div id="met-grid" class="met-grid"></div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;margin-bottom:4px;font-size:11px;color:var(--mu)">
+    <label for="chart-view" data-help="chartView">Chart view</label>
+    <select id="chart-view" onchange="setChartView(this.value)" style="font-size:11.5px;border:1px solid var(--brd);border-radius:4px;padding:2px 4px">
+      <option value="bars">Stacked bars</option>
+      <option value="area">Stacked area</option>
+      <option value="lines">Separate lines</option>
+    </select>
+  </div>
+  <div id="cmp-wrap"></div>
   <div class="cleg" id="cleg"></div>
   <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
   <div class="resbar">
@@ -622,22 +661,135 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-/* ══ TOOLTIP ══ */
+/* ══ HELP SYSTEM ══
+   Two ways to attach help to an element:
+   - data-help="key"  looks the text up in the HELP glossary below (title + explanation)
+   - data-tip="text"  plain text, used for one-off hints
+   A small "?" button is added automatically after any label or table heading that carries
+   either attribute, and qm('key') produces the same button inside templates.
+   The text shows on hover and on keyboard focus. Click or press Enter to pin it
+   (this is how touch screens open it), and press Escape or click elsewhere to close. */
 const ttEl=document.getElementById('tt');
-let ttT=null;
+let ttT=null,ttPin=null;
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function qm(key){return `<span class="qm" tabindex="0" role="button" aria-label="Help" data-help="${key}">?</span>`;}
+function helpFor(el){
+  const h=el.dataset.help&&HELP[el.dataset.help];
+  return h?{t:h.t,d:h.d}:{t:'',d:el.dataset.tip||''};
+}
+function showTip(el){
+  const {t,d}=helpFor(el);if(!d)return;
+  ttEl.innerHTML=(t?'<b>'+esc(t)+'</b>':'')+esc(d);
+  ttEl.style.display='block';
+  const r=el.getBoundingClientRect(),tw=ttEl.offsetWidth,th=ttEl.offsetHeight;
+  let left=r.left+r.width/2-tw/2,top=r.top-th-10;
+  left=Math.max(6,Math.min(left,window.innerWidth-tw-6));
+  if(top<6)top=r.bottom+8;
+  ttEl.style.left=left+'px';ttEl.style.top=top+'px';
+}
+function hideTip(){clearTimeout(ttT);ttEl.style.display='none';if(ttPin){ttPin.classList.remove('on');ttPin=null;}}
+const TIP_SEL='[data-tip],[data-help]';
 document.addEventListener('mouseover',e=>{
-  const t=e.target.closest('[data-tip]');if(!t)return;
-  clearTimeout(ttT);ttT=setTimeout(()=>{
-    const r=t.getBoundingClientRect();
-    ttEl.textContent=t.dataset.tip;ttEl.style.display='block';
-    const tw=ttEl.offsetWidth,th=ttEl.offsetHeight;
-    let left=r.left+r.width/2-tw/2,top=r.top-th-10;
-    left=Math.max(6,Math.min(left,window.innerWidth-tw-6));
-    if(top<6)top=r.bottom+8;
-    ttEl.style.left=left+'px';ttEl.style.top=top+'px';
-  },100);
+  const t=e.target.closest(TIP_SEL);if(!t||ttPin)return;
+  clearTimeout(ttT);ttT=setTimeout(()=>showTip(t),100);
 });
-document.addEventListener('mouseout',e=>{if(e.target.closest('[data-tip]')){clearTimeout(ttT);ttEl.style.display='none';}});
+document.addEventListener('mouseout',e=>{if(!ttPin&&e.target.closest(TIP_SEL)){clearTimeout(ttT);ttEl.style.display='none';}});
+document.addEventListener('focusin',e=>{const t=e.target.closest('.qm');if(t&&!ttPin)showTip(t);});
+document.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('.qm')&&!ttPin)ttEl.style.display='none';});
+function togglePin(q){
+  if(ttPin===q){hideTip();return;}
+  hideTip();ttPin=q;q.classList.add('on');showTip(q);
+}
+document.addEventListener('click',e=>{
+  const q=e.target.closest('.qm');
+  if(q){e.preventDefault();e.stopPropagation();togglePin(q);return;}
+  if(ttPin)hideTip();
+},true);
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&ttPin){hideTip();return;}
+  const q=e.target.closest&&e.target.closest('.qm');
+  if(q&&(e.key==='Enter'||e.key===' ')){e.preventDefault();togglePin(q);}
+});
+/* Add a "?" button after every label or heading that has help attached. */
+const QM_SEL='label[data-tip],th[data-tip],label[data-help],th[data-help]';
+function decorateOne(el){
+  if(el.classList.contains('has-qm')||el.querySelector(':scope > .qm'))return;
+  const q=document.createElement('span');
+  q.className='qm';q.tabIndex=0;q.setAttribute('role','button');q.setAttribute('aria-label','Help');
+  if(el.dataset.help)q.dataset.help=el.dataset.help;else q.dataset.tip=el.dataset.tip;
+  q.textContent='?';
+  el.appendChild(q);el.classList.add('has-qm');
+}
+function decorateTips(root){
+  if(root.matches&&root.matches(QM_SEL))decorateOne(root);
+  root.querySelectorAll&&root.querySelectorAll(QM_SEL).forEach(decorateOne);
+}
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)decorateTips(n);}))).observe(document.body,{childList:true,subtree:true});
+
+/* ══ HELP GLOSSARY ══
+   One entry per concept: t is the title, d the explanation. Entries with g:true also
+   appear in the Glossary section of the Info panel, so the wording lives in one place. */
+const HELP={
+  nominalreal:{g:1,t:'Nominal and real values',d:'A nominal amount is the number of dollars in a given year. A real amount is that number adjusted back to today\'s prices, so it shows what the money could buy. Prices rise every year, so a nominal total always looks larger than its real value.'},
+  stress:{g:1,t:'Stress-test return',d:'When switched on, each financial account earns the lower of its own return and this stress-test return. Property accounts do not change. Use it to see how the plan holds up through a long run of weak markets.'},
+  baseReturn:{t:'Default return',d:'This return is given to a new account when you add one. Each account keeps its own return after that, so changing this value does not alter accounts that already exist.'},
+  eur:{t:'Euro display',d:'Shows every amount in euros at the exchange rate below. The calculations stay in dollars and only the display changes.'},
+  currentAge:{t:'Current age',d:'The age of this person today. The first person\'s age fills the Age column of the results. Each person\'s own age decides when their income starts and stops and when they pass.'},
+  linkedPerson:{t:'Linked to person',d:'An income stops when its person passes, and its From and To ages use that person\'s age. Household / Joint income uses the first person\'s age and carries on until the simulation ends.'},
+  incAmount:{t:'Income amount',d:'Enter the amount in today\'s money. Each year it grows by the adjustment on the right, so an income of 20,000 with a 2.5% adjustment pays about 20,500 next year.'},
+  incAges:{t:'From and To age',d:'These ages limit when the income is paid. Leave From blank to start now and To blank to carry on until the person passes.'},
+  adjType:{t:'Adjustment type',d:'Fixed % raises the income by the percentage entered each year. General inflation and Medical inflation follow the matching rate in Settings. No adjustment keeps the amount the same every year.'},
+  taxTreatment:{t:'Tax treatment',d:'Social Security rules tax up to 85% of the benefit depending on your other income. Ordinary income is taxed in full. Tax-exempt income is paid without tax. The planner does not model capital gains rates separately, so that choice is taxed as ordinary income, which is the cautious estimate.'},
+  acctBalance:{t:'Balance',d:'The value of the account today. For property, enter the current market value.'},
+  acctReturn:{t:'Annual return',d:'The growth the account earns each year before fees. Fees and running costs go in the costs box. With the Real growth basis, this figure is the growth above inflation.'},
+  acctType:{t:'Account type',d:'The type decides whether the account is in the drawdown pool and whether required minimum distributions apply from age 73. Property is tracked in total wealth but cannot be drawn on until you add a house sale as a cash event.'},
+  drawOrder:{g:1,t:'Drawdown order',d:'When spending and tax are more than income, money is taken from the first account in the list until it is empty, then from the second, and so on. Use the arrows to change the order.'},
+  rmd:{g:1,t:'Required minimum distribution (RMD)',d:'From age 73 the government requires a minimum withdrawal each year from tax-deferred accounts such as Traditional IRAs and 401(k)s. The planner divides the balance by the IRS life-expectancy factor and taxes the result as ordinary income.'},
+  survivor:{g:1,t:'Survivor benefit',d:'When one person passes, the survivor keeps the higher of the two Social Security benefits and the lower one stops. The higher benefit is paid once a living person\'s own benefit has started. Tax filing also changes from joint to single.'},
+  expAmount:{t:'Expense amount',d:'Enter the amount in today\'s money, as a monthly or yearly figure. Each year it rises with the inflation type chosen in the next column.'},
+  expInfl:{t:'Inflation type',d:'General follows the general inflation rate in Settings. Medical follows the higher medical rate. Fixed keeps the amount the same every year.'},
+  cashEvent:{g:1,t:'Cash event',d:'A one-off sum paid in or out in a single year, such as selling the house or buying a car. The amount is not adjusted for inflation, so enter it in the money of that future year.'},
+  ceAge:{t:'Age of the event',d:'The age of the first person in the year the event happens. The event appears in the results row for that age.'},
+  ceAmount:{t:'Event amount',d:'The amount in the money of that future year. It is not adjusted for inflation, so use a larger figure for an event far away.'},
+  marketEvent:{g:1,t:'Market event',d:'A shock that hits chosen accounts only. The one-off change is applied to the balance at the start of the year. The optional return override then replaces the normal return for the number of years given, which lets you model a slow recovery.'},
+  meTargets:{t:'Accounts affected',d:'Tick the accounts the event hits. If you have not ticked any yourself, the event hits every financial account and leaves property alone.'},
+  sequence:{g:1,t:'Sequence of returns',d:'A fall early in retirement does more lasting damage than the same fall later, because withdrawals take money out while prices are low and that money cannot recover. Move a market event to different ages to see the effect.'},
+  growthBasis:{g:1,t:'Growth basis',d:'Nominal uses the rate exactly as entered. Real treats the rate as growth above inflation, so the account keeps pace with prices and adds the rate on top. Use Real for inflation-linked bonds or for property you expect to follow prices.'},
+  chartView:{t:'Chart view',d:'Stacked bars and stacked area show how the accounts add up to total wealth. Separate lines show each account on its own, with a total line on top, so you can compare how they move.'},
+  todayDollars:{t:'Wealth in today\'s dollars',d:'Total wealth divided by the inflation that has built up since the start, so it shows what the money would buy at today\'s prices. When this line falls while the bars rise, inflation is taking back the growth.'},
+  eventLine:{t:'Market event marker',d:'A red dashed line marks the age of a market event in the current scenario.'},
+  compare:{t:'Scenario comparison',d:'Each row runs one scenario with the same people, income and accounts but its own expenses, cash events and market events. Click a row to switch to that scenario.'},
+  m_startwealth:{t:'Starting wealth',d:'The total of all accounts, including property, at the first age shown.'},
+  m_endwealth:{t:'End wealth',d:'The total of all accounts in the last year of the projection, in future dollars.'},
+  m_funded:{t:'Funded through',d:'The age at which every financial account runs empty. If it never happens, the plan is funded to the end of the projection.'},
+  m_avgtax:{t:'Average annual tax',d:'The mean yearly tax over the projection, from federal brackets and the flat state rate.'},
+  m_cumtaxpd:{t:'Total tax paid',d:'All tax paid over the whole projection added together.'},
+  m_realend:{t:'End wealth in today\'s dollars',d:'End wealth adjusted for inflation, so it shows what the final balance would buy at today\'s prices.'},
+  m_efftax:{t:'Effective tax rate',d:'Average tax divided by average gross income. It is lower than the top bracket because only part of income is taxed at the higher rates.'},
+  m_inflcost:{t:'Inflation erosion',d:'The gap between end wealth and its value in today\'s dollars. It measures the buying power lost to inflation.'},
+  acctKind:{t:'Return comes as',d:'Savings accounts, CDs and bonds pay interest, which is taxed as ordinary income every year. Stocks and funds pay a small dividend each year, taxed at the lower capital gains rates, and the rest of the return is growth in value that is taxed only when shares are sold.'},
+  divYield:{t:'Dividend yield',d:'The share of the balance that stocks and funds pay out as dividends each year. A broad US stock fund pays about 1.5% to 2%. The planner treats dividends as qualified, taxed at the capital gains rates, and reinvests them. They are part of the account return, not extra to it.'},
+  costBasis:{g:1,t:'Cost basis',d:'What you paid for the investments, including dividends reinvested along the way. When you sell, only the gain above the basis is taxed. An account worth $700,000 with a $450,000 basis holds $250,000 of gain, so about 36% of each dollar sold is gain. Your brokerage statement shows the basis.'},
+  indexTax:{g:1,t:'Brackets rise with inflation',d:'The IRS raises the tax brackets, the standard deduction and the capital gains thresholds each year with inflation. Leave this on to model that. Switching it off keeps today\'s figures fixed, which overstates tax in later years because income rises while the brackets stay put.'},
+  ltcg:{g:1,t:'Capital gains and qualified dividends',d:'Profit on investments held longer than a year, and dividends that meet IRS holding rules, are taxed at 0%, 15% or 20% instead of the ordinary rates. In 2026 a couple pays 0% while taxable income is below $98,900 and 15% up to $613,700. The gains are stacked on top of ordinary income, so ordinary income uses up the 0% room first.'},
+  niit:{g:1,t:'Net Investment Income Tax (NIIT)',d:'An extra 3.8% on interest, dividends and gains when adjusted gross income is above $250,000 for a couple or $200,000 for a single person. These thresholds are not raised with inflation. It does not apply to Social Security or to IRA and 401(k) withdrawals.'},
+  agi:{g:1,t:'Adjusted gross income (AGI)',d:'Total taxable income for the year before the standard deduction: wages, pensions, interest, dividends, gains, taxable IRA withdrawals and the taxable part of Social Security. Many tax rules, including the state tax in this planner and the senior deduction, key off it.'},
+  stdDed:{g:1,t:'Standard deduction',d:'An amount of income that is not taxed. For 2026 it is $32,200 for a couple and $16,100 for a single person, plus $1,650 per spouse or $2,050 for a single person aged 65 or over. There is also a temporary extra senior deduction of up to $6,000 per person aged 65 or over for 2025 to 2028, which shrinks to zero as income rises from $150,000 to $250,000 for a couple.'},
+  steppedUp:{g:1,t:'Stepped-up basis',d:'When someone dies, the basis of investments they own is reset to the market value on that day, so the gain built up during life is never taxed. The planner does not model this, so it overstates tax on gains for a surviving spouse and for heirs.'},
+  irmaa:{g:1,t:'IRMAA',d:'Income-Related Monthly Adjustment Amount. Higher-income Medicare enrollees pay more for Part B and Part D premiums, based on income from two years earlier. The planner does not model it. Add the extra cost to the medical expenses if income runs high.'},
+  roth:{g:1,t:'Roth IRA and Roth 401(k)',d:'Retirement accounts funded with money that was already taxed. Growth and qualified withdrawals are tax-free, and the original owner has no required minimum distributions.'},
+  hsa:{g:1,t:'Health Savings Account (HSA)',d:'An account for medical costs. Contributions go in before tax, growth is tax-free, and withdrawals for medical costs are tax-free. The planner treats withdrawals as tax-free.'},
+  c_inv:{t:'Interest and dividends',d:'Interest from savings, CDs and bonds, and dividends from stock funds, earned inside taxable accounts. They are taxed every year even when reinvested. The cash stays in the account, so this column adds to taxable income but not to spendable cash.'},
+  c_gains:{t:'Realised gains',d:'The profit locked in when shares in a taxable stock account are sold to cover spending. Only the part above your cost basis is a gain. It is taxed at the capital gains rates.'},
+  c_pension:{t:'Pension and other income',d:'Taxable income other than Social Security, such as pensions, annuities, rent and wages. Tax-exempt income is included here but is not taxed.'},
+  c_wd:{t:'Taxable withdrawals',d:'Money taken from tax-deferred accounts (Traditional IRA, 401(k) and similar) beyond the required minimum, to cover spending. It counts as income and is taxed, so more comes out than the gap it fills.'},
+  c_gross:{t:'Gross income',d:'Social Security, taxable pension and other income, interest and dividends, required minimum distributions, taxable withdrawals and realised gains, before tax. Tax-exempt income is left out.'},
+  c_tax:{t:'Tax',d:'Federal income tax from the brackets in the Info panel plus the flat state rate. It is charged on income, interest and dividends, required distributions, withdrawals from tax-deferred accounts and gains realised in taxable accounts, at the capital gains rates where they apply. Roth and HSA withdrawals and the cost basis of taxable sales are not taxed.'},
+  c_expenses:{t:'Expenses',d:'The spending for the active scenario this year after inflation, plus any yearly costs entered on accounts.'},
+  c_ceio:{t:'Cash events',d:'One-off amounts paid in (green) or out (red) in this year.'},
+  c_draw:{t:'Extra draw or surplus',d:'When income does not cover spending, the shortfall is drawn from accounts in drawdown order. When it does, the surplus is added to the first taxable or cash account. Withdrawals from tax-deferred accounts are taxed (see Taxable withdrawals). Interest and capital gains tax on taxable accounts are not modelled, so tax is slightly understated there.'},
+  c_total:{t:'Total wealth',d:'The balance of every account at the end of the year, in that year\'s dollars.'},
+};
 
 /* ══ RESIZER ══ */
 (()=>{
@@ -675,11 +827,16 @@ const RMD_T={72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:
 
 // Account types that are subject to Required Minimum Distributions
 const RMD_TYPES=new Set(['traditional','403b','457b','sep_ira']);
+// Taxable accounts: interest and dividends are taxed each year, gains when shares are sold
+const TAXABLE_TYPES=new Set(['taxable','trust','cd']);
+const acctKind=a=>a.kind||(a.type==='cd'?'interest':'stock');
+const acctDiv=a=>(a.divYield===undefined||a.divYield===''||a.divYield===null)?1.8:+a.divYield;
+const acctBasis=a=>(a.basis===undefined||a.basis===''||a.basis===null)?a.balance:+a.basis;
 
 /* ══ DEFAULT STATE ══ */
 const DEF={
   endAge:95,genInfl:2.5,medInfl:5.5,retRate:6.5,stressRate:3.0,
-  useStress:false,stateTax:0,showEur:false,eurRate:0.92,
+  useStress:false,stateTax:0,indexTax:true,showEur:false,eurRate:0.92,
   people:[
     {id:1,name:'Father',currentAge:70,deathAge:85},
     {id:2,name:'Mother',currentAge:68,deathAge:88},
@@ -691,8 +848,8 @@ const DEF={
   ],_niid:4,
   accounts:[
     {id:1,label:'Investment Fund (IRA/401k)',balance:3000000,rate:6.5,type:'traditional',drawOrder:1,annualCost:0},
-    {id:2,label:'Brokerage Account',balance:700000,rate:5.5,type:'taxable',drawOrder:2,annualCost:0},
-    {id:3,label:'Joint Savings',balance:300000,rate:4.5,type:'taxable',drawOrder:3,annualCost:0},
+    {id:2,label:'Brokerage Account',balance:700000,rate:5.5,type:'taxable',kind:'stock',divYield:1.8,basis:450000,drawOrder:2,annualCost:0},
+    {id:3,label:'Joint Savings',balance:300000,rate:4.5,type:'taxable',kind:'interest',drawOrder:3,annualCost:0},
   ],_naid:4,
   activeScenario:0,
   scenarios:[
@@ -726,10 +883,10 @@ const DEF={
       {id:5,label:'Family visits & transport',amount:6000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     ],cashEvents:[]},
   ],_nsid:4,_neid:8,_ncid:3,
-  cols:{ss:true,pension:true,rmd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  cols:{ss:true,pension:true,rmd:true,wd:true,inv:true,gains:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
   /* colOrder controls the left-to-right display order in the results table.
      Keys must match the keys in cols. Drag-and-drop updates this array. */
-  colOrder:['ss','pension','rmd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  colOrder:['ss','pension','rmd','wd','inv','gains','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -738,18 +895,18 @@ const DEF={
    All income and cash events are absent so the user builds from scratch. */
 const BLANK={
   endAge:95,genInfl:2.5,medInfl:5.5,retRate:6.5,stressRate:3.0,
-  useStress:false,stateTax:0,showEur:false,eurRate:0.92,
+  useStress:false,stateTax:0,indexTax:true,showEur:false,eurRate:0.92,
   people:[{id:1,name:'Person 1',currentAge:65,deathAge:90}],_npid:2,
   incomes:[],_niid:1,
   accounts:[
     {id:1,label:'Investment Account',balance:0,rate:6.5,type:'traditional',drawOrder:1,annualCost:0},
-    {id:2,label:'Savings Account',balance:0,rate:4.5,type:'taxable',drawOrder:2,annualCost:0},
+    {id:2,label:'Savings Account',balance:0,rate:4.5,type:'taxable',kind:'interest',drawOrder:2,annualCost:0},
   ],_naid:3,
   activeScenario:0,
   scenarios:[{id:1,name:'General',expenses:[],cashEvents:[]}],
   _nsid:2,_neid:1,_ncid:1,
-  cols:{ss:true,pension:true,rmd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
-  colOrder:['ss','pension','rmd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  cols:{ss:true,pension:true,rmd:true,wd:true,inv:true,gains:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  colOrder:['ss','pension','rmd','wd','inv','gains','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -769,6 +926,12 @@ if(!S.cols)S.cols=JSON.parse(JSON.stringify(DEF.cols));
 if(!S.mets)S.mets=JSON.parse(JSON.stringify(DEF.mets));
 // v8: add colOrder for draggable column ordering
 if(!S.colOrder)S.colOrder=JSON.parse(JSON.stringify(DEF.colOrder));
+// v11: taxable withdrawals column
+if(!S.colOrder.includes('wd')){const i=S.colOrder.indexOf('rmd');S.colOrder.splice(i<0?0:i+1,0,'wd');}
+if(S.cols.wd===undefined)S.cols.wd=true;
+// v12: interest, dividends and realised gains columns; tax brackets rise with inflation
+['inv','gains'].forEach(k=>{if(!S.colOrder.includes(k)){const i=S.colOrder.indexOf(k==='inv'?'wd':'inv');S.colOrder.splice(i<0?0:i+1,0,k);}if(S.cols[k]===undefined)S.cols[k]=true;});
+if(S.indexTax===undefined)S.indexTax=true;
 // v7: migrate global cashEvents into the first scenario (if the global array exists)
 if(S.cashEvents&&S.cashEvents.length){
   if(!S.scenarios[0].cashEvents)S.scenarios[0].cashEvents=[];
@@ -781,6 +944,11 @@ if(!S._ncid)S._ncid=3;
 // endAge is now stored; fall back to 95
 if(!S.endAge)S.endAge=95;
 delete S.startAge; // replaced by S.people[0].currentAge
+// v10: per-account growth basis + colour, per-scenario market events, chart view
+S.accounts.forEach(a=>{if(!a.growth)a.growth='nominal';if(a.color===undefined)a.color='';});
+S.scenarios.forEach(sc=>{if(!sc.marketEvents)sc.marketEvents=[];});
+if(!S._nmid)S._nmid=1;
+if(!S.chartView)S.chartView='bars';
 
 /* Account and chart colors */
 const ACCT_CLR=['#1b2f4a','#b8892b','#2d6a4f','#b83232','#7366c8','#0c7c84']; // financial accounts
@@ -791,34 +959,108 @@ function fmt(n){if(n===null||n===undefined)return'—';const v=S.showEur?Math.ro
 function fmtK(n){const v=S.showEur?n*S.eurRate:n,sym=S.showEur?'€':'$';if(Math.abs(v)>=1e6)return sym+(v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return sym+Math.round(v/1e3)+'k';return sym+Math.round(v);}
 function toAnn(v,p){return p==='mo'?v*12:v;}
 function disp(a,p){return p==='mo'?+(a/12).toFixed(2):a;}
+/* Balance-weighted average of the financial accounts' own return rates, for report headers. */
+function blendedReturn(){
+  const fin=S.accounts.filter(a=>a.type!=='property'),tot=fin.reduce((t,a)=>t+a.balance,0);
+  return tot>0?fin.reduce((t,a)=>t+a.balance*a.rate,0)/tot:0;
+}
+/* Text for one year's events in an export: deaths by name, everything else by label. */
+const evText=e=>e.type==='death'?e.name+' passes':e.label;
+const tgtNames=ev=>{
+  const acc=S.accounts.filter(a=>ev.targets&&ev.targets.length?ev.targets.includes(a.id):a.type!=='property');
+  return acc.length?acc.map(a=>a.label).join(', '):'No accounts';
+};
+const growthL=a=>a.growth==='real'?'Real (above inflation)':'Nominal';
 
 /* ══ TAX ══
-   Simplified US federal income tax using 2024/25 brackets.
-   Social Security provisional income test (IRS Pub. 915):
-     provisional = (non-SS income) + SS×0.5
-     > $44,000 MFJ / $34,000 single → 85% of SS taxable
-     > $32,000 MFJ / $25,000 single → 50% of SS taxable
-   AGI = non-SS income + taxable SS portion
-   Taxable income = max(0, AGI − standard deduction)
-   State income tax = flat % of AGI
-   NOTE: MFJ status assumed when ≥2 people alive; single when 1 remains.
-   For >2 people, additional members' incomes are taxed as ordinary income (simplification).
+   Simplified US federal income tax using 2026 figures (IRS Rev. Proc. 2025-32 and the 2025 tax law).
+   Income is split into three layers:
+     ordinary   wages, pensions, interest, taxable withdrawals from IRAs and 401(k)s, rent
+     preferred  qualified dividends and long-term capital gains, taxed at 0%, 15% or 20%,
+                stacked on top of the ordinary income
+     Social Security, of which 0% to 85% is taxable (IRS Pub. 915, worksheet)
+   AGI = ordinary + preferred + taxable Social Security.
+   Taxable income = AGI minus the standard deduction (plus the extra amount for each person 65+)
+   minus the temporary senior deduction (2025 to 2028).
+   Net Investment Income Tax: 3.8% of the smaller of investment income and AGI above $200,000 / $250,000.
+   State income tax = flat % of AGI.
+   By default the brackets, deductions and gain thresholds rise with inflation each year, as they do
+   in practice. Social Security thresholds, the senior deduction and NIIT thresholds are not indexed.
+   NOTE: MFJ status assumed when 2 or more people are alive; single when 1 remains.
 */
-function calcTax(gross,ssTotal,single){
-  const pv=(gross-ssTotal)+ssTotal*0.5;
-  const th=single?{n:25000,h:34000}:{n:32000,h:44000};
+const TAX26={
+  single:{std:16100,add65:2050,
+    ord:[[12400,.10],[50400,.12],[105700,.22],[201775,.24],[256225,.32],[640600,.35],[1e13,.37]],
+    ltcg:[49450,545500],ssT:{n:25000,h:34000},niit:200000,senior:75000},
+  mfj:{std:32200,add65:1650,
+    ord:[[24800,.10],[100800,.12],[211400,.22],[403550,.24],[512450,.32],[768700,.35],[1e13,.37]],
+    ltcg:[98900,613700],ssT:{n:32000,h:44000},niit:250000,senior:150000},
+};
+function taxParts(gross,ssTotal,single,o){
+  o=o||{};
+  const T=single?TAX26.single:TAX26.mfj,idx=o.idx||1,n65=o.n65||0,yr=o.yr||2026;
+  const nonSS=gross-ssTotal;
+  const pref=Math.max(0,Math.min(o.pref||0,nonSS));
+  const ordInc=nonSS-pref;
+  // Taxable part of Social Security (IRS Pub. 915): half of the excess over the first threshold,
+  // then 85% of the excess over the second threshold, capped at 85% of the benefit.
+  const pv=nonSS+ssTotal*0.5;
   let tss=0;
-  if(pv>th.h)tss=ssTotal*0.85;
-  else if(pv>th.n)tss=ssTotal*0.5;
-  const agi=(gross-ssTotal)+tss;
-  const std=single?15000:30000;
-  const tx=Math.max(0,agi-std);
-  const b=single
-    ?[[11600,.10],[47150,.12],[100525,.22],[191950,.24],[243725,.32],[609350,.35],[1e9,.37]]
-    :[[23200,.10],[94300,.12],[201050,.22],[383900,.24],[487450,.32],[731200,.35],[1e9,.37]];
-  let tax=0,pr=0;
-  for(const[l,r]of b){if(tx<=pr)break;tax+=(Math.min(tx,l)-pr)*r;pr=l;}
-  return Math.round(tax+agi*S.stateTax/100);
+  if(ssTotal>0&&pv>T.ssT.n){
+    tss=pv<=T.ssT.h
+      ?Math.min(0.5*(pv-T.ssT.n),0.5*ssTotal)
+      :Math.min(0.85*(pv-T.ssT.h)+Math.min(0.5*ssTotal,0.5*(T.ssT.h-T.ssT.n)),0.85*ssTotal);
+  }
+  const agi=ordInc+pref+tss;
+  const std=(T.std+n65*T.add65)*idx;
+  const senior=(n65>0&&yr<=2028)?n65*Math.max(0,6000-0.06*Math.max(0,agi-T.senior)):0;
+  const taxable=Math.max(0,agi-std-senior);
+  const prefT=Math.min(pref,taxable),ordT=taxable-prefT;
+  let ordTax=0,pr=0;
+  for(const[l,r]of T.ord){const L=l*idx;if(ordT<=pr)break;ordTax+=(Math.min(ordT,L)-pr)*r;pr=L;}
+  const seg=(a,b)=>Math.max(0,Math.min(ordT+prefT,b)-Math.max(ordT,a));
+  const L0=T.ltcg[0]*idx,L1=T.ltcg[1]*idx;
+  const prefTax=0.15*seg(L0,L1)+0.20*seg(L1,1e15);
+  const niit=0.038*Math.min(Math.max(0,o.nii||0),Math.max(0,agi-T.niit));
+  const state=agi*S.stateTax/100;
+  return{total:Math.round(ordTax+prefTax+niit+state),ordTax,prefTax,niit,state,agi,taxable,std,senior};
+}
+function calcTax(gross,ssTotal,single,o){return taxParts(gross,ssTotal,single,o).total;}
+
+
+/* ══ INFO PANEL: TAX TABLES BUILT FROM THE MODEL'S OWN CONSTANTS ══ */
+function buildTaxInfo(){
+  const f=n=>'$'+Math.round(n).toLocaleString('en-US');
+  const ordRows=T=>{let prev=0;return T.ord.map(([l,r],i)=>{const row=i===T.ord.length-1?`<tr><td>Over ${f(prev)}</td><td>${Math.round(r*100)}%</td></tr>`:`<tr><td>${f(prev?prev+1:0)} – ${f(l)}</td><td>${Math.round(r*100)}%</td></tr>`;prev=l;return row;}).join('');};
+  const M=TAX26.mfj,Sg=TAX26.single;
+  document.getElementById('info-tax').innerHTML=`<h4>2026 Federal Income Tax Brackets</h4>
+    <p>Applied to taxable income, which is AGI minus the deductions below. The brackets rise with inflation each year in the projection unless you switch that off in Settings.</p>
+    <p><strong>Married Filing Jointly (MFJ)</strong>, used while both people are alive</p>
+    <table class="info-tbl"><tr><th>Taxable income</th><th>Rate</th></tr>${ordRows(M)}</table>
+    <p style="margin-top:5px"><strong>Single</strong>, used after one person passes</p>
+    <table class="info-tbl"><tr><th>Taxable income</th><th>Rate</th></tr>${ordRows(Sg)}</table>
+    <h4 style="margin-top:10px">Capital gains and qualified dividends, 2026</h4>
+    <p>Taxed at lower rates, stacked on top of ordinary taxable income.</p>
+    <table class="info-tbl"><tr><th>Rate</th><th>MFJ taxable income</th><th>Single taxable income</th></tr>
+      <tr><td>0%</td><td>up to ${f(M.ltcg[0])}</td><td>up to ${f(Sg.ltcg[0])}</td></tr>
+      <tr><td>15%</td><td>${f(M.ltcg[0]+1)} – ${f(M.ltcg[1])}</td><td>${f(Sg.ltcg[0]+1)} – ${f(Sg.ltcg[1])}</td></tr>
+      <tr><td>20%</td><td>over ${f(M.ltcg[1])}</td><td>over ${f(Sg.ltcg[1])}</td></tr></table>
+    <p style="margin-top:5px"><strong>Net Investment Income Tax:</strong> an extra 3.8% on the smaller of investment income and the AGI above ${f(M.niit)} (MFJ) or ${f(Sg.niit)} (single). Not raised with inflation.</p>
+    <h4 style="margin-top:10px">Deductions, 2026</h4>
+    <table class="info-tbl">
+      <tr><td>Standard deduction, MFJ</td><td>${f(M.std)}</td></tr>
+      <tr><td>Standard deduction, single</td><td>${f(Sg.std)}</td></tr>
+      <tr><td>Extra for each person 65+ (MFJ, per spouse)</td><td>${f(M.add65)}</td></tr>
+      <tr><td>Extra for a single person 65+</td><td>${f(Sg.add65)}</td></tr>
+      <tr><td>Senior deduction, per person 65+, 2025 to 2028</td><td>up to $6,000</td></tr>
+    </table>
+    <p style="margin-top:5px">The senior deduction falls by 6 cents for each dollar of AGI above ${f(M.senior)} (MFJ) or ${f(Sg.senior)} (single), and ends after 2028. The planner applies it for each person aged 65 or over through 2028.</p>
+    <h4 style="margin-top:10px">Social Security taxation (IRS Pub. 915)</h4>
+    <p>Provisional income = all other income + half of Social Security. The taxable share of Social Security climbs from 0% to a maximum of 85% as provisional income passes the thresholds. These thresholds are not raised with inflation.</p>
+    <table class="info-tbl"><tr><th>Provisional income</th><th>Share of Social Security taxed</th></tr>
+      <tr><td>Under ${f(M.ssT.n)} (MFJ) / ${f(Sg.ssT.n)} (single)</td><td>0%</td></tr>
+      <tr><td>${f(M.ssT.n)}–${f(M.ssT.h)} (MFJ) / ${f(Sg.ssT.n)}–${f(Sg.ssT.h)} (single)</td><td>Up to 50%</td></tr>
+      <tr><td>Over ${f(M.ssT.h)} (MFJ) / ${f(Sg.ssT.h)} (single)</td><td>Up to 85%</td></tr></table>`;
 }
 
 /* ══ INCOME TYPE DEFINITIONS ══ */
@@ -836,15 +1078,15 @@ const CE_T={
   house:{label:'House sale proceeds',dir:'in',tax:'Primary residence exclusion: up to $500,000 excluded from capital gains (married couple; must have lived there 2 of last 5 years). Enter net proceeds after any estimated tax.'},
   inheritance:{label:'Inheritance received',dir:'in',tax:'Generally income-tax-free to recipient in the US. Inherited investments receive a stepped-up cost basis, minimising capital gains if sold promptly.'},
   insurance:{label:'Insurance / life policy payout',dir:'in',tax:'Life insurance death benefits are usually tax-free. Annuity payouts may be partially taxable.'},
-  giftin:{label:'Gift received',dir:'in',tax:'Not taxable to recipient. Giver must file a gift tax return if over $18,000 per person per year (2024 annual exclusion).'},
+  giftin:{label:'Gift received',dir:'in',tax:'Not taxable to recipient. Giver must file a gift tax return if over $19,000 per person per year (2026 annual exclusion).'},
   assetsale:{label:'Asset / investment sale',dir:'in',tax:'Enter net proceeds after estimated capital gains tax. Long-term gains (held >1 year) taxed at 0%, 15%, or 20% depending on income.'},
   business_sale:{label:'Business sale / equity event',dir:'in',tax:'Capital gains treatment if structured as stock sale; ordinary income if asset sale. A tax attorney and CPA should be involved in structuring a business sale.'},
-  rsus:{label:'RSU / stock options vesting',dir:'in',tax:'Taxed as ordinary income in the year received (W-2 income). Any subsequent growth after vesting is taxed as capital gains.'},
+  rsus:{label:'RSU / stock options vesting',dir:'in',taxable:true,tax:'Taxed as ordinary income in the year received (W-2 income). The planner adds the amount to that year\'s income and taxes it, so enter the gross value. Any later growth is taxed as capital gains.'},
   settlement:{label:'Legal or insurance settlement',dir:'in',tax:'Physical injury settlements are generally tax-free. Punitive damages, emotional distress awards, and employment settlements are typically taxable. Verify with a CPA.'},
   otherin:{label:'Other inflow',dir:'in',tax:'Verify tax treatment with a CPA for unusual income sources.'},
   purchase:{label:'Large purchase',dir:'out',tax:'No tax deduction. Directly reduces account balances.'},
   renovation:{label:'Home renovation',dir:'out',tax:'No immediate tax deduction. Improvements increase your property cost basis, which reduces future capital gains when the home is sold.'},
-  giftout:{label:'Gift given',dir:'out',tax:'Not deductible. Giver must file a gift tax return if over $18,000 per recipient per year. Lifetime exemption of ~$13.6M (2024) before gift tax is actually owed.'},
+  giftout:{label:'Gift given',dir:'out',tax:'Not deductible. Giver must file a gift tax return if over $19,000 per recipient per year. Lifetime exemption of $15M (2026) before gift tax is actually owed.'},
   medical_exp:{label:'Large medical expense',dir:'out',tax:'Medical expenses exceeding 7.5% of AGI may be deductible if you itemise. Consult a CPA. High costs may be partially offset by HSA withdrawals.'},
   charity:{label:'Charitable donation',dir:'out',tax:'Cash donations to qualifying charities are deductible up to 60% of AGI when you itemise. Appreciated securities donated directly can avoid capital gains entirely.'},
   education:{label:'Education costs (family)',dir:'out',tax:'Not directly deductible for grandchildren. 529 plan contributions are not federally deductible but grow tax-free. Direct tuition payments to institutions are excluded from gift tax.'},
@@ -875,10 +1117,33 @@ const CE_T={
    Cash events:
    - Now stored per-scenario (sc.cashEvents) instead of globally.
 */
-function simulate(){
+/* Does a market event apply to this account?
+   ev.targets is a list of account ids; an empty or missing list means every
+   financial (non-property) account. Property is only hit when named explicitly. */
+function evTargets(ev,a){
+  if(ev.targets&&ev.targets.length)return ev.targets.includes(a.id);
+  return a.type!=='property';
+}
+
+/* Annual return for one account in one year.
+   1. Start from the account's own rate. The stress toggle caps financial accounts at the stress rate.
+   2. A market event with a "then return X% for N years" override replaces that rate while active.
+   3. Growth basis "real" treats the rate as a return above general inflation,
+      so the nominal growth is (1+rate)(1+inflation)-1. "nominal" uses the rate as entered. */
+function acctReturn(a,sc,tableAge){
+  let r=a.rate;
+  if(S.useStress&&a.type!=='property')r=Math.min(r,S.stressRate);
+  for(const ev of (sc.marketEvents||[])){
+    if(ev.years>0&&ev.rate!==''&&ev.rate!==null&&ev.rate!==undefined&&tableAge>=ev.age&&tableAge<ev.age+ev.years&&evTargets(ev,a))r=+ev.rate;
+  }
+  r/=100;
+  if(a.growth==='real')r=(1+r)*(1+S.genInfl/100)-1;
+  return r;
+}
+
+function simulate(scIdx){
   const primaryAge=S.people[0].currentAge;
-  const sc=S.scenarios[S.activeScenario];
-  const fallbackRet=(S.useStress?S.stressRate:S.retRate)/100;
+  const sc=S.scenarios[scIdx===undefined?S.activeScenario:scIdx];
 
   // Max simulation years: until primary person hits endAge, or last person dies
   const maxYears=Math.min(
@@ -889,6 +1154,8 @@ function simulate(){
   // All accounts sorted by drawOrder (property accounts stay in the array but skip drawdown)
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   let bals=sorted.map(a=>a.balance);
+  // Cost basis of each taxable account (what was paid in, including reinvested income)
+  const basis=sorted.map(a=>TAXABLE_TYPES.has(a.type)?acctBasis(a):0);
 
   // Hoist SS stream list — never changes during the loop
   const allSS=S.incomes.filter(i=>i.type==='ss');
@@ -911,6 +1178,14 @@ function simulate(){
         events.push({type:'death',pid:p.id,name:p.name});
       }
     });
+    // ── Market events: one-off shock to targeted accounts at the start of the year ──
+    // Applied before RMDs and growth, so a crash also shrinks that year's RMD base.
+    for(const ev of (sc.marketEvents||[])){
+      if(ev.age===tableAge&&ev.shockPct){
+        sorted.forEach((a,i)=>{if(evTargets(ev,a))bals[i]*=(1+ev.shockPct/100);});
+        events.push({type:'market',label:ev.label});
+      }
+    }
     const livePeople=S.people.filter(p=>!dead[p.id]);
     // MFJ filing for 2 people; single for 1; note: >2 uses MFJ as a simplification
     const singleFiler=livePeople.length<=1;
@@ -919,7 +1194,7 @@ function simulate(){
     const medY =Math.pow(1+S.medInfl/100,y);
 
     // ── Income streams (each linked person uses their own age for timing) ──────
-    let ssTotal=0,otherInc=0;
+    let ssTotal=0,otherInc=0,exemptInc=0;
     const survivingSSAmounts=[];
     for(const inc of S.incomes){
       const person=S.people.find(p=>p.id===inc.pid);
@@ -932,15 +1207,18 @@ function simulate(){
       const adj=inc.adjType==='general'?inflY:inc.adjType==='medical'?medY:inc.adjType==='none'?1:Math.pow(1+(inc.adj||0)/100,y);
       const ann=inc.amount*adj;
       if(inc.type==='ss')survivingSSAmounts.push({pid:inc.pid,amt:ann});
+      else if(inc.taxType==='exempt')exemptInc+=ann; // paid in full, outside gross income and tax
       else otherInc+=ann;
     }
 
     // ── Social Security survivor benefit ──────────────────────────────────────
-    if(survivingSSAmounts.length===0&&allSS.length>0){
-      ssTotal=0; // all SS recipients have passed
-    } else if(survivingSSAmounts.length<allSS.length&&survivingSSAmounts.length>0){
-      // One died: survivor gets the highest of all original amounts at this year's COLA
-      ssTotal=Math.max(...allSS.map(inc=>inc.amount*Math.pow(1+(inc.adj||0)/100,y)));
+    // The survivor rule applies only when a recipient has actually passed. A benefit that
+    // has simply not started yet (a later From age) must not trigger it.
+    const annOf=inc=>inc.amount*(inc.adjType==='general'?inflY:inc.adjType==='medical'?medY:inc.adjType==='none'?1:Math.pow(1+(inc.adj||0)/100,y));
+    const ssRecipientGone=allSS.some(i=>i.pid!==0&&dead[i.pid]);
+    if(ssRecipientGone){
+      // Survivor keeps the highest benefit, once a living recipient is claiming
+      ssTotal=survivingSSAmounts.length?Math.max(...allSS.map(annOf)):0;
     } else {
       ssTotal=survivingSSAmounts.reduce((t,x)=>t+x.amt,0);
     }
@@ -959,10 +1237,28 @@ function simulate(){
       });
     }
 
-    const gross=ssTotal+otherInc+rmdTotal;
-    const tax=calcTax(gross,ssTotal,singleFiler);
-    const netInc=gross-tax;
-    cumTax+=tax;
+    // Taxable cash events (RSU vesting) count as ordinary income in their year
+    for(const ce of (sc.cashEvents||[]))if(ce.age===tableAge&&ce.dir==='in'&&CE_T[ce.type]&&CE_T[ce.type].taxable)otherInc+=ce.amount;
+
+    // ── Interest and dividends earned inside taxable accounts ───────────────
+    // They are taxed every year whether or not they are spent. The cash stays in the account
+    // (it is part of the account's return), so the tax is paid from this year's cash flow.
+    let accInt=0,accDiv=0;
+    const acctInc=sorted.map((a,i)=>{
+      if(!TAXABLE_TYPES.has(a.type)||bals[i]<=0)return null;
+      if(acctKind(a)==='interest'){const v=Math.max(0,bals[i]*acctReturn(a,sc,tableAge));accInt+=v;return v;}
+      const v=bals[i]*acctDiv(a)/100;accDiv+=v;return v;
+    });
+    const accInc=accInt+accDiv;
+    const taxIdx=S.indexTax===false?1:inflY;
+    const n65=livePeople.filter(p=>p.currentAge+y>=65).length;
+    const calYear=new Date().getFullYear()+y;
+
+    const gross=ssTotal+otherInc+rmdTotal+accInc;
+    // Tax for the year given extra taxable withdrawals (ordinary) and realised gains (preferred rate)
+    const taxFn=(xOrd,xGain)=>calcTax(gross+xOrd+xGain,ssTotal,singleFiler,{pref:accDiv+xGain,nii:accInc+xGain,n65,idx:taxIdx,yr:calYear});
+    const baseTax=taxFn(0,0);
+    const netInc=gross-accInc-baseTax+exemptInc;
 
     // ── Expenses ─────────────────────────────────────────────────────────────
     let expenses=0;
@@ -979,7 +1275,10 @@ function simulate(){
     // Per-scenario cash events (one-off inflows/outflows)
     let ceIn=0,ceOut=0;
     for(const ce of (sc.cashEvents||[])){
-      if(ce.age===tableAge){ce.dir==='in'?ceIn+=ce.amount:ceOut+=ce.amount;}
+      if(ce.age===tableAge){
+        if(ce.dir==='in'&&CE_T[ce.type]&&CE_T[ce.type].taxable)continue;   // already counted as income
+        ce.dir==='in'?ceIn+=ce.amount:ceOut+=ce.amount;
+      }
     }
 
     const cashflow=netInc-expenses-acctCosts-ceOut+ceIn;
@@ -987,26 +1286,54 @@ function simulate(){
     const surplus  =cashflow>0? cashflow:0;
 
     // ── Update balances ───────────────────────────────────────────────────────
+    acctInc.forEach((v,i)=>{if(v)basis[i]+=v;});   // reinvested interest and dividends raise the basis
     bals=bals.map((b,i)=>{
       const a=sorted[i];
-      const r=(a.rate!==undefined?a.rate:fallbackRet*100)/100;
+      const r=acctReturn(a,sc,tableAge);
       // RMDs only apply to non-property accounts
       const rmd=a.type==='property'?0:acctRmds[i];
       return b*(1+r)-(a.annualCost||0)*inflY-rmd;
     });
 
     // ── Drawdown waterfall (skip property accounts) ───────────────────────────
-    let rem=extraDraw;
+    // Two kinds of withdrawal create tax. Money from tax-deferred accounts (traditional IRA, 401k
+    // and so on) is ordinary income. Money from a stock account carries a share of unrealised
+    // gain, taxed at the capital gains rate. In both cases more has to come out than the spending
+    // gap, so a bisection finds the amount whose after-tax value equals the gap. Roth, HSA,
+    // savings and CD money carries no further tax here.
+    let rem=extraDraw,wd=0,gains=0;
     for(let i=0;i<bals.length;i++){
-      if(sorted[i].type==='property')continue; // property can't be drawn without selling
+      const a=sorted[i];
+      if(a.type==='property')continue; // property can't be drawn without selling
       if(rem<=0)break;
-      const d=Math.min(rem,Math.max(0,bals[i]));
-      bals[i]-=d;rem-=d;
+      const avail=Math.max(0,bals[i]);
+      const isOrd=RMD_TYPES.has(a.type);
+      const isTx=TAXABLE_TYPES.has(a.type);
+      const gf=(isTx&&acctKind(a)==='stock'&&bals[i]>0)?Math.max(0,1-basis[i]/bals[i]):0;
+      if(isOrd||gf>0){
+        const net=e=>e-(taxFn(wd+(isOrd?e:0),gains+(isOrd?0:e*gf))-taxFn(wd,gains));
+        let take;
+        if(net(avail)<=rem)take=avail;
+        else{let lo=0,hi=avail;for(let k=0;k<40;k++){const mid=(lo+hi)/2;if(net(mid)<rem)lo=mid;else hi=mid;}take=hi;}
+        const got=net(take);
+        if(isTx){basis[i]-=take*Math.min(1,basis[i]/bals[i]);gains+=take*gf;}
+        bals[i]-=take;rem-=got;
+        if(isOrd)wd+=take;
+      }else{
+        const d=Math.min(rem,avail);
+        if(isTx&&bals[i]>0)basis[i]-=d*Math.min(1,basis[i]/bals[i]);
+        bals[i]-=d;rem-=d;
+      }
     }
-    // Surplus goes into the first non-property account
+    // Tax for the year now includes tax on those withdrawals and gains
+    const tax=taxFn(wd,gains);
+    cumTax+=tax;
+    // Surplus goes into the first taxable or cash account. Money cannot be paid into a
+    // tax-deferred account here, so those are used only if nothing else exists.
     if(surplus>0){
-      const fi=sorted.findIndex(a=>a.type!=='property');
-      if(fi>=0)bals[fi]+=surplus;
+      let fi=sorted.findIndex(a=>a.type==='taxable'||a.type==='trust'||a.type==='cd');
+      if(fi<0)fi=sorted.findIndex(a=>a.type!=='property');
+      if(fi>=0){bals[fi]+=surplus;if(TAXABLE_TYPES.has(sorted[fi].type))basis[fi]+=surplus;}
     }
 
     const snap=bals.map(b=>Math.round(Math.max(0,b)));
@@ -1017,8 +1344,8 @@ function simulate(){
 
     rows.push({
       age:tableAge,yr:new Date().getFullYear()+y,
-      ss:Math.round(ssTotal),otherInc:Math.round(otherInc),rmd:Math.round(rmdTotal),
-      gross:Math.round(gross),tax:Math.round(tax),cumTax:Math.round(cumTax),
+      ss:Math.round(ssTotal),otherInc:Math.round(otherInc+exemptInc),rmd:Math.round(rmdTotal),
+      wd:Math.round(wd),inv:Math.round(accInc),gains:Math.round(gains),gross:Math.round(gross+wd+gains),tax:Math.round(tax),cumTax:Math.round(cumTax),
       expenses:Math.round(expenses),ceIn:Math.round(ceIn),ceOut:Math.round(ceOut),
       extraDraw:Math.round(extraDraw),surplus:Math.round(surplus),
       snap,total,realTotal,inflLoss:Math.round(inflLoss),
@@ -1046,7 +1373,7 @@ function renderPeople(){
       </div>
       <div class="pblock">
         <div class="g3">
-          <div class="f"><label>Current age</label>
+          <div class="f"><label data-help="currentAge">Current age</label>
             <input type="number" value="${p.currentAge}" min="40" max="100" oninput="pF(${p.id},'currentAge',+this.value)">
           </div>
           <div class="f"><label data-tip="The age at which this person is expected to pass. When this age is reached: their income streams stop; for Social Security, the survivor receives whichever benefit is higher (survivor benefit); tax filing changes to single. The simulation ends when all people have passed or the primary person reaches the end age — whichever comes first.">Predicted age at passing</label>
@@ -1090,26 +1417,26 @@ function renderIncomes(){
       </div>
       <div class="g2" style="margin-bottom:5px">
         <div class="f"><label>Description / label</label><input type="text" value="${inc.label}" oninput="incF(${inc.id},'label',this.value)"></div>
-        <div class="f"><label>Linked to person</label><select onchange="incF(${inc.id},'pid',+this.value)">${pOpts}</select></div>
+        <div class="f"><label data-help="linkedPerson">Linked to person</label><select onchange="incF(${inc.id},'pid',+this.value)">${pOpts}</select></div>
       </div>
       <div class="g2">
         <div>
           <div class="mrow">
-            <div class="f"><label>Amount</label><input type="number" class="mono" value="${disp(inc.amount,inc.prd)}" step="${inc.prd==='mo'?100:1000}" oninput="incAmt(${inc.id},+this.value)"></div>
+            <div class="f"><label data-help="incAmount">Amount</label><input type="number" class="mono" value="${disp(inc.amount,inc.prd)}" step="${inc.prd==='mo'?100:1000}" oninput="incAmt(${inc.id},+this.value)"></div>
             <div class="ftog"><button class="ftb ${inc.prd==='mo'?'act':''}" onclick="incPrd(${inc.id},'mo')">mo</button><button class="ftb ${inc.prd==='yr'?'act':''}" onclick="incPrd(${inc.id},'yr')">yr</button></div>
           </div>
           <div class="g2">
-            <div class="f"><label>From age (blank = start)</label><input type="number" value="${inc.startAge}" placeholder="—" min="40" max="115" oninput="incF(${inc.id},'startAge',this.value)"></div>
+            <div class="f"><label data-help="incAges">From age (blank = start)</label><input type="number" value="${inc.startAge}" placeholder="—" min="40" max="115" oninput="incF(${inc.id},'startAge',this.value)"></div>
             <div class="f"><label>To age (blank = death)</label><input type="number" value="${inc.endAge}" placeholder="—" min="40" max="115" oninput="incF(${inc.id},'endAge',this.value)"></div>
           </div>
         </div>
         <div>
           <div class="f"><label data-tip="${td.adjTip||''}">${td.adjLabel}</label><input type="number" value="${inc.adj}" step="0.1" min="-5" max="15" oninput="incF(${inc.id},'adj',+this.value)"></div>
-          <div class="f"><label>Adjustment type</label><select onchange="incF(${inc.id},'adjType',this.value)">${adjOpts}</select></div>
-          <div class="f"><label>Tax treatment</label><select onchange="incF(${inc.id},'taxType',this.value)">
+          <div class="f"><label data-help="adjType">Adjustment type</label><select onchange="incF(${inc.id},'adjType',this.value)">${adjOpts}</select></div>
+          <div class="f"><label data-help="taxTreatment">Tax treatment</label><select onchange="incF(${inc.id},'taxType',this.value)">
             <option value="ss" ${inc.taxType==='ss'?'selected':''}>Social Security rules (up to 85% taxable)</option>
             <option value="ordinary" ${inc.taxType==='ordinary'?'selected':''}>Ordinary income (fully taxable)</option>
-            <option value="capital" ${inc.taxType==='capital'?'selected':''}>Capital gains rates (0–20%)</option>
+            <option value="capital" ${inc.taxType==='capital'?'selected':''}>Capital gains (taxed as ordinary here)</option>
             <option value="exempt" ${inc.taxType==='exempt'?'selected':''}>Tax-exempt</option>
           </select></div>
         </div>
@@ -1140,11 +1467,11 @@ function renderAccts(){
         ${S.accounts.length>1?`<button class="btn-del" onclick="delAcct(${a.id})">✕</button>`:''}
       </div>
       <div class="g3">
-        <div class="f"><label>${isP?'Current market value ($)':'Balance ($)'}</label><input type="number" class="mono" value="${a.balance}" step="10000" oninput="acctF(${a.id},'balance',+this.value)"></div>
-        <div class="f"><label>${isP?'Annual appreciation %':'Annual return %'}</label><input type="number" value="${a.rate}" step="0.1" min="-5" max="20" oninput="acctF(${a.id},'rate',+this.value)"></div>
+        <div class="f"><label data-help="acctBalance">${isP?'Current market value ($)':'Balance ($)'}</label><input type="number" class="mono" value="${a.balance}" step="10000" oninput="acctF(${a.id},'balance',+this.value)"></div>
+        <div class="f"><label data-help="acctReturn">${(isP?'Annual appreciation %':'Annual return %')+(a.growth==='real'?' (above inflation)':'')}</label><input type="number" value="${a.rate}" step="0.1" min="-5" max="20" oninput="acctF(${a.id},'rate',+this.value)"></div>
         <div class="f"><label data-tip="Annual costs: property tax, HOA, insurance, management fees, maintenance. Inflation-adjusted each year.">${isP?'Annual costs (tax, maint.) $':'Annual fees / costs ($)'}</label><input type="number" class="mono" value="${a.annualCost||0}" step="500" oninput="acctF(${a.id},'annualCost',+this.value)"></div>
       </div>
-      <div class="f" style="margin-bottom:3px"><label>Account / asset type</label>
+      <div class="f" style="margin-bottom:3px"><label data-help="acctType">Account / asset type</label>
         <select onchange="acctF(${a.id},'type',this.value)">
           <optgroup label="Tax-deferred (RMDs apply from age 73)">
             <option value="traditional" ${a.type==='traditional'?'selected':''}>Traditional IRA / 401(k) — taxable withdrawals</option>
@@ -1166,23 +1493,59 @@ function renderAccts(){
           </optgroup>
         </select>
       </div>
+      ${TAXABLE_TYPES.has(a.type)?`<div class="g3" style="margin-bottom:3px">
+        <div class="f"><label data-help="acctKind">Return comes as</label>
+          <select onchange="acctF(${a.id},'kind',this.value)">
+            <option value="interest" ${acctKind(a)==='interest'?'selected':''}>Interest (savings, CD, bonds)</option>
+            <option value="stock" ${acctKind(a)==='stock'?'selected':''}>Stocks and funds</option>
+          </select></div>
+        <div class="f"><label data-help="divYield">Dividend yield %</label>
+          <input type="number" value="${acctDiv(a)}" step="0.1" min="0" max="10" ${acctKind(a)==='stock'?'':'disabled'} oninput="acctF(${a.id},'divYield',+this.value)"></div>
+        <div class="f"><label data-help="costBasis">Cost basis ($)</label>
+          <input type="number" class="mono" value="${Math.round(acctBasis(a))}" step="10000" min="0" ${acctKind(a)==='stock'?'':'disabled'} oninput="acctF(${a.id},'basis',+this.value)"></div>
+      </div>`:''}
+      <div class="g2" style="margin-bottom:3px">
+        <div class="f"><label data-help="growthBasis">Growth basis</label>
+          <select onchange="acctF(${a.id},'growth',this.value)">
+            <option value="nominal" ${a.growth!=='real'?'selected':''}>Nominal (rate as entered)</option>
+            <option value="real" ${a.growth==='real'?'selected':''}>Real (inflation + rate)</option>
+          </select></div>
+        <div class="f"><label>Chart colour</label>
+          <input type="color" value="${acctColor(a)}" style="height:28px;padding:1px 3px" oninput="setAcctColor(${a.id},this.value)">
+          ${a.color?`<button class="btn-xs" style="margin-top:2px" onclick="setAcctColor(${a.id},'');renderAccts()">reset</button>`:''}</div>
+      </div>
       ${!isP?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-        <span style="font-size:10.5px;color:var(--mu)">Drawdown order: ${i+1} — ${i===0?'drawn first':'after account '+i}</span>
+        <span style="font-size:10.5px;color:var(--mu)">Drawdown order: ${i+1} — ${i===0?'drawn first':'after account '+i}${qm('drawOrder')}</span>
         <div style="display:flex;gap:3px">${i>0?`<button class="btn-xs" onclick="moveAcct(${a.id},-1)">↑</button>`:''}${i<S.accounts.length-1?`<button class="btn-xs" onclick="moveAcct(${a.id},1)">↓</button>`:''}</div>
       </div>`:'<p class="note">Property is tracked separately — add a "House sale proceeds" cash event in the Scenarios tab to model a sale.</p>'}
       ${rmdChip}
     </div>`;
   }).join('');
 }
-function acctF(id,f,v){const a=S.accounts.find(x=>x.id===id);if(a){a[f]=v;if(f!=='label'){renderAccts();recalc();}}}
-function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:4.5,type:'taxable',drawOrder:S.accounts.length+1,annualCost:0});renderAccts();recalc();}
-function delAcct(id){S.accounts=S.accounts.filter(x=>x.id!==id);S.accounts.forEach((a,i)=>a.drawOrder=i+1);renderAccts();recalc();}
+function acctF(id,f,v){const a=S.accounts.find(x=>x.id===id);if(a){a[f]=v;if(f!=='label'){renderAccts();recalc();}if(f==='label'||f==='type')renderME();}}
+function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:S.retRate,type:'taxable',kind:'stock',divYield:1.8,basis:100000,drawOrder:S.accounts.length+1,annualCost:0,growth:'nominal',color:''});renderAccts();renderME();recalc();}
+
+/* Chart colour for an account: the user's choice if set, otherwise the next unused
+   palette colour for its class (financial or property), in drawdown order. */
+function acctColor(a){
+  if(a.color)return a.color;
+  const sorted=[...S.accounts].sort((x,y)=>x.drawOrder-y.drawOrder);
+  const isP=a.type==='property';
+  const idx=sorted.filter(x=>(x.type==='property')===isP).indexOf(a);
+  return isP?PROP_CLR[idx%PROP_CLR.length]:ACCT_CLR[idx%ACCT_CLR.length];
+}
+function setAcctColor(id,v){const a=S.accounts.find(x=>x.id===id);if(a){a.color=v;renderME();recalc();}}
+
+function delAcct(id){S.accounts=S.accounts.filter(x=>x.id!==id);
+  S.scenarios.forEach(sc=>(sc.marketEvents||[]).forEach(ev=>{
+    if(ev.targets&&ev.targets.length){ev.targets=ev.targets.filter(t=>t!==id);if(!ev.targets.length)ev.targets=[-1];}
+  }));S.accounts.forEach((a,i)=>a.drawOrder=i+1);renderAccts();renderME();recalc();}
 function moveAcct(id,d){
   const i=S.accounts.findIndex(x=>x.id===id);
   const ni=i+d;if(ni<0||ni>=S.accounts.length)return;
   [S.accounts[i],S.accounts[ni]]=[S.accounts[ni],S.accounts[i]];
   S.accounts.forEach((a,idx)=>a.drawOrder=idx+1);
-  renderAccts();recalc();
+  renderAccts();renderME();recalc();
 }
 
 /* ══ RENDER: SCENARIOS & EXPENSES ══ */
@@ -1196,6 +1559,7 @@ function renderScens(){
     `<button class="btn-scen-new" onclick="addScen()">+ New scenario</button>`;
   renderExp();
   renderCE();
+  renderME();
   const scName=S.scenarios[S.activeScenario].name;
   document.getElementById('ce-scen-name').textContent='"'+scName+'"';
   document.getElementById('tbl-hd').textContent='Year-by-year · '+scName;
@@ -1203,7 +1567,7 @@ function renderScens(){
 function switchScen(i){S.activeScenario=i;renderScens();recalc();}
 function addScen(){
   const n=prompt('Scenario name:','New Scenario');if(!n)return;
-  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],expenses:[
+  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],marketEvents:[],expenses:[
     {id:S._neid++,label:'Housing',amount:24000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Medical & healthcare',amount:24000,prd:'yr',infl:'medical',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Food & groceries',amount:14400,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
@@ -1219,6 +1583,7 @@ function dupScen(i){
   // Re-assign unique IDs to all copied items
   clone.expenses.forEach(e=>e.id=S._neid++);
   clone.cashEvents.forEach(ce=>ce.id=S._ncid++);
+  (clone.marketEvents||[]).forEach(ev=>ev.id=S._nmid++);
   S.scenarios.splice(i+1,0,clone);
   S.activeScenario=i+1;
   renderScens();recalc();
@@ -1240,8 +1605,8 @@ function renderExp(){
       </div>
       <div class="exp-wrap"><table class="etbl">
         <thead><tr>
-          <th style="min-width:120px">Item</th><th style="min-width:78px">Amount</th>
-          <th style="width:56px">Period</th><th style="width:72px">Inflation</th>
+          <th style="min-width:120px">Item</th><th style="min-width:78px" data-help="expAmount">Amount</th>
+          <th style="width:56px">Period</th><th style="width:72px" data-help="expInfl">Inflation</th>
           <th style="width:54px" data-tip="Leave blank to apply from the simulation start. Set an age to model costs that begin later — e.g. assisted living from age 82.">From age</th>
           <th style="width:54px" data-tip="Leave blank to apply through end of simulation. Set an age to model costs that stop — e.g. a mortgage ending at age 75.">To age</th>
           <th style="min-width:110px">Notes</th>
@@ -1297,8 +1662,8 @@ function renderCE(){
         </div>
         <div class="ce-rows">
           <div class="f" style="margin:0"><label>Description</label><input type="text" value="${ce.label}" oninput="ceF(${si},${ce.id},'label',this.value)"></div>
-          <div class="f" style="margin:0"><label>At age</label><input type="number" value="${ce.age}" min="40" max="115" oninput="ceF(${si},${ce.id},'age',+this.value)"></div>
-          <div class="f" style="margin:0"><label>Amount ($)</label><input type="number" class="mono" value="${ce.amount}" step="1000" oninput="ceF(${si},${ce.id},'amount',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-help="ceAge">At age</label><input type="number" value="${ce.age}" min="40" max="115" oninput="ceF(${si},${ce.id},'age',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-help="ceAmount">Amount ($)</label><input type="number" class="mono" value="${ce.amount}" step="1000" oninput="ceF(${si},${ce.id},'amount',+this.value)"></div>
           <div class="f" style="margin:0"><label>Notes</label><input type="text" value="${ce.note||''}" placeholder="Optional…" oninput="ceF(${si},${ce.id},'note',this.value)"></div>
           <div></div>
         </div>
@@ -1321,6 +1686,77 @@ function addCE(dir){
 }
 function delCE(si,id){S.scenarios[si].cashEvents=S.scenarios[si].cashEvents.filter(x=>x.id!==id);renderCE();recalc();}
 
+/* ══ RENDER: MARKET EVENTS ══
+   Per-scenario shocks that hit chosen accounts only (a stock market crash, a property
+   slump, a rate change). shockPct is applied once at the start of the age shown.
+   "years" and "rate" optionally replace the account's return for that many years from
+   the same age, so a crash can be followed by a slow recovery. */
+const ME_PRESETS={
+  crash:{label:'Stock market crash',shockPct:-35,years:2,rate:'3'},
+  slump:{label:'Property slump',shockPct:-20,years:0,rate:''},
+  lost:{label:'Lost decade (no growth)',shockPct:0,years:10,rate:'0'},
+};
+function renderME(){
+  const si=S.activeScenario;
+  const mes=(S.scenarios[si].marketEvents||[]);
+  const accts=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
+  document.getElementById('me-list').innerHTML=mes.length===0
+    ?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>'
+    :mes.map(ev=>{
+      const allOn=!(ev.targets&&ev.targets.length);
+      const chips=accts.map(a=>{
+        const on=allOn?a.type!=='property':ev.targets.includes(a.id);
+        return `<label class="pop-item" style="display:inline-flex;gap:4px;margin-right:8px;font-size:11.5px"><input type="checkbox" ${on?'checked':''} onchange="meTarget(${si},${ev.id},${a.id},this.checked)"><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</label>`;
+      }).join('');
+      return `<div class="ce-card">
+        <div class="ce-head">
+          <span class="ce-type ce-out">⚡ Market event</span>
+          <input type="text" value="${ev.label}" style="flex:1;font-size:11.5px" oninput="meF(${si},${ev.id},'label',this.value)">
+          <button class="btn-del" onclick="delME(${si},${ev.id})">✕</button>
+        </div>
+        <div class="g3">
+          <div class="f" style="margin:0"><label>At age</label><input type="number" value="${ev.age}" min="40" max="115" oninput="meF(${si},${ev.id},'age',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-tip="One-off change to the balance at the start of that year. -35 is a 35% fall. Use 0 for no immediate shock.">One-off change %</label><input type="number" value="${ev.shockPct}" step="1" oninput="meF(${si},${ev.id},'shockPct',+this.value)"></div>
+          <div class="f" style="margin:0"><label data-tip="Optional. For this many years from the event age, the affected accounts earn the return below instead of their normal rate. 0 means no override.">Then, for N yrs</label><input type="number" value="${ev.years}" min="0" max="40" oninput="meF(${si},${ev.id},'years',+this.value)"></div>
+        </div>
+        <div class="g3" style="margin-top:5px">
+          <div class="f" style="margin:0"><label data-tip="Annual return used during those years. Blank leaves the account's own rate in place.">Return % in that time</label><input type="number" value="${ev.rate}" step="0.5" placeholder="unchanged" oninput="meF(${si},${ev.id},'rate',this.value===''?'':+this.value)"></div>
+        </div>
+        <div style="margin-top:6px;font-size:10.5px;color:var(--mu)">Affects:${qm('meTargets')}</div>
+        <div style="margin-top:2px">${chips}</div>
+      </div>`;
+    }).join('');
+}
+function meF(si,id,f,v){
+  const ev=(S.scenarios[si].marketEvents||[]).find(x=>x.id===id);
+  if(!ev)return;
+  ev[f]=v;
+  if(f!=='label')recalc();
+}
+function meTarget(si,id,acctId,on){
+  const ev=(S.scenarios[si].marketEvents||[]).find(x=>x.id===id);
+  if(!ev)return;
+  // First edit converts the implicit "all financial accounts" into an explicit list
+  if(!(ev.targets&&ev.targets.length))ev.targets=S.accounts.filter(a=>a.type!=='property').map(a=>a.id);
+  const has=ev.targets.includes(acctId);
+  if(on&&!has)ev.targets.push(acctId);
+  if(!on&&has)ev.targets=ev.targets.filter(t=>t!==acctId);
+  // An empty list means "all financial accounts", so unticking the last one stores [-1], which matches nothing
+  if(ev.targets.length===0)ev.targets=[-1];
+  renderME();recalc();
+}
+function addME(kind){
+  const si=S.activeScenario;
+  const sc=S.scenarios[si];
+  if(!sc.marketEvents)sc.marketEvents=[];
+  const p=ME_PRESETS[kind]||ME_PRESETS.crash;
+  sc.marketEvents.push({id:S._nmid++,label:p.label,age:S.people[0].currentAge+3,shockPct:p.shockPct,years:p.years,rate:p.rate===''?'':+p.rate,
+    // [-1] matches no account: a slump with no property account does nothing rather than hitting everything
+    targets:kind==='slump'?(S.accounts.some(a=>a.type==='property')?S.accounts.filter(a=>a.type==='property').map(a=>a.id):[-1]):[]});
+  renderME();recalc();
+}
+function delME(si,id){S.scenarios[si].marketEvents=S.scenarios[si].marketEvents.filter(x=>x.id!==id);renderME();recalc();}
+
 /* ══ METRIC DEFINITIONS ══ */
 const MET_DEFS=[
   {key:'startwealth',label:'Starting wealth',fn:rows=>({v:fmtK(rows[0].snap.reduce((t,x)=>t+x,0)),c:'',s:'All accounts at age '+S.people[0].currentAge})},
@@ -1341,7 +1777,7 @@ function renderMetItems(){document.getElementById('met-items').innerHTML=MET_DEF
 */
 const COL_DEFS=[
   {key:'ss',label:'Social Security income'},{key:'pension',label:'Pension & other income'},
-  {key:'rmd',label:'Required min. distributions'},{key:'gross',label:'Gross income'},
+  {key:'rmd',label:'Required min. distributions'},{key:'wd',label:'Taxable withdrawals'},{key:'inv',label:'Interest & dividends'},{key:'gains',label:'Realised gains'},{key:'gross',label:'Gross income'},
   {key:'tax',label:'Tax'},{key:'expenses',label:'Expenses'},
   {key:'ceio',label:'Cash event inflows / outflows'},{key:'draw',label:'Extra draw / surplus'},
   {key:'realwealth',label:'Total wealth (today\'s $)'},{key:'infloss',label:'Inflation erosion this year'},
@@ -1419,21 +1855,27 @@ function renderMetrics(rows){
   const active=MET_DEFS.filter(m=>S.mets[m.key]);
   const n=active.length;
   document.getElementById('met-grid').style.gridTemplateColumns=`repeat(${n<=4?n:n<=6?3:4},minmax(0,1fr))`;
-  document.getElementById('met-grid').innerHTML=active.map(m=>{const d=m.fn(rows);return`<div class="met"><div class="met-l">${m.label}</div><div class="met-v ${d.c||''}">${d.v}</div><div class="met-s">${d.s}</div></div>`;}).join('');
+  document.getElementById('met-grid').innerHTML=active.map(m=>{const d=m.fn(rows);return`<div class="met"><div class="met-l">${m.label}${HELP['m_'+m.key]?qm('m_'+m.key):''}</div><div class="met-v ${d.c||''}">${d.v}</div><div class="met-s">${d.s}</div></div>`;}).join('');
 }
 
 let chart=null;
+function setChartView(v){S.chartView=v;recalc();}
 function renderChart(rows){
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
-  let finColorIdx=0,propColorIdx=0;
-  // Stacked bar datasets: financial accounts first, then property accounts (same stack 's')
-  const barDatasets=sorted.map(a=>{
-    const isP=a.type==='property';
-    const color=isP?PROP_CLR[propColorIdx++%PROP_CLR.length]:ACCT_CLR[finColorIdx++%ACCT_CLR.length];
-    return{label:a.label,data:rows.map((r,i)=>r.snap[sorted.indexOf(a)]||0),backgroundColor:color,stack:'s'};
+  const view=S.chartView||'bars';
+  const labels=rows.map(r=>String(r.age));
+  const hex2rgba=(h,al)=>{const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?`rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${al})`:h;};
+  // One dataset per account. Bars and areas stack; the lines view plots each balance on its own.
+  const acctSets=sorted.map((a,idx)=>{
+    const color=acctColor(a);
+    const data=rows.map(r=>r.snap[idx]||0);
+    if(view==='bars')return{label:a.label,data,backgroundColor:color,stack:'s'};
+    if(view==='area')return{type:'line',label:a.label,data,borderColor:color,backgroundColor:hex2rgba(color,0.75),borderWidth:1.5,pointRadius:0,tension:0.25,fill:true};
+    return{type:'line',label:a.label,data,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.25};
   });
-  // Today's $ overlay line — rendered LAST so it sits on top of all bars
-  // Color: indigo (#6B48FF) — clearly distinct from all account colors
+  // Nominal total: shown on the lines view, where accounts do not stack to it
+  const totalLine=view==='lines'?{type:'line',label:'Total (nominal)',data:rows.map(r=>r.total),borderColor:'#333',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:0.25}:null;
+  // Today's $ overlay line, drawn last so it sits on top
   const realLine={
     label:"Wealth in today's $",
     data:rows.map(r=>r.realTotal),
@@ -1444,41 +1886,42 @@ function renderChart(rows){
     borderDash:[5,3],
     pointRadius:0,
     tension:0.3,
-    stack:undefined,  // not stacked — floats above bars
   };
-  // Build legend
-  finColorIdx=0;propColorIdx=0;
+  // Legend follows the same colours as the datasets
   document.getElementById('cleg').innerHTML=
-    sorted.map(a=>{const isP=a.type==='property';const c=isP?PROP_CLR[propColorIdx++%PROP_CLR.length]:ACCT_CLR[finColorIdx++%ACCT_CLR.length];return`<span><span class="ld" style="background:${c}"></span>${a.label}</span>`;}).join('')+
-    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's $</span>`;
-  // Event annotation plugin (vertical dashed lines at death and cash event ages)
+    sorted.map(a=>`<span><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</span>`).join('')+
+    (totalLine?`<span><span style="display:inline-block;width:14px;height:0;border-top:2.5px solid #333;vertical-align:middle;margin-right:3px"></span>Total</span>`:'')+
+    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's $${qm('todayDollars')}</span>`+
+    `<span><span style="display:inline-block;width:0;height:11px;border-left:2px dashed rgba(184,50,50,0.7);vertical-align:middle;margin-right:4px"></span>Market event${qm('eventLine')}</span>`;
+  const sel=document.getElementById('chart-view');if(sel&&sel.value!==view)sel.value=view;
+  // Vertical dashed lines at deaths, cash events and market events
   const sc=S.scenarios[S.activeScenario];
   const evtAges={};
   (sc.cashEvents||[]).forEach(ce=>{if(!evtAges[ce.age])evtAges[ce.age]={type:'ce'};});
   S.people.forEach(p=>{if(!evtAges[p.deathAge])evtAges[p.deathAge]={type:'death'};});
-  const labels=rows.map(r=>String(r.age));
+  (sc.marketEvents||[]).forEach(ev=>{evtAges[ev.age]={type:'market'};});
   const evtPlugin={id:'evtLines',afterDraw(c){
     const ctx=c.ctx,xs=c.scales.x,ys=c.scales.y;
     Object.entries(evtAges).forEach(([ageStr,ev])=>{
       const idx=labels.indexOf(String(+ageStr));if(idx<0)return;
       const x=xs.getPixelForValue(idx);
       ctx.save();
-      ctx.strokeStyle=ev.type==='death'?'rgba(184,50,50,0.3)':'rgba(184,137,43,0.4)';
-      ctx.lineWidth=1;ctx.setLineDash([3,3]);
+      ctx.strokeStyle=ev.type==='market'?'rgba(184,50,50,0.75)':ev.type==='death'?'rgba(184,50,50,0.3)':'rgba(184,137,43,0.4)';
+      ctx.lineWidth=ev.type==='market'?1.5:1;ctx.setLineDash([3,3]);
       ctx.beginPath();ctx.moveTo(x,ys.top);ctx.lineTo(x,ys.bottom);ctx.stroke();
       ctx.restore();
     });
   }};
   if(chart){chart.destroy();chart=null;}
   chart=new Chart(document.getElementById('main-chart'),{
-    type:'bar',
-    // realLine is last in datasets → drawn on top
-    data:{labels,datasets:[...barDatasets,realLine]},
+    type:view==='bars'?'bar':'line',
+    data:{labels,datasets:[...acctSets,...(totalLine?[totalLine]:[]),realLine]},
     plugins:[evtPlugin],
     options:{responsive:true,maintainAspectRatio:false,
+      interaction:view==='bars'?undefined:{mode:'index',intersect:false},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
-      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
-               y:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+      scales:{x:{stacked:view!=='lines',grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
+               y:{stacked:view!=='lines',grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
   });
 }
 
@@ -1497,7 +1940,7 @@ function renderTable(rows){
     infloss:'Gap between nominal and real wealth — the purchasing power eroded by inflation this year.',
   };
   const colHeaders={
-    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',gross:'Gross Income',
+    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',wd:'Taxable Withdrawals',inv:'Interest & Dividends',gains:'Realised Gains',gross:'Gross Income',
     tax:'Tax',expenses:'Expenses',ceio:'Cash Events',draw:'Extra Draw',
     realwealth:"Wealth Today's $",infloss:'Inflation Erosion',cumtax:'Cumul. Tax',total:'Total Wealth',
   };
@@ -1505,7 +1948,7 @@ function renderTable(rows){
   // Render in user-defined order
   for(const key of S.colOrder){
     if(!c[key])continue;
-    const tip=colTips[key]?`data-tip="${colTips[key]}"`:'' ;
+    const tip=HELP['c_'+key]?`data-help="c_${key}"`:(colTips[key]?`data-tip="${colTips[key]}"`:'');
     ths+=`<th ${tip}>${colHeaders[key]||key}</th>`;
   }
   // Per-account balance columns always appended
@@ -1514,8 +1957,9 @@ function renderTable(rows){
 
   document.getElementById('rt-body').innerHTML=rows.map(r=>{
     const evtNames=r.events.filter(e=>e.type==='death').map(e=>e.name);
-    const cls=r.depleted?'dep':evtNames.length?'evt':'';
-    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('');
+    const mktNames=r.events.filter(e=>e.type==='market').map(e=>e.label);
+    const cls=r.depleted?'dep':(evtNames.length||mktNames.length)?'evt':'';
+    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('')+mktNames.map(n=>`<span class="badge bw" style="background:#fef2f2;color:var(--red)">${n}</span>`).join('');
     let tds=`<td>${r.age}<span style="color:var(--text-hint);font-size:9px;margin-left:3px">${r.yr}</span>${evtB}</td>`;
     for(const key of S.colOrder){
       if(!c[key])continue;
@@ -1523,6 +1967,9 @@ function renderTable(rows){
         case 'ss':      tds+=`<td>${fmt(r.ss)}</td>`;break;
         case 'pension': tds+=`<td>${r.otherInc>0?fmt(r.otherInc):'—'}</td>`;break;
         case 'rmd':     tds+=`<td>${r.rmd>0?fmt(r.rmd):'—'}</td>`;break;
+        case 'wd':      tds+=`<td>${r.wd>0?fmt(r.wd):'—'}</td>`;break;
+        case 'inv':     tds+=`<td>${r.inv>0?fmt(r.inv):'—'}</td>`;break;
+        case 'gains':   tds+=`<td>${r.gains>0?fmt(r.gains):'—'}</td>`;break;
         case 'gross':   tds+=`<td>${fmt(r.gross)}</td>`;break;
         case 'tax':     tds+=`<td class="neg">(${fmt(r.tax)})</td>`;break;
         case 'expenses':tds+=`<td class="neg">(${fmt(r.expenses)})</td>`;break;
@@ -1539,7 +1986,18 @@ function renderTable(rows){
   }).join('');
 }
 
-function recalc(){const rows=simulate();renderMetrics(rows);renderChart(rows);renderTable(rows);}
+/* Runs every scenario against the same people, income and accounts and lists the headline results. */
+function renderCompare(){
+  const wrap=document.getElementById('cmp-wrap');
+  if(S.scenarios.length<2){wrap.innerHTML='';return;}
+  const body=S.scenarios.map((sc,i)=>{
+    const r=simulate(i),l=r[r.length-1],d=r.find(x=>x.depleted);
+    const tax=l.cumTax;
+    return `<tr class="${i===S.activeScenario?'act':''}" onclick="switchScen(${i})"><td>${sc.name}</td><td class="${d?'neg':''}">${d?'Runs out at '+d.age:'To age '+l.age}</td><td>${fmtK(l.total)}</td><td>${fmtK(l.realTotal)}</td><td>${fmtK(tax)}</td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<table class="cmp"><thead><tr><th>Scenario${qm('compare')}</th><th>Funded</th><th>End wealth</th><th>In today's $</th><th>Total tax</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+function recalc(){const rows=simulate();renderMetrics(rows);renderCompare();renderChart(rows);renderTable(rows);}
 
 /* ══ STRESS TOGGLE ══ */
 function toggleStress(){
@@ -1588,7 +2046,7 @@ function printRpt(){
       <span>Ages ${S.people[0].currentAge}–${last.age} (${S.people[0].name})</span>
       <span>${cur}${S.showEur?' ($1=€'+S.eurRate+')':''}</span>
       <span>Generated: ${dateStr}</span>
-      <span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Base return: '+S.retRate+'%/yr'}</span>
+      <span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Returns set per account'}</span>
     </div>
   </div>
   <div class="rpt-kpis">
@@ -1598,16 +2056,17 @@ function printRpt(){
     <div class="rpt-kpi"><div class="rpt-kpi-l">End wealth (today's $)</div><div class="rpt-kpi-v a">${sym}${n(last.realTotal)}</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">Average annual tax</div><div class="rpt-kpi-v">${sym}${n(avgTax)}</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">Total tax paid</div><div class="rpt-kpi-v">${sym}${n(last.cumTax)}</div></div>
-    <div class="rpt-kpi"><div class="rpt-kpi-l">Return rate</div><div class="rpt-kpi-v">${S.useStress?S.stressRate:S.retRate}%/yr</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">${S.useStress?'Stress-test return cap':'Blended account return'}</div><div class="rpt-kpi-v">${S.useStress?S.stressRate:blendedReturn().toFixed(1)}%/yr</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">General inflation</div><div class="rpt-kpi-v">${S.genInfl}%/yr</div></div>
   </div>
   <div class="rpt-sec"><h2>Simulation assumptions</h2>
     <div class="rpt-assm">
-      <div class="rpt-assm-row"><span class="al">Investment return</span><span class="av">${S.useStress?S.stressRate:S.retRate}%/yr${S.useStress?' (stress test)':''}</span></div>
+      <div class="rpt-assm-row"><span class="al">Investment return</span><span class="av">${S.useStress?'Each account capped at '+S.stressRate+'%/yr (stress test)':'Per account, blended '+blendedReturn().toFixed(1)+'%/yr'}</span></div>
+      <div class="rpt-assm-row"><span class="al">Withdrawals</span><span class="av">Tax-deferred accounts taxed as income; other accounts untaxed</span></div>
       <div class="rpt-assm-row"><span class="al">General inflation</span><span class="av">${S.genInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">Medical inflation</span><span class="av">${S.medInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">State income tax</span><span class="av">${S.stateTax>0?S.stateTax+'% on AGI':'None (0%)'}</span></div>
-      <div class="rpt-assm-row"><span class="al">Federal tax brackets</span><span class="av">2024/25 simplified estimate</span></div>
+      <div class="rpt-assm-row"><span class="al">Federal tax brackets</span><span class="av">2026 brackets${S.indexTax===false?', held fixed':', rising with inflation'}</span></div>
       <div class="rpt-assm-row"><span class="al">Standard deduction</span><span class="av">$30,000 MFJ / $15,000 single</span></div>
       <div class="rpt-assm-row"><span class="al">RMDs</span><span class="av">IRS Uniform Lifetime Table, from age 73</span></div>
       <div class="rpt-assm-row"><span class="al">Ages simulated</span><span class="av">${S.people[0].currentAge}–${last.age} (${S.people[0].name}'s age)</span></div>
@@ -1627,9 +2086,9 @@ function printRpt(){
     </table>
   </div>
   <div class="rpt-sec"><h2>Accounts & assets</h2>
-    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th>Balance / Value</th><th>Return / Apprec. %</th><th>Annual costs</th><th>Draw order</th></tr>
-    ${sorted.map(a=>`<tr><td class="tl">${a.label}</td><td class="tl">${a.type}</td><td>${sym}${n(a.balance)}</td><td>${pct(a.rate)}</td><td>${a.annualCost>0?sym+n(a.annualCost):'—'}</td><td>${a.type==='property'?'Not drawable (property)':a.drawOrder}</td></tr>`).join('')}
-    <tr class="tot"><td class="tl" colspan="2">Total</td><td>${sym}${n(sorted.reduce((t,a)=>t+a.balance,0))}</td><td colspan="3"></td></tr>
+    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th>Balance / Value</th><th>Return / Apprec. %</th><th class="tl">Growth basis</th><th>Annual costs</th><th>Draw order</th></tr>
+    ${sorted.map(a=>`<tr><td class="tl">${a.label}</td><td class="tl">${a.type}</td><td>${sym}${n(a.balance)}</td><td>${pct(a.rate)}</td><td class="tl">${growthL(a)}</td><td>${a.annualCost>0?sym+n(a.annualCost):'—'}</td><td>${a.type==='property'?'Not drawable (property)':a.drawOrder}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl" colspan="2">Total</td><td>${sym}${n(sorted.reduce((t,a)=>t+a.balance,0))}</td><td colspan="4"></td></tr>
     </table>
   </div>
   <div class="rpt-sec pb-before"><h2>Expenses — ${sc.name}</h2>
@@ -1643,22 +2102,30 @@ function printRpt(){
     <table class="rt2"><tr><th class="tl">Direction</th><th class="tl">Category</th><th class="tl">Description</th><th>At age</th><th>Amount (${cur})</th></tr>
     ${sc.cashEvents.map(ce=>`<tr><td class="tl">${ce.dir==='in'?'Inflow':'Outflow'}</td><td class="tl">${CE_T[ce.type]?.label||ce.type}</td><td class="tl">${ce.label}</td><td>${ce.age}</td><td>${sym}${n(ce.amount)}</td></tr>`).join('')}
     </table></div>`:''}
+  ${(sc.marketEvents||[]).length?`<div class="rpt-sec"><h2>Market events — ${sc.name}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
+    ${sc.marketEvents.map(ev=>`<tr><td class="tl">${ev.label}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${tgtNames(ev)}</td></tr>`).join('')}
+    </table></div>`:''}
+  ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
+    <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Funded</th><th>End wealth</th><th>In today's $</th><th>Total tax</th><th>Market events</th></tr>
+    ${S.scenarios.map(x=>{const r=simulate(S.scenarios.indexOf(x)),l=r[r.length-1],d=r.find(q=>q.depleted);return`<tr><td class="tl">${x.name}${x===sc?' (shown here)':''}</td><td class="tl">${d?'Runs out at '+d.age:'To age '+l.age}</td><td>${sym}${n(l.total)}</td><td>${sym}${n(l.realTotal)}</td><td>${sym}${n(l.cumTax)}</td><td>${(x.marketEvents||[]).length}</td></tr>`;}).join('')}
+    </table></div>`:''}
   <div class="rpt-sec pb-before landscape-section"><h2>Year-by-year projection — ${sc.name}</h2>
     <table class="rt2"><tr>
       <th class="tl">Age</th><th class="tl">Year</th><th class="tl">Events</th>
-      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th>
+      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th><th>Taxable Withdrawals</th><th>Interest &amp; Dividends</th><th>Realised Gains</th>
       <th>Gross Income</th><th>Tax (est.)</th><th>Expenses</th><th>Cash Events</th><th>Extra Draw</th>
       ${sorted.map(a=>`<th>${a.label.length>12?a.label.slice(0,11)+'…':a.label}</th>`).join('')}
       <th>Total Wealth</th><th>Today's $</th><th>Cumul. Tax</th>
     </tr>
     ${rows.map(r=>{
-      const evtNames=r.events.filter(e=>e.type==='death').map(e=>e.name);
+      const evtNames=r.events.map(evText);
       const cls=r.depleted?'dep':evtNames.length?'evt':'';
       const ceNet=r.ceIn-r.ceOut;
       return`<tr class="${cls}">
         <td class="tl">${r.age}</td><td class="tl">${r.yr}</td>
-        <td class="tl" style="font-size:9px">${evtNames.map(n=>n+' passes').join('; ')||'—'}</td>
-        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td>
+        <td class="tl" style="font-size:9px">${evtNames.join('; ')||'—'}</td>
+        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td><td>${r.wd>0?sym+n(r.wd):'—'}</td><td>${r.inv>0?sym+n(r.inv):'—'}</td><td>${r.gains>0?sym+n(r.gains):'—'}</td>
         <td>${sym}${n(r.gross)}</td><td>(${sym}${n(r.tax)})</td><td>(${sym}${n(r.expenses)})</td>
         <td>${ceNet>0?'+'+sym+n(ceNet):ceNet<0?'('+sym+n(-ceNet)+')':'—'}</td>
         <td>${r.extraDraw>0?'('+sym+n(r.extraDraw)+')':r.surplus>0?'+'+sym+n(r.surplus):'—'}</td>
@@ -1667,9 +2134,9 @@ function printRpt(){
       </tr>`;
     }).join('')}
     </table>
-    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a person passes that year; red rows = all accounts depleted. Min. Withdrawal = Required Minimum Distribution from tax-deferred accounts. Today's $ = total wealth adjusted for ${S.genInfl}%/yr general inflation.</p>
+    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a person passes or a market event happens that year; red rows = all accounts depleted. Min. Withdrawal = Required Minimum Distribution from tax-deferred accounts. Taxable Withdrawals = extra money taken from tax-deferred accounts to cover spending, which is taxed as income. Today's $ = total wealth adjusted for ${S.genInfl}%/yr general inflation.</p>
   </div>
-  <div class="rpt-disc"><strong>Disclaimer:</strong> For illustrative planning purposes only — not financial, tax, legal, or investment advice. Federal tax uses simplified 2024/25 estimates. Actual liability will vary. Returns are not guaranteed. Sequence-of-returns risk not modelled. Property values are estimates and are not independently verified. Consult a qualified financial planner (CFP), accountant (CPA), and estate attorney before making decisions.</div>`;
+  <div class="rpt-disc"><strong>Disclaimer:</strong> For illustrative planning purposes only — not financial, tax, legal, or investment advice. Federal tax uses simplified 2026 estimates. Actual liability will vary. Returns are not guaranteed. Sequence-of-returns risk not modelled. Property values are estimates and are not independently verified. Consult a qualified financial planner (CFP), accountant (CPA), and estate attorney before making decisions.</div>`;
   window.print();
 }
 
@@ -1690,7 +2157,7 @@ function exportXLSX(){
     const sumData=[
       ['Family Retirement Financial Forecast','','',''],
       ['Generated',new Date().toLocaleDateString('en-IE'),'Currency',cur],
-      ['Active scenario',sc.name,'Return rate',(S.useStress?S.stressRate:S.retRate)+'%/yr'],
+      ['Active scenario',sc.name,S.useStress?'Stress-test cap':'Blended account return',(S.useStress?S.stressRate:blendedReturn().toFixed(1))+'%/yr'],
       ['','','',''],
       ['KEY METRICS','','',''],
       ['Starting wealth',cv(rows[0].snap.reduce((t,v)=>t+v,0)),'',''],
@@ -1700,23 +2167,23 @@ function exportXLSX(){
       ['Average annual tax',cv(avgTax),'Total tax paid',cv(last.cumTax)],
       ['','','',''],
       ['ASSUMPTIONS','','',''],
-      ['Investment return',S.retRate+'%/yr','Stress-test return',S.stressRate+'%/yr ('+( S.useStress?'active':'inactive')+')'],
+      ['Default return for new accounts',S.retRate+'%/yr','Stress-test return',S.stressRate+'%/yr ('+( S.useStress?'active':'inactive')+')'],
       ['General inflation',S.genInfl+'%/yr','Medical inflation',S.medInfl+'%/yr'],
-      ['State income tax',S.stateTax+'%','Federal brackets','2024/25 simplified'],
+      ['State income tax',S.stateTax+'%','Federal brackets','2026, '+(S.indexTax===false?'fixed':'rising with inflation')],
       ['','','',''],
       ['PEOPLE','Current age','Predicted age at passing','Income streams'],
       ...S.people.map(p=>[p.name,p.currentAge,p.deathAge,S.incomes.filter(i=>i.pid===p.id).length]),
       ['','','',''],
-      ['ACCOUNTS','Balance ('+cur+')','Return %','Type'],
-      ...sorted.map(a=>[a.label,cv(a.balance),a.rate,a.type]),
+      ['ACCOUNTS','Balance ('+cur+')','Return %','Type / growth basis'],
+      ...sorted.map(a=>[a.label,cv(a.balance),a.rate,a.type+' / '+(a.growth==='real'?'real':'nominal')]),
       ['TOTAL',cv(sorted.reduce((t,a)=>t+a.balance,0)),'',''],
     ];
     const wsSummary=XLSX.utils.aoa_to_sheet(sumData);
     wsSummary['!cols']=[{wch:40},{wch:18},{wch:28},{wch:18}];
     XLSX.utils.book_append_sheet(wb,wsSummary,'Summary');
     // Year by Year sheet
-    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
-    const yyR=rows.map(r=>[r.age,r.yr,r.events.filter(e=>e.type==='death').map(e=>e.name).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
+    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Taxable Withdrawals ('+cur+')','Interest and Dividends ('+cur+')','Realised Gains ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+    const yyR=rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.inv),cv(r.gains),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
     const wsYY=XLSX.utils.aoa_to_sheet([yyH,...yyR]);
     wsYY['!cols']=[{wch:5},{wch:6},{wch:20},...Array(yyH.length-3).fill({wch:16})];
     XLSX.utils.book_append_sheet(wb,wsYY,'Year by Year');
@@ -1726,9 +2193,9 @@ function exportXLSX(){
     const wsInc=XLSX.utils.aoa_to_sheet([incH,...incR]);wsInc['!cols']=[{wch:24},{wch:14},{wch:18},{wch:14},{wch:14},{wch:20},{wch:8},{wch:9},{wch:9},{wch:24}];
     XLSX.utils.book_append_sheet(wb,wsInc,'Income Streams');
     // Accounts
-    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Annual Costs ('+cur+')','Draw Order'];
-    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder]);
-    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:16},{wch:14}];
+    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Growth basis','Annual Costs ('+cur+')','Draw Order','Return comes as','Dividend yield %','Cost basis ('+cur+')'];
+    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,growthL(a),cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder,TAXABLE_TYPES.has(a.type)?(acctKind(a)==='interest'?'Interest':'Stocks and funds'):'',TAXABLE_TYPES.has(a.type)&&acctKind(a)==='stock'?acctDiv(a):'',TAXABLE_TYPES.has(a.type)&&acctKind(a)==='stock'?cv(acctBasis(a)):'']);
+    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:22},{wch:16},{wch:14},{wch:18},{wch:15},{wch:16}];
     XLSX.utils.book_append_sheet(wb,wsAc,'Accounts');
     // All scenario expenses
     const expH=['Scenario','Item','Annual ('+cur+')','Monthly ('+cur+')','Inflation','From age','To age','Notes'];
@@ -1745,6 +2212,16 @@ function exportXLSX(){
     const ceR=[];
     S.scenarios.forEach(s=>(s.cashEvents||[]).forEach(ce=>ceR.push([s.name,ce.dir==='in'?'Inflow':'Outflow',CE_T[ce.type]?.label||ce.type,ce.label,ce.age,cv(ce.amount),ce.note||''])));
     if(ceR.length){const wsCE=XLSX.utils.aoa_to_sheet([ceH,...ceR]);wsCE['!cols']=[{wch:18},{wch:10},{wch:26},{wch:28},{wch:8},{wch:14},{wch:30}];XLSX.utils.book_append_sheet(wb,wsCE,'Cash Events');}
+    // Market events (all scenarios)
+    const meH=['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'];
+    const meR=[];
+    S.scenarios.forEach(s=>(s.marketEvents||[]).forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
+    if(meR.length){const wsME=XLSX.utils.aoa_to_sheet([meH,...meR]);wsME['!cols']=[{wch:18},{wch:26},{wch:8},{wch:16},{wch:18},{wch:10},{wch:44}];XLSX.utils.book_append_sheet(wb,wsME,'Market Events');}
+    // Scenario comparison
+    const cmpH=['Scenario','Funded','End wealth ('+cur+')','End wealth today\'s $ ('+cur+')','Total tax ('+cur+')','Market events'];
+    const cmpR=S.scenarios.map((x,i)=>{const r=simulate(i),l=r[r.length-1],d=r.find(q=>q.depleted);return[x.name,d?'Runs out at '+d.age:'To age '+l.age,cv(l.total),cv(l.realTotal),cv(l.cumTax),(x.marketEvents||[]).length];});
+    const wsCmp=XLSX.utils.aoa_to_sheet([cmpH,...cmpR]);wsCmp['!cols']=[{wch:26},{wch:18},{wch:18},{wch:24},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,wsCmp,'Scenario Comparison');
     XLSX.writeFile(wb,'retirement-projection.xlsx');
   }
   if(window.XLSX){doExport();}
@@ -1757,10 +2234,10 @@ function exportCSV(){
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   const cur=S.showEur?'EUR':'USD';
   const cv=v=>S.showEur?Math.round(v*S.eurRate):Math.round(v);
-  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Taxable Withdrawals ('+cur+')','Interest and Dividends ('+cur+')','Realised Gains ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>'"'+a.label.replace(/"/g,'""')+' ('+cur+')"'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
   const R=rows.map(r=>{
-    const evts=r.events.filter(e=>e.type==='death').map(e=>e.name).join('; ');
-    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
+    const evts=r.events.map(evText).join('; ').replace(/"/g,'""');
+    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.inv),cv(r.gains),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([[H.join(','),...R].join('\n')],{type:'text/csv'}));
@@ -1776,11 +2253,14 @@ function syncInputs(){
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   const chk=(id,v)=>{const el=document.getElementById(id);if(el)el.checked=v;};
   set('h-ret',S.retRate);  set('h-inf',S.genInfl);  set('h-med',S.medInfl);
-  set('h-str',S.stressRate); set('h-st',S.stateTax); set('h-ea',S.endAge);
+  set('h-str',S.stressRate); set('h-st',S.stateTax);{const ix=document.getElementById('h-ix');if(ix)ix.checked=S.indexTax!==false;} set('h-ea',S.endAge);
   chk('h-eur',S.showEur);  set('h-er',S.eurRate);
   if(S.useStress){const b=document.getElementById('stress-btn');if(b){b.textContent='ON — pessimistic';b.className='stress-pill sp-on';}}
 }
 function init(){
+  buildTaxInfo();
+  document.getElementById('glossary').innerHTML=Object.values(HELP).filter(h=>h.g).map(h=>`<div class="gl-item"><b>${esc(h.t)}.</b> ${esc(h.d)}</div>`).join('');
+  decorateTips(document.body);
   syncInputs();
   renderPeople();renderIncomes();renderAccts();renderScens();
   recalc();
