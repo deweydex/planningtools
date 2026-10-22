@@ -81,7 +81,7 @@ near('2029 rent credit ends after 2028',E.tyParams(2029).cr.rent1,0);
 
 console.log(fails?('\n'+fails+' FAILURES'):'\nALL HAND CHECKS PASSED');
 // 15. Whole-simulation checks
-const hs0={mode:'rent',rentMonthly:0,rentInfl:3,rtc:false,buyAge:34,price:420000,newBuild:true,ceiling:475000,houseGrowth:3,depositPct:10,useHTB:true,useFHS:true,fhsPct:20,mortRate:4,mortTerm:30,costsPct:1.5,runPct:1};
+const hs0={mode:'rent',rentMonthly:0,rentInfl:3,rtc:false,buyAge:34,price:420000,newBuild:true,ceiling:500000,houseGrowth:3,depositPct:10,useHTB:true,useFHS:true,fhsPct:20,mortRate:4,mortTerm:30,costsPct:1.5,runPct:1};
 const person={id:1,name:'A',currentAge:33,retireAge:66,deathAge:88,salary:115000,pensionMode:'none',eePct:0,erPct:0,card:false,spAge:66,spPct:100};
 Object.assign(S,{status:'single',people:[person],incomes:[],accounts:[{id:1,label:'Deposit',type:'deposit',owner:0,balance:100000,rate:2.5,feePct:0,regular:0,saveTo:'',growth:'nominal',drawOrder:1}],
   scenarios:[{id:1,name:'t',housing:Object.assign({},hs0,{mode:'buy'}),expenses:[],cashEvents:[],marketEvents:[]}],activeScenario:0});

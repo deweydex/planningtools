@@ -396,7 +396,11 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
             <span class="unit">%</span>
           </div>
           <div class="settings-row" style="color:var(--text-hint);font-size:11px;justify-content:flex-start">
-            Federal tax calculated automatically · 2024/25 brackets
+            Federal tax calculated automatically · 2026 brackets
+          </div>
+          <div class="settings-row">
+            <label data-help="indexTax">Brackets rise with inflation</label>
+            <input type="checkbox" id="h-ix" onchange="S.indexTax=this.checked;recalc()">
           </div>
         </div>
 
@@ -457,51 +461,49 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 <!-- ── INFO & ASSUMPTIONS PANEL ── -->
 <div class="info-panel" id="info-panel">
   <div class="info-inner">
+    <div class="info-sec" id="info-tax"></div>
+
     <div class="info-sec">
-      <h4>2024/25 Federal Income Tax Brackets</h4>
-      <p>Married Filing Jointly (MFJ) — used when 2+ people alive</p>
+      <h4>Account types and what the letters mean</h4>
       <table class="info-tbl">
-        <tr><th>Taxable income</th><th>Rate</th></tr>
-        <tr><td>$0 – $23,200</td><td>10%</td></tr>
-        <tr><td>$23,201 – $94,300</td><td>12%</td></tr>
-        <tr><td>$94,301 – $201,050</td><td>22%</td></tr>
-        <tr><td>$201,051 – $383,900</td><td>24%</td></tr>
-        <tr><td>$383,901 – $487,450</td><td>32%</td></tr>
-        <tr><td>$487,451 – $731,200</td><td>35%</td></tr>
-        <tr><td>Over $731,200</td><td>37%</td></tr>
+        <tr><th>Account</th><th>What it is and how the planner taxes it</th></tr>
+        <tr><td>Traditional IRA</td><td>Individual Retirement Account. Money went in before tax, so every dollar withdrawn is ordinary income. Required minimum distributions (RMDs) start at 73.</td></tr>
+        <tr><td>401(k), 403(b), 457(b)</td><td>Retirement plans run by an employer: private companies (401k), schools and nonprofits (403b), and government bodies (457b). Taxed like a Traditional IRA, with RMDs from 73.</td></tr>
+        <tr><td>SEP-IRA</td><td>Simplified Employee Pension, a retirement account for self-employed people. Taxed like a Traditional IRA.</td></tr>
+        <tr><td>Roth IRA</td><td>Funded with money already taxed. Qualified withdrawals are tax-free and there are no RMDs for the owner. The planner never taxes it.</td></tr>
+        <tr><td>HSA</td><td>Health Savings Account for medical costs. Tax-free in, tax-free growth, tax-free out for medical spending. The planner never taxes it.</td></tr>
+        <tr><td>Brokerage (stocks and funds)</td><td>An ordinary investment account. Dividends are taxed each year at the capital gains rates. A gain is taxed only when shares are sold, and only the part above the cost basis counts.</td></tr>
+        <tr><td>Savings account</td><td>Interest is taxed each year as ordinary income. Selling or withdrawing creates no further tax.</td></tr>
+        <tr><td>CD (Certificate of Deposit) and bonds</td><td>A CD is a bank deposit locked for a fixed term. Bonds are loans you make to a company or government. Both pay interest, taxed each year as ordinary income. Interest on municipal bonds can be tax-free, which the planner does not model.</td></tr>
+        <tr><td>Trust account</td><td>Investments held in a trust. The planner taxes it like a brokerage account. Real trusts can face higher rates.</td></tr>
+        <tr><td>Property</td><td>Tracked in net worth only. It is not drawn on until you add a house sale as a cash event.</td></tr>
       </table>
-      <p style="margin-top:5px">Single filer — used after one person passes</p>
+      <h4 style="margin-top:10px">Other abbreviations</h4>
       <table class="info-tbl">
-        <tr><th>Taxable income</th><th>Rate</th></tr>
-        <tr><td>$0 – $11,600</td><td>10%</td></tr>
-        <tr><td>$11,601 – $47,150</td><td>12%</td></tr>
-        <tr><td>$47,151 – $100,525</td><td>22%</td></tr>
-        <tr><td>$100,526 – $191,950</td><td>24%</td></tr>
-        <tr><td>Over $191,950</td><td>32–37%</td></tr>
+        <tr><td>AGI</td><td>Adjusted Gross Income, the total taxable income before the standard deduction.</td></tr>
+        <tr><td>MFJ</td><td>Married Filing Jointly, the status used while both people are alive.</td></tr>
+        <tr><td>LTCG</td><td>Long-term capital gain, profit on an investment held more than a year.</td></tr>
+        <tr><td>NIIT</td><td>Net Investment Income Tax, an extra 3.8% for higher incomes.</td></tr>
+        <tr><td>RMD</td><td>Required Minimum Distribution, the amount you must take from tax-deferred accounts each year.</td></tr>
+        <tr><td>COLA</td><td>Cost-of-Living Adjustment, the yearly rise in Social Security.</td></tr>
+        <tr><td>RSU</td><td>Restricted Stock Unit, shares an employer grants that count as wages when they vest.</td></tr>
+        <tr><td>IRMAA</td><td>Medicare surcharge for higher incomes. Not modelled.</td></tr>
       </table>
     </div>
 
     <div class="info-sec">
-      <h4>Social Security Taxation (IRS Pub. 915)</h4>
-      <p>Up to 85% of Social Security income is taxable depending on total "provisional income" = (non-SS income) + SS × 50%.</p>
-      <table class="info-tbl">
-        <tr><th>Provisional income</th><th>SS taxable</th></tr>
-        <tr><td>Under $32k (MFJ) / $25k (Single)</td><td>0%</td></tr>
-        <tr><td>$32k–$44k (MFJ) / $25k–$34k (Single)</td><td>Up to 50%</td></tr>
-        <tr><td>Over $44k (MFJ) / $34k (Single)</td><td>Up to 85%</td></tr>
-      </table>
-      <h4 style="margin-top:10px">Standard Deductions 2024</h4>
-      <table class="info-tbl">
-        <tr><td>Married Filing Jointly</td><td>$30,000</td></tr>
-        <tr><td>Single filer</td><td>$15,000</td></tr>
-      </table>
-      <p style="margin-top:5px">Additional $1,550 deduction per person age 65+. This planner uses the base figures as a conservative estimate.</p>
+      <h4>How interest, dividends and gains are taxed here</h4>
+      <p><strong>Each year.</strong> Interest and dividends earned in a taxable account are added to income and taxed, even when they stay invested. The tax is paid from your cash flow, and the money stays in the account.</p>
+      <p><strong>When you sell.</strong> The planner tracks each account's cost basis. If spending forces a sale, the share of the sale above the basis is a gain, taxed at 0%, 15% or 20% depending on total taxable income. It draws a little extra to cover that tax.</p>
+      <p><strong>Stacking.</strong> Gains sit on top of ordinary income. Ordinary income fills the 0% gain band first, so a retiree with little other income can often sell shares at a 0% federal rate.</p>
+      <p><strong>Social Security.</strong> Dividends and gains raise provisional income, so they can make more of the Social Security taxable.</p>
+      <p><strong>Not modelled.</strong> The stepped-up basis at death, losses used to offset gains, state tax on gains different from the flat state rate, the alternative minimum tax, tax-free municipal bond interest, Medicare IRMAA surcharges, and the 3.8% tax on rental income.</p>
     </div>
 
     <div class="info-sec">
-      <h4>Gift Tax Rules (2024)</h4>
-      <p><strong>Annual exclusion:</strong> $18,000 per recipient per year. Gifts up to this amount require no reporting.</p>
-      <p><strong>Lifetime exemption:</strong> $13,610,000 per person. Gift tax is rarely owed below this cumulative threshold.</p>
+      <h4>Gift Tax Rules (2026)</h4>
+      <p><strong>Annual exclusion:</strong> $19,000 per recipient per year. Gifts up to this amount require no reporting.</p>
+      <p><strong>Lifetime exemption:</strong> $15,000,000 per person (2026). Gift tax is rarely owed below this cumulative threshold.</p>
       <p><strong>Direct tuition payments</strong> to educational institutions are excluded from gift tax entirely (any amount).</p>
       <p><strong>Medical payments</strong> directly to providers are also excluded.</p>
       <h4 style="margin-top:10px">Required Minimum Distributions</h4>
@@ -525,7 +527,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <tr><td>Business sale</td><td>Capital gains if stock sale; ordinary income if asset sale. Get a CPA involved.</td></tr>
         <tr><td>RSU / equity vesting</td><td>Taxed as ordinary income (W-2) in the year received.</td></tr>
         <tr><td>Insurance payout</td><td>Life insurance death benefits are usually tax-free.</td></tr>
-        <tr><td>Gift received</td><td>Not taxable to recipient. Giver files a return if over $18k/person/year.</td></tr>
+        <tr><td>Gift received</td><td>Not taxable to recipient. Giver files a return if over $19k/person/year.</td></tr>
         <tr><td>Charitable donation</td><td>Deductible up to 60% of AGI for cash gifts to qualifying charities when itemising.</td></tr>
         <tr><td>Legal settlement</td><td>Physical injury awards generally tax-free; punitive/employment awards taxable.</td></tr>
         <tr><td>Large purchases</td><td>No deduction. Directly reduces account balances.</td></tr>
@@ -540,7 +542,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
     </div>
 
     <div class="info-disc">
-      These figures are illustrative and based on 2024/25 US tax law. Tax law changes frequently — always verify with a qualified CPA or financial planner before making decisions. This planner uses simplified tax estimates; actual liability will vary based on deductions, credits, filing status, state law, and other factors. Investment returns are assumptions, not guarantees. Sequence-of-returns risk (poor early returns permanently damaging the portfolio) is not modelled.
+      These figures are illustrative and based on 2026 US tax law. Tax law changes frequently — always verify with a qualified CPA or financial planner before making decisions. This planner uses simplified tax estimates; actual liability will vary based on deductions, credits, filing status, state law, and other factors. Investment returns are assumptions, not guarantees. Sequence-of-returns risk (poor early returns permanently damaging the portfolio) is not modelled.
     </div>
   </div>
 </div>
@@ -765,10 +767,24 @@ const HELP={
   m_realend:{t:'End wealth in today\'s dollars',d:'End wealth adjusted for inflation, so it shows what the final balance would buy at today\'s prices.'},
   m_efftax:{t:'Effective tax rate',d:'Average tax divided by average gross income. It is lower than the top bracket because only part of income is taxed at the higher rates.'},
   m_inflcost:{t:'Inflation erosion',d:'The gap between end wealth and its value in today\'s dollars. It measures the buying power lost to inflation.'},
+  acctKind:{t:'Return comes as',d:'Savings accounts, CDs and bonds pay interest, which is taxed as ordinary income every year. Stocks and funds pay a small dividend each year, taxed at the lower capital gains rates, and the rest of the return is growth in value that is taxed only when shares are sold.'},
+  divYield:{t:'Dividend yield',d:'The share of the balance that stocks and funds pay out as dividends each year. A broad US stock fund pays about 1.5% to 2%. The planner treats dividends as qualified, taxed at the capital gains rates, and reinvests them. They are part of the account return, not extra to it.'},
+  costBasis:{g:1,t:'Cost basis',d:'What you paid for the investments, including dividends reinvested along the way. When you sell, only the gain above the basis is taxed. An account worth $700,000 with a $450,000 basis holds $250,000 of gain, so about 36% of each dollar sold is gain. Your brokerage statement shows the basis.'},
+  indexTax:{g:1,t:'Brackets rise with inflation',d:'The IRS raises the tax brackets, the standard deduction and the capital gains thresholds each year with inflation. Leave this on to model that. Switching it off keeps today\'s figures fixed, which overstates tax in later years because income rises while the brackets stay put.'},
+  ltcg:{g:1,t:'Capital gains and qualified dividends',d:'Profit on investments held longer than a year, and dividends that meet IRS holding rules, are taxed at 0%, 15% or 20% instead of the ordinary rates. In 2026 a couple pays 0% while taxable income is below $98,900 and 15% up to $613,700. The gains are stacked on top of ordinary income, so ordinary income uses up the 0% room first.'},
+  niit:{g:1,t:'Net Investment Income Tax (NIIT)',d:'An extra 3.8% on interest, dividends and gains when adjusted gross income is above $250,000 for a couple or $200,000 for a single person. These thresholds are not raised with inflation. It does not apply to Social Security or to IRA and 401(k) withdrawals.'},
+  agi:{g:1,t:'Adjusted gross income (AGI)',d:'Total taxable income for the year before the standard deduction: wages, pensions, interest, dividends, gains, taxable IRA withdrawals and the taxable part of Social Security. Many tax rules, including the state tax in this planner and the senior deduction, key off it.'},
+  stdDed:{g:1,t:'Standard deduction',d:'An amount of income that is not taxed. For 2026 it is $32,200 for a couple and $16,100 for a single person, plus $1,650 per spouse or $2,050 for a single person aged 65 or over. There is also a temporary extra senior deduction of up to $6,000 per person aged 65 or over for 2025 to 2028, which shrinks to zero as income rises from $150,000 to $250,000 for a couple.'},
+  steppedUp:{g:1,t:'Stepped-up basis',d:'When someone dies, the basis of investments they own is reset to the market value on that day, so the gain built up during life is never taxed. The planner does not model this, so it overstates tax on gains for a surviving spouse and for heirs.'},
+  irmaa:{g:1,t:'IRMAA',d:'Income-Related Monthly Adjustment Amount. Higher-income Medicare enrollees pay more for Part B and Part D premiums, based on income from two years earlier. The planner does not model it. Add the extra cost to the medical expenses if income runs high.'},
+  roth:{g:1,t:'Roth IRA and Roth 401(k)',d:'Retirement accounts funded with money that was already taxed. Growth and qualified withdrawals are tax-free, and the original owner has no required minimum distributions.'},
+  hsa:{g:1,t:'Health Savings Account (HSA)',d:'An account for medical costs. Contributions go in before tax, growth is tax-free, and withdrawals for medical costs are tax-free. The planner treats withdrawals as tax-free.'},
+  c_inv:{t:'Interest and dividends',d:'Interest from savings, CDs and bonds, and dividends from stock funds, earned inside taxable accounts. They are taxed every year even when reinvested. The cash stays in the account, so this column adds to taxable income but not to spendable cash.'},
+  c_gains:{t:'Realised gains',d:'The profit locked in when shares in a taxable stock account are sold to cover spending. Only the part above your cost basis is a gain. It is taxed at the capital gains rates.'},
   c_pension:{t:'Pension and other income',d:'Taxable income other than Social Security, such as pensions, annuities, rent and wages. Tax-exempt income is included here but is not taxed.'},
   c_wd:{t:'Taxable withdrawals',d:'Money taken from tax-deferred accounts (Traditional IRA, 401(k) and similar) beyond the required minimum, to cover spending. It counts as income and is taxed, so more comes out than the gap it fills.'},
-  c_gross:{t:'Gross income',d:'Social Security, taxable pension and other income, required minimum distributions and taxable withdrawals, before tax. Tax-exempt income is left out.'},
-  c_tax:{t:'Tax',d:'Federal income tax from the brackets in the Info panel plus the flat state rate. It is charged on income, required distributions and withdrawals from tax-deferred accounts. Withdrawals from taxable, Roth and HSA accounts are not taxed here.'},
+  c_gross:{t:'Gross income',d:'Social Security, taxable pension and other income, interest and dividends, required minimum distributions, taxable withdrawals and realised gains, before tax. Tax-exempt income is left out.'},
+  c_tax:{t:'Tax',d:'Federal income tax from the brackets in the Info panel plus the flat state rate. It is charged on income, interest and dividends, required distributions, withdrawals from tax-deferred accounts and gains realised in taxable accounts, at the capital gains rates where they apply. Roth and HSA withdrawals and the cost basis of taxable sales are not taxed.'},
   c_expenses:{t:'Expenses',d:'The spending for the active scenario this year after inflation, plus any yearly costs entered on accounts.'},
   c_ceio:{t:'Cash events',d:'One-off amounts paid in (green) or out (red) in this year.'},
   c_draw:{t:'Extra draw or surplus',d:'When income does not cover spending, the shortfall is drawn from accounts in drawdown order. When it does, the surplus is added to the first taxable or cash account. Withdrawals from tax-deferred accounts are taxed (see Taxable withdrawals). Interest and capital gains tax on taxable accounts are not modelled, so tax is slightly understated there.'},
@@ -811,11 +827,16 @@ const RMD_T={72:27.4,73:26.5,74:25.5,75:24.6,76:23.7,77:22.9,78:22.0,79:21.1,80:
 
 // Account types that are subject to Required Minimum Distributions
 const RMD_TYPES=new Set(['traditional','403b','457b','sep_ira']);
+// Taxable accounts: interest and dividends are taxed each year, gains when shares are sold
+const TAXABLE_TYPES=new Set(['taxable','trust','cd']);
+const acctKind=a=>a.kind||(a.type==='cd'?'interest':'stock');
+const acctDiv=a=>(a.divYield===undefined||a.divYield===''||a.divYield===null)?1.8:+a.divYield;
+const acctBasis=a=>(a.basis===undefined||a.basis===''||a.basis===null)?a.balance:+a.basis;
 
 /* ══ DEFAULT STATE ══ */
 const DEF={
   endAge:95,genInfl:2.5,medInfl:5.5,retRate:6.5,stressRate:3.0,
-  useStress:false,stateTax:0,showEur:false,eurRate:0.92,
+  useStress:false,stateTax:0,indexTax:true,showEur:false,eurRate:0.92,
   people:[
     {id:1,name:'Father',currentAge:70,deathAge:85},
     {id:2,name:'Mother',currentAge:68,deathAge:88},
@@ -827,8 +848,8 @@ const DEF={
   ],_niid:4,
   accounts:[
     {id:1,label:'Investment Fund (IRA/401k)',balance:3000000,rate:6.5,type:'traditional',drawOrder:1,annualCost:0},
-    {id:2,label:'Brokerage Account',balance:700000,rate:5.5,type:'taxable',drawOrder:2,annualCost:0},
-    {id:3,label:'Joint Savings',balance:300000,rate:4.5,type:'taxable',drawOrder:3,annualCost:0},
+    {id:2,label:'Brokerage Account',balance:700000,rate:5.5,type:'taxable',kind:'stock',divYield:1.8,basis:450000,drawOrder:2,annualCost:0},
+    {id:3,label:'Joint Savings',balance:300000,rate:4.5,type:'taxable',kind:'interest',drawOrder:3,annualCost:0},
   ],_naid:4,
   activeScenario:0,
   scenarios:[
@@ -862,10 +883,10 @@ const DEF={
       {id:5,label:'Family visits & transport',amount:6000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     ],cashEvents:[]},
   ],_nsid:4,_neid:8,_ncid:3,
-  cols:{ss:true,pension:true,rmd:true,wd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  cols:{ss:true,pension:true,rmd:true,wd:true,inv:true,gains:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
   /* colOrder controls the left-to-right display order in the results table.
      Keys must match the keys in cols. Drag-and-drop updates this array. */
-  colOrder:['ss','pension','rmd','wd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  colOrder:['ss','pension','rmd','wd','inv','gains','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -874,18 +895,18 @@ const DEF={
    All income and cash events are absent so the user builds from scratch. */
 const BLANK={
   endAge:95,genInfl:2.5,medInfl:5.5,retRate:6.5,stressRate:3.0,
-  useStress:false,stateTax:0,showEur:false,eurRate:0.92,
+  useStress:false,stateTax:0,indexTax:true,showEur:false,eurRate:0.92,
   people:[{id:1,name:'Person 1',currentAge:65,deathAge:90}],_npid:2,
   incomes:[],_niid:1,
   accounts:[
     {id:1,label:'Investment Account',balance:0,rate:6.5,type:'traditional',drawOrder:1,annualCost:0},
-    {id:2,label:'Savings Account',balance:0,rate:4.5,type:'taxable',drawOrder:2,annualCost:0},
+    {id:2,label:'Savings Account',balance:0,rate:4.5,type:'taxable',kind:'interest',drawOrder:2,annualCost:0},
   ],_naid:3,
   activeScenario:0,
   scenarios:[{id:1,name:'General',expenses:[],cashEvents:[]}],
   _nsid:2,_neid:1,_ncid:1,
-  cols:{ss:true,pension:true,rmd:true,wd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
-  colOrder:['ss','pension','rmd','wd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  cols:{ss:true,pension:true,rmd:true,wd:true,inv:true,gains:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  colOrder:['ss','pension','rmd','wd','inv','gains','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -908,6 +929,9 @@ if(!S.colOrder)S.colOrder=JSON.parse(JSON.stringify(DEF.colOrder));
 // v11: taxable withdrawals column
 if(!S.colOrder.includes('wd')){const i=S.colOrder.indexOf('rmd');S.colOrder.splice(i<0?0:i+1,0,'wd');}
 if(S.cols.wd===undefined)S.cols.wd=true;
+// v12: interest, dividends and realised gains columns; tax brackets rise with inflation
+['inv','gains'].forEach(k=>{if(!S.colOrder.includes(k)){const i=S.colOrder.indexOf(k==='inv'?'wd':'inv');S.colOrder.splice(i<0?0:i+1,0,k);}if(S.cols[k]===undefined)S.cols[k]=true;});
+if(S.indexTax===undefined)S.indexTax=true;
 // v7: migrate global cashEvents into the first scenario (if the global array exists)
 if(S.cashEvents&&S.cashEvents.length){
   if(!S.scenarios[0].cashEvents)S.scenarios[0].cashEvents=[];
@@ -949,32 +973,94 @@ const tgtNames=ev=>{
 const growthL=a=>a.growth==='real'?'Real (above inflation)':'Nominal';
 
 /* ══ TAX ══
-   Simplified US federal income tax using 2024/25 brackets.
-   Social Security provisional income test (IRS Pub. 915):
-     provisional = (non-SS income) + SS×0.5
-     > $44,000 MFJ / $34,000 single → 85% of SS taxable
-     > $32,000 MFJ / $25,000 single → 50% of SS taxable
-   AGI = non-SS income + taxable SS portion
-   Taxable income = max(0, AGI − standard deduction)
-   State income tax = flat % of AGI
-   NOTE: MFJ status assumed when ≥2 people alive; single when 1 remains.
-   For >2 people, additional members' incomes are taxed as ordinary income (simplification).
+   Simplified US federal income tax using 2026 figures (IRS Rev. Proc. 2025-32 and the 2025 tax law).
+   Income is split into three layers:
+     ordinary   wages, pensions, interest, taxable withdrawals from IRAs and 401(k)s, rent
+     preferred  qualified dividends and long-term capital gains, taxed at 0%, 15% or 20%,
+                stacked on top of the ordinary income
+     Social Security, of which 0% to 85% is taxable (IRS Pub. 915, worksheet)
+   AGI = ordinary + preferred + taxable Social Security.
+   Taxable income = AGI minus the standard deduction (plus the extra amount for each person 65+)
+   minus the temporary senior deduction (2025 to 2028).
+   Net Investment Income Tax: 3.8% of the smaller of investment income and AGI above $200,000 / $250,000.
+   State income tax = flat % of AGI.
+   By default the brackets, deductions and gain thresholds rise with inflation each year, as they do
+   in practice. Social Security thresholds, the senior deduction and NIIT thresholds are not indexed.
+   NOTE: MFJ status assumed when 2 or more people are alive; single when 1 remains.
 */
-function calcTax(gross,ssTotal,single){
-  const pv=(gross-ssTotal)+ssTotal*0.5;
-  const th=single?{n:25000,h:34000}:{n:32000,h:44000};
+const TAX26={
+  single:{std:16100,add65:2050,
+    ord:[[12400,.10],[50400,.12],[105700,.22],[201775,.24],[256225,.32],[640600,.35],[1e13,.37]],
+    ltcg:[49450,545500],ssT:{n:25000,h:34000},niit:200000,senior:75000},
+  mfj:{std:32200,add65:1650,
+    ord:[[24800,.10],[100800,.12],[211400,.22],[403550,.24],[512450,.32],[768700,.35],[1e13,.37]],
+    ltcg:[98900,613700],ssT:{n:32000,h:44000},niit:250000,senior:150000},
+};
+function taxParts(gross,ssTotal,single,o){
+  o=o||{};
+  const T=single?TAX26.single:TAX26.mfj,idx=o.idx||1,n65=o.n65||0,yr=o.yr||2026;
+  const nonSS=gross-ssTotal;
+  const pref=Math.max(0,Math.min(o.pref||0,nonSS));
+  const ordInc=nonSS-pref;
+  // Taxable part of Social Security (IRS Pub. 915): half of the excess over the first threshold,
+  // then 85% of the excess over the second threshold, capped at 85% of the benefit.
+  const pv=nonSS+ssTotal*0.5;
   let tss=0;
-  if(pv>th.h)tss=ssTotal*0.85;
-  else if(pv>th.n)tss=ssTotal*0.5;
-  const agi=(gross-ssTotal)+tss;
-  const std=single?15000:30000;
-  const tx=Math.max(0,agi-std);
-  const b=single
-    ?[[11600,.10],[47150,.12],[100525,.22],[191950,.24],[243725,.32],[609350,.35],[1e9,.37]]
-    :[[23200,.10],[94300,.12],[201050,.22],[383900,.24],[487450,.32],[731200,.35],[1e9,.37]];
-  let tax=0,pr=0;
-  for(const[l,r]of b){if(tx<=pr)break;tax+=(Math.min(tx,l)-pr)*r;pr=l;}
-  return Math.round(tax+agi*S.stateTax/100);
+  if(ssTotal>0&&pv>T.ssT.n){
+    tss=pv<=T.ssT.h
+      ?Math.min(0.5*(pv-T.ssT.n),0.5*ssTotal)
+      :Math.min(0.85*(pv-T.ssT.h)+Math.min(0.5*ssTotal,0.5*(T.ssT.h-T.ssT.n)),0.85*ssTotal);
+  }
+  const agi=ordInc+pref+tss;
+  const std=(T.std+n65*T.add65)*idx;
+  const senior=(n65>0&&yr<=2028)?n65*Math.max(0,6000-0.06*Math.max(0,agi-T.senior)):0;
+  const taxable=Math.max(0,agi-std-senior);
+  const prefT=Math.min(pref,taxable),ordT=taxable-prefT;
+  let ordTax=0,pr=0;
+  for(const[l,r]of T.ord){const L=l*idx;if(ordT<=pr)break;ordTax+=(Math.min(ordT,L)-pr)*r;pr=L;}
+  const seg=(a,b)=>Math.max(0,Math.min(ordT+prefT,b)-Math.max(ordT,a));
+  const L0=T.ltcg[0]*idx,L1=T.ltcg[1]*idx;
+  const prefTax=0.15*seg(L0,L1)+0.20*seg(L1,1e15);
+  const niit=0.038*Math.min(Math.max(0,o.nii||0),Math.max(0,agi-T.niit));
+  const state=agi*S.stateTax/100;
+  return{total:Math.round(ordTax+prefTax+niit+state),ordTax,prefTax,niit,state,agi,taxable,std,senior};
+}
+function calcTax(gross,ssTotal,single,o){return taxParts(gross,ssTotal,single,o).total;}
+
+
+/* ══ INFO PANEL: TAX TABLES BUILT FROM THE MODEL'S OWN CONSTANTS ══ */
+function buildTaxInfo(){
+  const f=n=>'$'+Math.round(n).toLocaleString('en-US');
+  const ordRows=T=>{let prev=0;return T.ord.map(([l,r],i)=>{const row=i===T.ord.length-1?`<tr><td>Over ${f(prev)}</td><td>${Math.round(r*100)}%</td></tr>`:`<tr><td>${f(prev?prev+1:0)} – ${f(l)}</td><td>${Math.round(r*100)}%</td></tr>`;prev=l;return row;}).join('');};
+  const M=TAX26.mfj,Sg=TAX26.single;
+  document.getElementById('info-tax').innerHTML=`<h4>2026 Federal Income Tax Brackets</h4>
+    <p>Applied to taxable income, which is AGI minus the deductions below. The brackets rise with inflation each year in the projection unless you switch that off in Settings.</p>
+    <p><strong>Married Filing Jointly (MFJ)</strong>, used while both people are alive</p>
+    <table class="info-tbl"><tr><th>Taxable income</th><th>Rate</th></tr>${ordRows(M)}</table>
+    <p style="margin-top:5px"><strong>Single</strong>, used after one person passes</p>
+    <table class="info-tbl"><tr><th>Taxable income</th><th>Rate</th></tr>${ordRows(Sg)}</table>
+    <h4 style="margin-top:10px">Capital gains and qualified dividends, 2026</h4>
+    <p>Taxed at lower rates, stacked on top of ordinary taxable income.</p>
+    <table class="info-tbl"><tr><th>Rate</th><th>MFJ taxable income</th><th>Single taxable income</th></tr>
+      <tr><td>0%</td><td>up to ${f(M.ltcg[0])}</td><td>up to ${f(Sg.ltcg[0])}</td></tr>
+      <tr><td>15%</td><td>${f(M.ltcg[0]+1)} – ${f(M.ltcg[1])}</td><td>${f(Sg.ltcg[0]+1)} – ${f(Sg.ltcg[1])}</td></tr>
+      <tr><td>20%</td><td>over ${f(M.ltcg[1])}</td><td>over ${f(Sg.ltcg[1])}</td></tr></table>
+    <p style="margin-top:5px"><strong>Net Investment Income Tax:</strong> an extra 3.8% on the smaller of investment income and the AGI above ${f(M.niit)} (MFJ) or ${f(Sg.niit)} (single). Not raised with inflation.</p>
+    <h4 style="margin-top:10px">Deductions, 2026</h4>
+    <table class="info-tbl">
+      <tr><td>Standard deduction, MFJ</td><td>${f(M.std)}</td></tr>
+      <tr><td>Standard deduction, single</td><td>${f(Sg.std)}</td></tr>
+      <tr><td>Extra for each person 65+ (MFJ, per spouse)</td><td>${f(M.add65)}</td></tr>
+      <tr><td>Extra for a single person 65+</td><td>${f(Sg.add65)}</td></tr>
+      <tr><td>Senior deduction, per person 65+, 2025 to 2028</td><td>up to $6,000</td></tr>
+    </table>
+    <p style="margin-top:5px">The senior deduction falls by 6 cents for each dollar of AGI above ${f(M.senior)} (MFJ) or ${f(Sg.senior)} (single), and ends after 2028. The planner applies it for each person aged 65 or over through 2028.</p>
+    <h4 style="margin-top:10px">Social Security taxation (IRS Pub. 915)</h4>
+    <p>Provisional income = all other income + half of Social Security. The taxable share of Social Security climbs from 0% to a maximum of 85% as provisional income passes the thresholds. These thresholds are not raised with inflation.</p>
+    <table class="info-tbl"><tr><th>Provisional income</th><th>Share of Social Security taxed</th></tr>
+      <tr><td>Under ${f(M.ssT.n)} (MFJ) / ${f(Sg.ssT.n)} (single)</td><td>0%</td></tr>
+      <tr><td>${f(M.ssT.n)}–${f(M.ssT.h)} (MFJ) / ${f(Sg.ssT.n)}–${f(Sg.ssT.h)} (single)</td><td>Up to 50%</td></tr>
+      <tr><td>Over ${f(M.ssT.h)} (MFJ) / ${f(Sg.ssT.h)} (single)</td><td>Up to 85%</td></tr></table>`;
 }
 
 /* ══ INCOME TYPE DEFINITIONS ══ */
@@ -992,7 +1078,7 @@ const CE_T={
   house:{label:'House sale proceeds',dir:'in',tax:'Primary residence exclusion: up to $500,000 excluded from capital gains (married couple; must have lived there 2 of last 5 years). Enter net proceeds after any estimated tax.'},
   inheritance:{label:'Inheritance received',dir:'in',tax:'Generally income-tax-free to recipient in the US. Inherited investments receive a stepped-up cost basis, minimising capital gains if sold promptly.'},
   insurance:{label:'Insurance / life policy payout',dir:'in',tax:'Life insurance death benefits are usually tax-free. Annuity payouts may be partially taxable.'},
-  giftin:{label:'Gift received',dir:'in',tax:'Not taxable to recipient. Giver must file a gift tax return if over $18,000 per person per year (2024 annual exclusion).'},
+  giftin:{label:'Gift received',dir:'in',tax:'Not taxable to recipient. Giver must file a gift tax return if over $19,000 per person per year (2026 annual exclusion).'},
   assetsale:{label:'Asset / investment sale',dir:'in',tax:'Enter net proceeds after estimated capital gains tax. Long-term gains (held >1 year) taxed at 0%, 15%, or 20% depending on income.'},
   business_sale:{label:'Business sale / equity event',dir:'in',tax:'Capital gains treatment if structured as stock sale; ordinary income if asset sale. A tax attorney and CPA should be involved in structuring a business sale.'},
   rsus:{label:'RSU / stock options vesting',dir:'in',taxable:true,tax:'Taxed as ordinary income in the year received (W-2 income). The planner adds the amount to that year\'s income and taxes it, so enter the gross value. Any later growth is taxed as capital gains.'},
@@ -1000,7 +1086,7 @@ const CE_T={
   otherin:{label:'Other inflow',dir:'in',tax:'Verify tax treatment with a CPA for unusual income sources.'},
   purchase:{label:'Large purchase',dir:'out',tax:'No tax deduction. Directly reduces account balances.'},
   renovation:{label:'Home renovation',dir:'out',tax:'No immediate tax deduction. Improvements increase your property cost basis, which reduces future capital gains when the home is sold.'},
-  giftout:{label:'Gift given',dir:'out',tax:'Not deductible. Giver must file a gift tax return if over $18,000 per recipient per year. Lifetime exemption of ~$13.6M (2024) before gift tax is actually owed.'},
+  giftout:{label:'Gift given',dir:'out',tax:'Not deductible. Giver must file a gift tax return if over $19,000 per recipient per year. Lifetime exemption of $15M (2026) before gift tax is actually owed.'},
   medical_exp:{label:'Large medical expense',dir:'out',tax:'Medical expenses exceeding 7.5% of AGI may be deductible if you itemise. Consult a CPA. High costs may be partially offset by HSA withdrawals.'},
   charity:{label:'Charitable donation',dir:'out',tax:'Cash donations to qualifying charities are deductible up to 60% of AGI when you itemise. Appreciated securities donated directly can avoid capital gains entirely.'},
   education:{label:'Education costs (family)',dir:'out',tax:'Not directly deductible for grandchildren. 529 plan contributions are not federally deductible but grow tax-free. Direct tuition payments to institutions are excluded from gift tax.'},
@@ -1068,6 +1154,8 @@ function simulate(scIdx){
   // All accounts sorted by drawOrder (property accounts stay in the array but skip drawdown)
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   let bals=sorted.map(a=>a.balance);
+  // Cost basis of each taxable account (what was paid in, including reinvested income)
+  const basis=sorted.map(a=>TAXABLE_TYPES.has(a.type)?acctBasis(a):0);
 
   // Hoist SS stream list — never changes during the loop
   const allSS=S.incomes.filter(i=>i.type==='ss');
@@ -1152,10 +1240,25 @@ function simulate(scIdx){
     // Taxable cash events (RSU vesting) count as ordinary income in their year
     for(const ce of (sc.cashEvents||[]))if(ce.age===tableAge&&ce.dir==='in'&&CE_T[ce.type]&&CE_T[ce.type].taxable)otherInc+=ce.amount;
 
-    const gross=ssTotal+otherInc+rmdTotal;
-    // Tax before any extra withdrawals. Withdrawals from tax-deferred accounts are taxed below.
-    const baseTax=calcTax(gross,ssTotal,singleFiler);
-    const netInc=gross-baseTax+exemptInc;
+    // ── Interest and dividends earned inside taxable accounts ───────────────
+    // They are taxed every year whether or not they are spent. The cash stays in the account
+    // (it is part of the account's return), so the tax is paid from this year's cash flow.
+    let accInt=0,accDiv=0;
+    const acctInc=sorted.map((a,i)=>{
+      if(!TAXABLE_TYPES.has(a.type)||bals[i]<=0)return null;
+      if(acctKind(a)==='interest'){const v=Math.max(0,bals[i]*acctReturn(a,sc,tableAge));accInt+=v;return v;}
+      const v=bals[i]*acctDiv(a)/100;accDiv+=v;return v;
+    });
+    const accInc=accInt+accDiv;
+    const taxIdx=S.indexTax===false?1:inflY;
+    const n65=livePeople.filter(p=>p.currentAge+y>=65).length;
+    const calYear=new Date().getFullYear()+y;
+
+    const gross=ssTotal+otherInc+rmdTotal+accInc;
+    // Tax for the year given extra taxable withdrawals (ordinary) and realised gains (preferred rate)
+    const taxFn=(xOrd,xGain)=>calcTax(gross+xOrd+xGain,ssTotal,singleFiler,{pref:accDiv+xGain,nii:accInc+xGain,n65,idx:taxIdx,yr:calYear});
+    const baseTax=taxFn(0,0);
+    const netInc=gross-accInc-baseTax+exemptInc;
 
     // ── Expenses ─────────────────────────────────────────────────────────────
     let expenses=0;
@@ -1183,6 +1286,7 @@ function simulate(scIdx){
     const surplus  =cashflow>0? cashflow:0;
 
     // ── Update balances ───────────────────────────────────────────────────────
+    acctInc.forEach((v,i)=>{if(v)basis[i]+=v;});   // reinvested interest and dividends raise the basis
     bals=bals.map((b,i)=>{
       const a=sorted[i];
       const r=acctReturn(a,sc,tableAge);
@@ -1192,38 +1296,44 @@ function simulate(scIdx){
     });
 
     // ── Drawdown waterfall (skip property accounts) ───────────────────────────
-    // Withdrawals from tax-deferred accounts (traditional IRA, 401k and so on) are taxed as
-    // income, so more has to come out than the spending gap: the bisection finds the amount
-    // whose after-tax value equals the gap. Roth and HSA money is tax-free. Other accounts
-    // are not taxed here (interest and capital gains tax are not modelled).
-    let rem=extraDraw,wd=0;
-    const taxOn=x=>calcTax(gross+wd+x,ssTotal,singleFiler)-calcTax(gross+wd,ssTotal,singleFiler);
+    // Two kinds of withdrawal create tax. Money from tax-deferred accounts (traditional IRA, 401k
+    // and so on) is ordinary income. Money from a stock account carries a share of unrealised
+    // gain, taxed at the capital gains rate. In both cases more has to come out than the spending
+    // gap, so a bisection finds the amount whose after-tax value equals the gap. Roth, HSA,
+    // savings and CD money carries no further tax here.
+    let rem=extraDraw,wd=0,gains=0;
     for(let i=0;i<bals.length;i++){
       const a=sorted[i];
       if(a.type==='property')continue; // property can't be drawn without selling
       if(rem<=0)break;
       const avail=Math.max(0,bals[i]);
-      if(RMD_TYPES.has(a.type)){
-        const net=e=>e-taxOn(e);
+      const isOrd=RMD_TYPES.has(a.type);
+      const isTx=TAXABLE_TYPES.has(a.type);
+      const gf=(isTx&&acctKind(a)==='stock'&&bals[i]>0)?Math.max(0,1-basis[i]/bals[i]):0;
+      if(isOrd||gf>0){
+        const net=e=>e-(taxFn(wd+(isOrd?e:0),gains+(isOrd?0:e*gf))-taxFn(wd,gains));
         let take;
         if(net(avail)<=rem)take=avail;
         else{let lo=0,hi=avail;for(let k=0;k<40;k++){const mid=(lo+hi)/2;if(net(mid)<rem)lo=mid;else hi=mid;}take=hi;}
         const got=net(take);
-        bals[i]-=take;rem-=got;wd+=take;
+        if(isTx){basis[i]-=take*Math.min(1,basis[i]/bals[i]);gains+=take*gf;}
+        bals[i]-=take;rem-=got;
+        if(isOrd)wd+=take;
       }else{
         const d=Math.min(rem,avail);
+        if(isTx&&bals[i]>0)basis[i]-=d*Math.min(1,basis[i]/bals[i]);
         bals[i]-=d;rem-=d;
       }
     }
-    // Tax for the year now includes tax on those withdrawals
-    const tax=calcTax(gross+wd,ssTotal,singleFiler);
+    // Tax for the year now includes tax on those withdrawals and gains
+    const tax=taxFn(wd,gains);
     cumTax+=tax;
     // Surplus goes into the first taxable or cash account. Money cannot be paid into a
     // tax-deferred account here, so those are used only if nothing else exists.
     if(surplus>0){
       let fi=sorted.findIndex(a=>a.type==='taxable'||a.type==='trust'||a.type==='cd');
       if(fi<0)fi=sorted.findIndex(a=>a.type!=='property');
-      if(fi>=0)bals[fi]+=surplus;
+      if(fi>=0){bals[fi]+=surplus;if(TAXABLE_TYPES.has(sorted[fi].type))basis[fi]+=surplus;}
     }
 
     const snap=bals.map(b=>Math.round(Math.max(0,b)));
@@ -1235,7 +1345,7 @@ function simulate(scIdx){
     rows.push({
       age:tableAge,yr:new Date().getFullYear()+y,
       ss:Math.round(ssTotal),otherInc:Math.round(otherInc+exemptInc),rmd:Math.round(rmdTotal),
-      wd:Math.round(wd),gross:Math.round(gross+wd),tax:Math.round(tax),cumTax:Math.round(cumTax),
+      wd:Math.round(wd),inv:Math.round(accInc),gains:Math.round(gains),gross:Math.round(gross+wd+gains),tax:Math.round(tax),cumTax:Math.round(cumTax),
       expenses:Math.round(expenses),ceIn:Math.round(ceIn),ceOut:Math.round(ceOut),
       extraDraw:Math.round(extraDraw),surplus:Math.round(surplus),
       snap,total,realTotal,inflLoss:Math.round(inflLoss),
@@ -1383,6 +1493,17 @@ function renderAccts(){
           </optgroup>
         </select>
       </div>
+      ${TAXABLE_TYPES.has(a.type)?`<div class="g3" style="margin-bottom:3px">
+        <div class="f"><label data-help="acctKind">Return comes as</label>
+          <select onchange="acctF(${a.id},'kind',this.value)">
+            <option value="interest" ${acctKind(a)==='interest'?'selected':''}>Interest (savings, CD, bonds)</option>
+            <option value="stock" ${acctKind(a)==='stock'?'selected':''}>Stocks and funds</option>
+          </select></div>
+        <div class="f"><label data-help="divYield">Dividend yield %</label>
+          <input type="number" value="${acctDiv(a)}" step="0.1" min="0" max="10" ${acctKind(a)==='stock'?'':'disabled'} oninput="acctF(${a.id},'divYield',+this.value)"></div>
+        <div class="f"><label data-help="costBasis">Cost basis ($)</label>
+          <input type="number" class="mono" value="${Math.round(acctBasis(a))}" step="10000" min="0" ${acctKind(a)==='stock'?'':'disabled'} oninput="acctF(${a.id},'basis',+this.value)"></div>
+      </div>`:''}
       <div class="g2" style="margin-bottom:3px">
         <div class="f"><label data-help="growthBasis">Growth basis</label>
           <select onchange="acctF(${a.id},'growth',this.value)">
@@ -1402,7 +1523,7 @@ function renderAccts(){
   }).join('');
 }
 function acctF(id,f,v){const a=S.accounts.find(x=>x.id===id);if(a){a[f]=v;if(f!=='label'){renderAccts();recalc();}if(f==='label'||f==='type')renderME();}}
-function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:S.retRate,type:'taxable',drawOrder:S.accounts.length+1,annualCost:0,growth:'nominal',color:''});renderAccts();renderME();recalc();}
+function addAcct(){S.accounts.push({id:S._naid++,label:'New Account',balance:100000,rate:S.retRate,type:'taxable',kind:'stock',divYield:1.8,basis:100000,drawOrder:S.accounts.length+1,annualCost:0,growth:'nominal',color:''});renderAccts();renderME();recalc();}
 
 /* Chart colour for an account: the user's choice if set, otherwise the next unused
    palette colour for its class (financial or property), in drawdown order. */
@@ -1656,7 +1777,7 @@ function renderMetItems(){document.getElementById('met-items').innerHTML=MET_DEF
 */
 const COL_DEFS=[
   {key:'ss',label:'Social Security income'},{key:'pension',label:'Pension & other income'},
-  {key:'rmd',label:'Required min. distributions'},{key:'wd',label:'Taxable withdrawals'},{key:'gross',label:'Gross income'},
+  {key:'rmd',label:'Required min. distributions'},{key:'wd',label:'Taxable withdrawals'},{key:'inv',label:'Interest & dividends'},{key:'gains',label:'Realised gains'},{key:'gross',label:'Gross income'},
   {key:'tax',label:'Tax'},{key:'expenses',label:'Expenses'},
   {key:'ceio',label:'Cash event inflows / outflows'},{key:'draw',label:'Extra draw / surplus'},
   {key:'realwealth',label:'Total wealth (today\'s $)'},{key:'infloss',label:'Inflation erosion this year'},
@@ -1819,7 +1940,7 @@ function renderTable(rows){
     infloss:'Gap between nominal and real wealth — the purchasing power eroded by inflation this year.',
   };
   const colHeaders={
-    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',wd:'Taxable Withdrawals',gross:'Gross Income',
+    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',wd:'Taxable Withdrawals',inv:'Interest & Dividends',gains:'Realised Gains',gross:'Gross Income',
     tax:'Tax',expenses:'Expenses',ceio:'Cash Events',draw:'Extra Draw',
     realwealth:"Wealth Today's $",infloss:'Inflation Erosion',cumtax:'Cumul. Tax',total:'Total Wealth',
   };
@@ -1847,6 +1968,8 @@ function renderTable(rows){
         case 'pension': tds+=`<td>${r.otherInc>0?fmt(r.otherInc):'—'}</td>`;break;
         case 'rmd':     tds+=`<td>${r.rmd>0?fmt(r.rmd):'—'}</td>`;break;
         case 'wd':      tds+=`<td>${r.wd>0?fmt(r.wd):'—'}</td>`;break;
+        case 'inv':     tds+=`<td>${r.inv>0?fmt(r.inv):'—'}</td>`;break;
+        case 'gains':   tds+=`<td>${r.gains>0?fmt(r.gains):'—'}</td>`;break;
         case 'gross':   tds+=`<td>${fmt(r.gross)}</td>`;break;
         case 'tax':     tds+=`<td class="neg">(${fmt(r.tax)})</td>`;break;
         case 'expenses':tds+=`<td class="neg">(${fmt(r.expenses)})</td>`;break;
@@ -1943,7 +2066,7 @@ function printRpt(){
       <div class="rpt-assm-row"><span class="al">General inflation</span><span class="av">${S.genInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">Medical inflation</span><span class="av">${S.medInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">State income tax</span><span class="av">${S.stateTax>0?S.stateTax+'% on AGI':'None (0%)'}</span></div>
-      <div class="rpt-assm-row"><span class="al">Federal tax brackets</span><span class="av">2024/25 simplified estimate</span></div>
+      <div class="rpt-assm-row"><span class="al">Federal tax brackets</span><span class="av">2026 brackets${S.indexTax===false?', held fixed':', rising with inflation'}</span></div>
       <div class="rpt-assm-row"><span class="al">Standard deduction</span><span class="av">$30,000 MFJ / $15,000 single</span></div>
       <div class="rpt-assm-row"><span class="al">RMDs</span><span class="av">IRS Uniform Lifetime Table, from age 73</span></div>
       <div class="rpt-assm-row"><span class="al">Ages simulated</span><span class="av">${S.people[0].currentAge}–${last.age} (${S.people[0].name}'s age)</span></div>
@@ -1990,7 +2113,7 @@ function printRpt(){
   <div class="rpt-sec pb-before landscape-section"><h2>Year-by-year projection — ${sc.name}</h2>
     <table class="rt2"><tr>
       <th class="tl">Age</th><th class="tl">Year</th><th class="tl">Events</th>
-      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th><th>Taxable Withdrawals</th>
+      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th><th>Taxable Withdrawals</th><th>Interest &amp; Dividends</th><th>Realised Gains</th>
       <th>Gross Income</th><th>Tax (est.)</th><th>Expenses</th><th>Cash Events</th><th>Extra Draw</th>
       ${sorted.map(a=>`<th>${a.label.length>12?a.label.slice(0,11)+'…':a.label}</th>`).join('')}
       <th>Total Wealth</th><th>Today's $</th><th>Cumul. Tax</th>
@@ -2002,7 +2125,7 @@ function printRpt(){
       return`<tr class="${cls}">
         <td class="tl">${r.age}</td><td class="tl">${r.yr}</td>
         <td class="tl" style="font-size:9px">${evtNames.join('; ')||'—'}</td>
-        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td><td>${r.wd>0?sym+n(r.wd):'—'}</td>
+        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td><td>${r.wd>0?sym+n(r.wd):'—'}</td><td>${r.inv>0?sym+n(r.inv):'—'}</td><td>${r.gains>0?sym+n(r.gains):'—'}</td>
         <td>${sym}${n(r.gross)}</td><td>(${sym}${n(r.tax)})</td><td>(${sym}${n(r.expenses)})</td>
         <td>${ceNet>0?'+'+sym+n(ceNet):ceNet<0?'('+sym+n(-ceNet)+')':'—'}</td>
         <td>${r.extraDraw>0?'('+sym+n(r.extraDraw)+')':r.surplus>0?'+'+sym+n(r.surplus):'—'}</td>
@@ -2013,7 +2136,7 @@ function printRpt(){
     </table>
     <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a person passes or a market event happens that year; red rows = all accounts depleted. Min. Withdrawal = Required Minimum Distribution from tax-deferred accounts. Taxable Withdrawals = extra money taken from tax-deferred accounts to cover spending, which is taxed as income. Today's $ = total wealth adjusted for ${S.genInfl}%/yr general inflation.</p>
   </div>
-  <div class="rpt-disc"><strong>Disclaimer:</strong> For illustrative planning purposes only — not financial, tax, legal, or investment advice. Federal tax uses simplified 2024/25 estimates. Actual liability will vary. Returns are not guaranteed. Sequence-of-returns risk not modelled. Property values are estimates and are not independently verified. Consult a qualified financial planner (CFP), accountant (CPA), and estate attorney before making decisions.</div>`;
+  <div class="rpt-disc"><strong>Disclaimer:</strong> For illustrative planning purposes only — not financial, tax, legal, or investment advice. Federal tax uses simplified 2026 estimates. Actual liability will vary. Returns are not guaranteed. Sequence-of-returns risk not modelled. Property values are estimates and are not independently verified. Consult a qualified financial planner (CFP), accountant (CPA), and estate attorney before making decisions.</div>`;
   window.print();
 }
 
@@ -2046,7 +2169,7 @@ function exportXLSX(){
       ['ASSUMPTIONS','','',''],
       ['Default return for new accounts',S.retRate+'%/yr','Stress-test return',S.stressRate+'%/yr ('+( S.useStress?'active':'inactive')+')'],
       ['General inflation',S.genInfl+'%/yr','Medical inflation',S.medInfl+'%/yr'],
-      ['State income tax',S.stateTax+'%','Federal brackets','2024/25 simplified'],
+      ['State income tax',S.stateTax+'%','Federal brackets','2026, '+(S.indexTax===false?'fixed':'rising with inflation')],
       ['','','',''],
       ['PEOPLE','Current age','Predicted age at passing','Income streams'],
       ...S.people.map(p=>[p.name,p.currentAge,p.deathAge,S.incomes.filter(i=>i.pid===p.id).length]),
@@ -2059,8 +2182,8 @@ function exportXLSX(){
     wsSummary['!cols']=[{wch:40},{wch:18},{wch:28},{wch:18}];
     XLSX.utils.book_append_sheet(wb,wsSummary,'Summary');
     // Year by Year sheet
-    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Taxable Withdrawals ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
-    const yyR=rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
+    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Taxable Withdrawals ('+cur+')','Interest and Dividends ('+cur+')','Realised Gains ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+    const yyR=rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.inv),cv(r.gains),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
     const wsYY=XLSX.utils.aoa_to_sheet([yyH,...yyR]);
     wsYY['!cols']=[{wch:5},{wch:6},{wch:20},...Array(yyH.length-3).fill({wch:16})];
     XLSX.utils.book_append_sheet(wb,wsYY,'Year by Year');
@@ -2070,9 +2193,9 @@ function exportXLSX(){
     const wsInc=XLSX.utils.aoa_to_sheet([incH,...incR]);wsInc['!cols']=[{wch:24},{wch:14},{wch:18},{wch:14},{wch:14},{wch:20},{wch:8},{wch:9},{wch:9},{wch:24}];
     XLSX.utils.book_append_sheet(wb,wsInc,'Income Streams');
     // Accounts
-    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Growth basis','Annual Costs ('+cur+')','Draw Order'];
-    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,growthL(a),cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder]);
-    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:22},{wch:16},{wch:14}];
+    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Growth basis','Annual Costs ('+cur+')','Draw Order','Return comes as','Dividend yield %','Cost basis ('+cur+')'];
+    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,growthL(a),cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder,TAXABLE_TYPES.has(a.type)?(acctKind(a)==='interest'?'Interest':'Stocks and funds'):'',TAXABLE_TYPES.has(a.type)&&acctKind(a)==='stock'?acctDiv(a):'',TAXABLE_TYPES.has(a.type)&&acctKind(a)==='stock'?cv(acctBasis(a)):'']);
+    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:22},{wch:16},{wch:14},{wch:18},{wch:15},{wch:16}];
     XLSX.utils.book_append_sheet(wb,wsAc,'Accounts');
     // All scenario expenses
     const expH=['Scenario','Item','Annual ('+cur+')','Monthly ('+cur+')','Inflation','From age','To age','Notes'];
@@ -2111,10 +2234,10 @@ function exportCSV(){
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   const cur=S.showEur?'EUR':'USD';
   const cv=v=>S.showEur?Math.round(v*S.eurRate):Math.round(v);
-  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Taxable Withdrawals ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>'"'+a.label.replace(/"/g,'""')+' ('+cur+')"'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Taxable Withdrawals ('+cur+')','Interest and Dividends ('+cur+')','Realised Gains ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>'"'+a.label.replace(/"/g,'""')+' ('+cur+')"'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
   const R=rows.map(r=>{
     const evts=r.events.map(evText).join('; ').replace(/"/g,'""');
-    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
+    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.inv),cv(r.gains),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([[H.join(','),...R].join('\n')],{type:'text/csv'}));
@@ -2130,11 +2253,12 @@ function syncInputs(){
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   const chk=(id,v)=>{const el=document.getElementById(id);if(el)el.checked=v;};
   set('h-ret',S.retRate);  set('h-inf',S.genInfl);  set('h-med',S.medInfl);
-  set('h-str',S.stressRate); set('h-st',S.stateTax); set('h-ea',S.endAge);
+  set('h-str',S.stressRate); set('h-st',S.stateTax);{const ix=document.getElementById('h-ix');if(ix)ix.checked=S.indexTax!==false;} set('h-ea',S.endAge);
   chk('h-eur',S.showEur);  set('h-er',S.eurRate);
   if(S.useStress){const b=document.getElementById('stress-btn');if(b){b.textContent='ON — pessimistic';b.className='stress-pill sp-on';}}
 }
 function init(){
+  buildTaxInfo();
   document.getElementById('glossary').innerHTML=Object.values(HELP).filter(h=>h.g).map(h=>`<div class="gl-item"><b>${esc(h.t)}.</b> ${esc(h.d)}</div>`).join('');
   decorateTips(document.body);
   syncInputs();

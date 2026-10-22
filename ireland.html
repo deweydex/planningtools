@@ -504,17 +504,17 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
       <table class="info-tbl">
         <tr><th>Account type</th><th>How it is taxed in the planner</th></tr>
         <tr><td>Deposit</td><td>DIRT at 33% on interest each year</td></tr>
-        <tr><td>Fund</td><td>Exit tax on growth each year: 38% in 2026, 35% from 2027 ⚠</td></tr>
-        <tr><td>Investment Account ⚠</td><td>From 2027, 1% a year on the balance above €50,000. No tax on growth. Announced, not yet law.</td></tr>
+        <tr><td>Fund</td><td>Exit tax on growth each year: 38% in 2026, 35% from 2027</td></tr>
+        <tr><td>Investment Account ⚠</td><td>Opens 1 July 2027. 1% a year on the balance above €50,000, no tax on growth, and contributions limited to €12,000 a year. Announced, not yet law.</td></tr>
         <tr><td>Pension</td><td>No tax on growth. Tax on withdrawals as income.</td></tr>
         <tr><td>Property</td><td>Not taxed while held. Property tax and capital gains on sale are not modelled.</td></tr>
       </table>
       <h4 style="margin-top:10px">Gifts and inheritances (CAT at 33%)</h4>
       <table class="info-tbl">
         <tr><th>Group</th><th>Relationship to giver</th><th>Tax-free threshold</th></tr>
-        <tr><td>A</td><td>Child of the giver</td><td>€420,000 ⚠</td></tr>
-        <tr><td>B</td><td>Sibling, niece, nephew, aunt, uncle, grandparent, grandchild</td><td>€44,000 ⚠</td></tr>
-        <tr><td>C</td><td>Anyone else</td><td>€22,000 ⚠</td></tr>
+        <tr><td>A</td><td>Child of the giver</td><td>€420,000</td></tr>
+        <tr><td>B</td><td>Sibling, niece, nephew, aunt, uncle, grandparent, grandchild</td><td>€44,000</td></tr>
+        <tr><td>C</td><td>Anyone else</td><td>€22,000</td></tr>
       </table>
       <p style="margin-top:6px">The first €3,000 of gifts from any one person each year is exempt and does not use the threshold. Gifts between spouses are free of tax. The thresholds are not indexed by law. The planner assumes they rise with the yearly rise in bands and credits (Settings) so that gifts entered in future euro are treated fairly. Set that rise to 0 for fixed thresholds.</p>
     </div>
@@ -524,12 +524,11 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
       <table class="info-tbl">
         <tr><th>Scheme</th><th>What it does</th><th>Window</th></tr>
         <tr><td>Help to Buy</td><td>Refunds income tax and DIRT paid in the last 4 years, up to 10% of a new home's price and up to €35,000</td><td>Contracts 7 Oct 2026 to 31 Dec 2029</td></tr>
-        <tr><td>First Home Scheme</td><td>State and banks fund up to 30% of a new-build price (20% with Help to Buy) for a share of the home</td><td>To end 2027 ⚠</td></tr>
-        <tr><td>Rent tax credit</td><td>20% of rent paid, up to €1,000 per renter (€1,150 in 2027) ⚠</td><td>Tax years 2022 to 2028</td></tr>
+        <tr><td>First Home Scheme</td><td>State and banks fund up to 30% of a new-build price (20% with Help to Buy) for a share of the home. Not available for second-hand homes.</td><td>To June 2027, no extension announced</td></tr>
+        <tr><td>Rent tax credit</td><td>20% of rent paid, up to €1,000 per renter (€1,150 in 2027 and 2028)</td><td>Tax years 2022 to 2028</td></tr>
         <tr><td>Stamp duty</td><td>1% to €1m, 2% on €1m to €1.5m, 6% above</td><td>Ongoing</td></tr>
         <tr><td>Central Bank rules</td><td>Mortgage up to 4 times gross income. Deposit at least 10% for first-time buyers.</td><td>Ongoing</td></tr>
       </table>
-      <p style="margin-top:6px">The Local Authority Home Loan and other grants are not modelled.</p>
     </div>
 
     <div class="info-sec">
@@ -537,12 +536,10 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
       <p>These come from news and budget summaries, not an official page, or are assumptions. Check them before relying on a result.</p>
       <ul class="info-list">
         <li>Budget 2027 figures are as announced and need the Finance Bill to pass.</li>
-        <li>The age credit for 2027, and the age exemption limit for a single person (€18,000).</li>
-        <li>Help to Buy price cap of €500,000 (assumed unchanged). Help to Buy at €35,000 runs to the end of 2029.</li>
-        <li>First Home Scheme end date (2027) and the price ceiling for your area.</li>
-        <li>The rent credit rate of 20%, and the 2027 amount.</li>
-        <li>Exit tax of 35% from 2027, and the Investment Account design (announced for 2027).</li>
-        <li>CAT thresholds for 2026 and after.</li>
+        <li>The age credit for 2027 (€245 single, €490 married). Budget 2027 summaries do not mention a change, so the planner keeps it.</li>
+        <li>The Investment Account design. It is announced for 1 July 2027 and is not yet law. The planner does not enforce the €12,000 yearly contribution limit.</li>
+        <li>First Home Scheme: no extension past June 2027 has been announced, and ceilings change every six months.</li>
+        <li>An Employee PRSI rise of 0.2% reported from October 2028 is not modelled. The planner holds the rate at 4.5% from October 2027.</li>
         <li>The 4% / 5% / 6% minimum ARF rule and the 4-year Help to Buy look-back are modelled in simplified form.</li>
       </ul>
       <h4 style="margin-top:10px">Not modelled</h4>
@@ -559,6 +556,8 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
       <ul class="info-list">
         <li><a href="https://www.revenue.ie" target="_blank" rel="noopener">Revenue</a>: tax rates, credits, bands, pension relief and ARF rules</li>
         <li><a href="https://www.citizensinformation.ie" target="_blank" rel="noopener">Citizens Information</a>: State Pension, PRSI, Help to Buy, rent credit</li>
+        <li><a href="https://www.revenue.ie/en/personal-tax-credits-reliefs-and-exemptions/marital-and-civil-status/exemption-and-marginal-relief/exemption-limits.aspx" target="_blank" rel="noopener">Revenue</a>: age exemption limits</li>
+        <li><a href="https://www.citizensinformation.ie/en/housing/owning-a-home/help-with-buying-a-home/first-home-scheme/" target="_blank" rel="noopener">Citizens Information</a>: First Home Scheme ceilings, new builds only</li>
         <li><a href="https://www.irishexaminer.com/news/politics/arid-41920831.html" target="_blank" rel="noopener">Irish Examiner</a>: Budget 2027 Help to Buy increase</li>
         <li><a href="https://www.gov.ie/en/department-of-housing-local-government-and-heritage/press-releases/minister-james-browne-announces-additional-30-million-in-funding-and-extension-to-2027-of-first-home-scheme" target="_blank" rel="noopener">gov.ie</a>: First Home Scheme extended to 2027</li>
         <li><a href="https://evara.ie/wp-content/uploads/2025/02/Evara_The_First_Home_Scheme_PDF-REV.pdf" target="_blank" rel="noopener">First Home Scheme guide</a>: equity share and price ceilings</li>
@@ -819,7 +818,7 @@ const HELP={
   fhs:{g:1,t:'First Home Scheme',d:'The State and the banks put in up to 30% of the price of a new-build home (20% if you also use Help to Buy) in return for a share of the home\'s value. You pay no rent on the share, but you repay the same percentage of the value later. The scheme runs to the end of 2027 as it now stands. It does not cover second-hand homes. Price ceilings depend on the area.'},
   fhsPct:{t:'Equity share',d:'The percentage of the price the scheme pays. It is limited to 30%, and to 20% when you also use Help to Buy. The planner reduces the mortgage by this amount and keeps the share out of your equity.'},
   fhsCharge:{t:'Scheme service charge',d:'After five years the First Home Scheme charges a yearly fee on the equity share. Enter the percentage if you want it included. Leave at 0 to ignore it.'},
-  ceiling:{t:'Price ceiling',d:'The most the First Home Scheme will fund. Ceilings differ by area. In Dublin City the figure is €475,000 for a house and €500,000 for an apartment, and other areas are lower. Check the scheme\'s table for yours.'},
+  ceiling:{t:'Price ceiling',d:'The most the First Home Scheme will fund. Ceilings differ by area: €500,000 in Dublin, Cork City and Wicklow, €475,000 in Galway City, Kildare and Meath, €450,000 in Cork County, Galway County and Limerick, and lower elsewhere down to €375,000. Waterford allows €450,000 for apartments. Ceilings are reviewed twice a year, so check the scheme\'s current table for your area.'},
   mortRate:{t:'Mortgage rate',d:'The yearly interest rate. The planner keeps it fixed for the whole term.'},
   mortTerm:{t:'Mortgage term',d:'Years to repay. The mortgage must usually be repaid by retirement, and lenders limit the term for older buyers.'},
   costsPct:{t:'Legal and purchase costs',d:'Solicitor, valuation, surveys and the first year of mortgage protection insurance, as a percentage of the price. Stamp duty is added automatically at 1% of the price up to €1 million.'},
@@ -904,7 +903,7 @@ function togglePop(id){
 const mkHousing=o=>Object.assign({
   mode:'rent',
   rentMonthly:2200,rentInfl:3,rtc:true,
-  buyAge:36,price:420000,newBuild:true,ceiling:475000,houseGrowth:3,
+  buyAge:36,price:420000,newBuild:true,ceiling:500000,houseGrowth:3,
   depositPct:10,useHTB:true,useFHS:false,fhsPct:20,
   mortRate:4,mortTerm:30,costsPct:1.5,runPct:1,
 },o||{});
@@ -966,8 +965,8 @@ if(typeof module!=='undefined')module.exports={DEF,BLANK,mkHousing,mkExpenses};
    Pure functions that read the global state S. Nothing here touches the page, so the
    same code runs in the browser and under Node for testing.
 
-   Sources for every figure are listed in the Info panel. Figures marked "assumption" are
-   not confirmed from an official page and are flagged in the interface as well.
+   Sources for every figure are listed in the Info panel. Figures checked against Revenue, Citizens Information
+   and Budget 2027 summaries on 22 October 2026. Anything still unconfirmed is flagged in the interface.
 */
 
 const DIRT_RATE=0.33;            // deposit interest retention tax
@@ -977,8 +976,8 @@ const LUMP_FREE=200000;          // lifetime tax-free retirement lump sum
 const LUMP_MID=500000;           // 20% band ends here, marginal rate above
 const HTB_MAX=35000;             // Help to Buy, contracts 7 Oct 2026 to 31 Dec 2029
 const HTB_FROM=2026,HTB_TO=2029; // calendar years the enhanced relief covers
-const HTB_PRICE_CAP=500000;      // assumption: property value limit, reported unchanged in Budget 2027
-const FHS_TO=2027;               // First Home Scheme extended to 2027 (May 2025 announcement)
+const HTB_PRICE_CAP=500000;      // property value limit (Citizens Information, mortgage guides 2026)
+const FHS_TO=2027;               // First Home Scheme runs to June 2027 (May 2025 extension); the planner allows the whole of 2027
 const AE_START=2026;             // auto-enrolment (MyFutureFund) started 1 January 2026
 const RTC_LAST=2028;             // Rent Tax Credit covers tax years 2022 to 2028
 const AGE_REL=[[30,.15],[40,.20],[50,.25],[55,.30],[60,.35],[999,.40]];
@@ -1009,7 +1008,7 @@ function tyParams(Y){
     uscExempt:sc(13000),uscRedLimit:sc(60000),
     prsi:Y<=2026?0.042375:Y===2027?0.043875:0.045,  // 4.2% to Sep 2026, 4.35% to Sep 2027, then 4.5%
     prsiExempt:sc(352*52),
-    ageEx:{single:sc(18000),married:sc(36000)},      // single figure is an assumption; married is confirmed
+    ageEx:{single:sc(18000),married:sc(36000)},      // €18,000 single and €36,000 married confirmed on Revenue's exemption limits page
     earnCap:sc(115000),
     exit:Y>=2027?0.35:0.38,                          // 38% in 2026, 35% announced for 2027
     cat:{A:sc(420000),B:sc(44000),C:sc(22000)},
@@ -2283,7 +2282,7 @@ function printRpt(){
       ${sorted.map((_,i)=>`<td>${sym}${n(r.snap[i]||0)}</td>`).join('')}<td>${d(r.homeEquity)}</td><td>${d(r.mortBal)}</td><td><strong>${sym}${n(r.total)}</strong></td><td>${sym}${n(r.realTotal)}</td><td>(${sym}${n(r.cumTax)})</td></tr>`;}).join('')}
     </table>
     <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a retirement, purchase, passing or market event happens that year; red rows = money has run out. Today's € = net worth adjusted for ${S.genInfl}%/yr general inflation.</p></div>
-  <div class="rpt-disc"><strong>Disclaimer:</strong> A planning aid, not tax or financial advice. Figures follow the rules published in October 2026, including Budget 2027 as announced. Several figures are assumptions or come from news summaries: the 2027 age credit, the single age exemption limit, the Help to Buy price cap, the First Home Scheme end date and price ceiling, the rent credit rate, exit tax from 2027, the Investment Account design and the CAT thresholds. Investment returns, house prices and rents are assumptions, not forecasts. Check with Revenue or a qualified adviser before making decisions.</div>`;
+  <div class="rpt-disc"><strong>Disclaimer:</strong> A planning aid, not tax or financial advice. Figures follow the rules published in October 2026, including Budget 2027 as announced. Several figures are assumptions or come from news summaries: the 2027 age credit (assumed unchanged), the Investment Account design (announced, not yet law) and the First Home Scheme, which runs to June 2027 with no extension announced. Investment returns, house prices and rents are assumptions, not forecasts. Check with Revenue or a qualified adviser before making decisions.</div>`;
   window.print();
 }
 
@@ -2328,7 +2327,7 @@ function buildInfo(){
   const a=TY[2026],b=TY[2027],px=tyParams(2027),e=n=>'€'+Math.round(n).toLocaleString('en-IE');
   const tr=(l,x,y)=>`<tr><td>${l}</td><td>${x}</td><td>${y}</td></tr>`;
   document.getElementById('info-tax').innerHTML=`<h4>Income tax, 2026 and 2027</h4>
-    <p>20% up to the standard rate band, 40% above it, less credits. The 2027 figures are from Budget 2027 ⚠. Later years scale 2027 by the rise set in Settings.</p>
+    <p>20% up to the standard rate band, 40% above it, less credits. The 2027 figures are from Budget 2027 and need the Finance Bill to pass. Later years scale 2027 by the rise set in Settings.</p>
     <table class="info-tbl"><tr><th></th><th>2026</th><th>2027</th></tr>
     ${tr('Band, single person',e(a.cut.single),e(b.cut.single))}
     ${tr('Band, married, one income',e(a.cut.m1),e(b.cut.m1))}
@@ -2336,10 +2335,10 @@ function buildInfo(){
     ${tr('Personal credit, single',e(a.cr.personal),e(b.cr.personal))}
     ${tr('Personal credit, married',e(a.cr.married),e(b.cr.married))}
     ${tr('Employee credit, each',e(a.cr.employee),e(b.cr.employee))}
-    ${tr('Age credit from 65, single / married',e(a.cr.age1)+' / '+e(a.cr.age2),e(b.cr.age1)+' / '+e(b.cr.age2)+' ⚠')}
-    ${tr('Rent credit, per renter',e(a.cr.rent1),e(b.cr.rent1)+' ⚠')}
+    ${tr('Age credit from 65, single / married',e(a.cr.age1)+' / '+e(a.cr.age2),e(b.cr.age1)+' / '+e(b.cr.age2)+' (unchanged)')}
+    ${tr('Rent credit, per renter',e(a.cr.rent1),e(b.cr.rent1))}
     </table>
-    <p style="margin-top:6px">From age 65 income tax can be reduced to nil by the age exemption: income up to ${e(px.ageEx.single)} ⚠ for a single person and ${e(px.ageEx.married)} for a couple. Above that, marginal relief limits the tax to 40% of the excess.</p>`;
+    <p style="margin-top:6px">From age 65 income tax can be reduced to nil by the age exemption: income up to ${e(px.ageEx.single)} for a single person and ${e(px.ageEx.married)} for a couple. Above that, marginal relief limits the tax to 40% of the excess.</p>`;
   const u=(x,i)=>x.usc[i];
   document.getElementById('info-usc').innerHTML=`<table class="info-tbl"><tr><th>Income band (USC)</th><th>Rate</th></tr>
     <tr><td>Up to ${e(a.usc[0][0])}</td><td>0.5%</td></tr>
