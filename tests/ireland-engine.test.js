@@ -102,4 +102,51 @@ rows=E.simulateIE(0);
 const f6=Math.pow(1.03,6);
 near('CAT on 800k gift',rows.find(r=>r.age===40).cat,.33*(800000-3000*f6-420000*f6),1);
 
+
+// 16. Macro events
+// Inflation shock: 7% a year for 3 years from age 38. The price level in a year is the product of each year's rise.
+Object.assign(S,{genInfl:2.5});
+S.scenarios[0].housing=Object.assign({},hs0,{mode:'rent'});
+S.scenarios[0].cashEvents=[];
+S.scenarios[0].expenses=[{id:1,label:'Living',amount:30000,infl:'general',startAge:'',endAge:''}];
+S.scenarios[0].macroEvents=[{id:1,kind:'inflation',age:38,years:3,rate:7}];
+rows=E.simulateIE(0);
+let pf=1;for(let age=34;age<=40;age++)pf*=(age>=38&&age<41)?1.07:1.025;
+near('Inflation shock: expenses at 40',rows.find(r=>r.age===40).expenses,30000*pf,0.5);
+near('Inflation shock: today-euro deflator year 40',rows.find(r=>r.age===40).total/rows.find(r=>r.age===40).realTotal,pf,0.001);
+S.scenarios[0].macroEvents=[];
+rows=E.simulateIE(0);
+near('No shock: expenses at 40',rows.find(r=>r.age===40).expenses,30000*Math.pow(1.025,7),0.5);
+
+// Job loss: six months out at age 40 with 12,000 a year of benefit, so half the salary and 6,000 of other income
+S.scenarios[0].macroEvents=[{id:1,kind:'job',pid:1,age:40,months:6,income:12000}];
+rows=E.simulateIE(0);
+const wg7=Math.pow(1.03,7);
+near('Job loss: salary in the year',rows.find(r=>r.age===40).salary,115000*wg7*0.5,0.5);
+near('Job loss: benefit income',rows.find(r=>r.age===40).pens,6000,0.5);
+near('Job loss: salary back the year after',rows.find(r=>r.age===41).salary,115000*Math.pow(1.03,8),0.5);
+// 18 months out spills into the next year: all of year one lost, half of year two
+S.scenarios[0].macroEvents=[{id:1,kind:'job',pid:1,age:40,months:18,income:0}];
+rows=E.simulateIE(0);
+near('18 months out: first year salary',rows.find(r=>r.age===40).salary,0,0.5);
+near('18 months out: second year salary',rows.find(r=>r.age===41).salary,115000*Math.pow(1.03,8)*0.5,0.5);
+
+// Mortgage rate rise: buy at 36, rate 4% to 7% from age 40, payment re-set over the remaining term
+S.scenarios[0].macroEvents=[];
+S.scenarios[0].housing=Object.assign({},hs0,{mode:'buy',buyAge:36,useFHS:false,useHTB:false,depositPct:10});
+const base=E.simulateIE(0);
+S.scenarios[0].macroEvents=[{id:1,kind:'mortrate',age:40,years:0,rate:7}];
+const hi=E.simulateIE(0);
+const bal39=base.find(r=>r.age===39).mortBal,Yb=base.find(r=>r.age===36).yr,Y40=base.find(r=>r.age===40).yr;
+const left=30-(Y40-Yb);
+const dPay=12*(E.mortgagePayment(bal39,7,left)-E.mortgagePayment(bal39,4,left));
+near('Rate rise: no effect before it starts',hi.find(r=>r.age===39).housing,base.find(r=>r.age===39).housing,0.01);
+near('Rate rise: extra housing cost in first year',hi.find(r=>r.age===40).housing-base.find(r=>r.age===40).housing,dPay,2);
+if(!(hi.find(r=>r.age===50).mortBal>base.find(r=>r.age===50).mortBal)){fails++;console.log('FAIL Rate rise: balance should be higher later');}else console.log('ok   Rate rise: balance higher later');
+// Temporary rise ends and the rate falls back
+S.scenarios[0].macroEvents=[{id:1,kind:'mortrate',age:40,years:2,rate:7}];
+const tmp=E.simulateIE(0);
+const p42=tmp.find(r=>r.age===42).housing,b42=base.find(r=>r.age===42).housing;
+if(!(p42<b42*1.2&&p42>b42*0.95)){fails++;console.log('FAIL Rate rise ends: housing back near base in 42 ('+p42.toFixed(0)+' vs '+b42.toFixed(0)+')');}else console.log('ok   Rate rise ends: housing back near base');
+
 console.log(fails?('\n'+fails+' FAILURES'):'\nALL SIMULATION CHECKS PASSED');process.exit(fails?1:0);
