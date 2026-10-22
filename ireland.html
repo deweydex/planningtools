@@ -619,6 +619,18 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
   <!-- Tab 1: scenarios, housing, expenses, events -->
   <div class="ltab-panel" id="ltab-1">
     <div class="accord">
+      <button class="ac-btn open" onclick="togAc(this)">Market Events for this Scenario <span class="ac-arr">▾</span></button>
+      <div class="ac-body open">
+        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the deposit account, or a property slump. With nothing ticked explicitly an event hits every financial account.</p>
+        <div id="me-list"></div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+        </div>
+      </div>
+    </div>
+    <div class="accord">
       <button class="ac-btn open" onclick="togAc(this)">Scenarios &amp; Housing <span class="ac-arr">▾</span></button>
       <div class="ac-body open">
         <div class="spills" id="scen-pills"></div>
@@ -641,18 +653,6 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <div style="display:flex;gap:5px;margin-top:4px">
           <button class="btn-add" style="width:50%" onclick="addCE('in')">+ Add inflow / gift</button>
           <button class="btn-add" style="width:50%;border-color:#f8d4d4;color:var(--red)" onclick="addCE('out')">+ Add outflow</button>
-        </div>
-      </div>
-    </div>
-    <div class="accord">
-      <button class="ac-btn open" onclick="togAc(this)">Market Events for this Scenario <span class="ac-arr">▾</span></button>
-      <div class="ac-body open">
-        <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the deposit account, or a property slump. With nothing ticked explicitly an event hits every financial account.</p>
-        <div id="me-list"></div>
-        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
-          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
-          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
-          <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
         </div>
       </div>
     </div>
