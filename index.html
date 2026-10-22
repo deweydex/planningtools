@@ -743,7 +743,7 @@ const HELP={
   acctType:{t:'Account type',d:'The type decides whether the account is in the drawdown pool and whether required minimum distributions apply from age 73. Property is tracked in total wealth but cannot be drawn on until you add a house sale as a cash event.'},
   drawOrder:{g:1,t:'Drawdown order',d:'When spending and tax are more than income, money is taken from the first account in the list until it is empty, then from the second, and so on. Use the arrows to change the order.'},
   rmd:{g:1,t:'Required minimum distribution (RMD)',d:'From age 73 the government requires a minimum withdrawal each year from tax-deferred accounts such as Traditional IRAs and 401(k)s. The planner divides the balance by the IRS life-expectancy factor and taxes the result as ordinary income.'},
-  survivor:{g:1,t:'Survivor benefit',d:'When one person passes, the survivor keeps the higher of the two Social Security benefits and the lower one stops. Tax filing also changes from joint to single.'},
+  survivor:{g:1,t:'Survivor benefit',d:'When one person passes, the survivor keeps the higher of the two Social Security benefits and the lower one stops. The higher benefit is paid once a living person\'s own benefit has started. Tax filing also changes from joint to single.'},
   expAmount:{t:'Expense amount',d:'Enter the amount in today\'s money, as a monthly or yearly figure. Each year it rises with the inflation type chosen in the next column.'},
   expInfl:{t:'Inflation type',d:'General follows the general inflation rate in Settings. Medical follows the higher medical rate. Fixed keeps the amount the same every year.'},
   cashEvent:{g:1,t:'Cash event',d:'A one-off sum paid in or out in a single year, such as selling the house or buying a car. The amount is not adjusted for inflation, so enter it in the money of that future year.'},
@@ -766,11 +766,12 @@ const HELP={
   m_efftax:{t:'Effective tax rate',d:'Average tax divided by average gross income. It is lower than the top bracket because only part of income is taxed at the higher rates.'},
   m_inflcost:{t:'Inflation erosion',d:'The gap between end wealth and its value in today\'s dollars. It measures the buying power lost to inflation.'},
   c_pension:{t:'Pension and other income',d:'Taxable income other than Social Security, such as pensions, annuities, rent and wages. Tax-exempt income is included here but is not taxed.'},
-  c_gross:{t:'Gross income',d:'Social Security, taxable pension and other income, and required minimum distributions, before tax. Tax-exempt income is left out.'},
-  c_tax:{t:'Tax',d:'Federal income tax from the brackets in the Info panel plus the flat state rate. It is charged on income and required distributions, not on other withdrawals from accounts.'},
+  c_wd:{t:'Taxable withdrawals',d:'Money taken from tax-deferred accounts (Traditional IRA, 401(k) and similar) beyond the required minimum, to cover spending. It counts as income and is taxed, so more comes out than the gap it fills.'},
+  c_gross:{t:'Gross income',d:'Social Security, taxable pension and other income, required minimum distributions and taxable withdrawals, before tax. Tax-exempt income is left out.'},
+  c_tax:{t:'Tax',d:'Federal income tax from the brackets in the Info panel plus the flat state rate. It is charged on income, required distributions and withdrawals from tax-deferred accounts. Withdrawals from taxable, Roth and HSA accounts are not taxed here.'},
   c_expenses:{t:'Expenses',d:'The spending for the active scenario this year after inflation, plus any yearly costs entered on accounts.'},
   c_ceio:{t:'Cash events',d:'One-off amounts paid in (green) or out (red) in this year.'},
-  c_draw:{t:'Extra draw or surplus',d:'When income does not cover spending, the shortfall is drawn from accounts in drawdown order. When it does, the surplus is added to the first financial account. Withdrawals other than required distributions are not taxed here, so tax is understated when large sums leave tax-deferred accounts.'},
+  c_draw:{t:'Extra draw or surplus',d:'When income does not cover spending, the shortfall is drawn from accounts in drawdown order. When it does, the surplus is added to the first taxable or cash account. Withdrawals from tax-deferred accounts are taxed (see Taxable withdrawals). Interest and capital gains tax on taxable accounts are not modelled, so tax is slightly understated there.'},
   c_total:{t:'Total wealth',d:'The balance of every account at the end of the year, in that year\'s dollars.'},
 };
 
@@ -861,10 +862,10 @@ const DEF={
       {id:5,label:'Family visits & transport',amount:6000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     ],cashEvents:[]},
   ],_nsid:4,_neid:8,_ncid:3,
-  cols:{ss:true,pension:true,rmd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  cols:{ss:true,pension:true,rmd:true,wd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
   /* colOrder controls the left-to-right display order in the results table.
      Keys must match the keys in cols. Drag-and-drop updates this array. */
-  colOrder:['ss','pension','rmd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  colOrder:['ss','pension','rmd','wd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -883,8 +884,8 @@ const BLANK={
   activeScenario:0,
   scenarios:[{id:1,name:'General',expenses:[],cashEvents:[]}],
   _nsid:2,_neid:1,_ncid:1,
-  cols:{ss:true,pension:true,rmd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
-  colOrder:['ss','pension','rmd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
+  cols:{ss:true,pension:true,rmd:true,wd:true,gross:true,tax:true,expenses:true,ceio:true,draw:true,realwealth:true,infloss:false,cumtax:false,total:true},
+  colOrder:['ss','pension','rmd','wd','gross','tax','expenses','ceio','draw','realwealth','infloss','cumtax','total'],
   mets:{startwealth:true,endwealth:true,funded:true,avgtax:true,cumtaxpd:false,realend:false,efftax:false,inflcost:false},
 };
 
@@ -904,6 +905,9 @@ if(!S.cols)S.cols=JSON.parse(JSON.stringify(DEF.cols));
 if(!S.mets)S.mets=JSON.parse(JSON.stringify(DEF.mets));
 // v8: add colOrder for draggable column ordering
 if(!S.colOrder)S.colOrder=JSON.parse(JSON.stringify(DEF.colOrder));
+// v11: taxable withdrawals column
+if(!S.colOrder.includes('wd')){const i=S.colOrder.indexOf('rmd');S.colOrder.splice(i<0?0:i+1,0,'wd');}
+if(S.cols.wd===undefined)S.cols.wd=true;
 // v7: migrate global cashEvents into the first scenario (if the global array exists)
 if(S.cashEvents&&S.cashEvents.length){
   if(!S.scenarios[0].cashEvents)S.scenarios[0].cashEvents=[];
@@ -931,6 +935,18 @@ function fmt(n){if(n===null||n===undefined)return'—';const v=S.showEur?Math.ro
 function fmtK(n){const v=S.showEur?n*S.eurRate:n,sym=S.showEur?'€':'$';if(Math.abs(v)>=1e6)return sym+(v/1e6).toFixed(2)+'M';if(Math.abs(v)>=1e3)return sym+Math.round(v/1e3)+'k';return sym+Math.round(v);}
 function toAnn(v,p){return p==='mo'?v*12:v;}
 function disp(a,p){return p==='mo'?+(a/12).toFixed(2):a;}
+/* Balance-weighted average of the financial accounts' own return rates, for report headers. */
+function blendedReturn(){
+  const fin=S.accounts.filter(a=>a.type!=='property'),tot=fin.reduce((t,a)=>t+a.balance,0);
+  return tot>0?fin.reduce((t,a)=>t+a.balance*a.rate,0)/tot:0;
+}
+/* Text for one year's events in an export: deaths by name, everything else by label. */
+const evText=e=>e.type==='death'?e.name+' passes':e.label;
+const tgtNames=ev=>{
+  const acc=S.accounts.filter(a=>ev.targets&&ev.targets.length?ev.targets.includes(a.id):a.type!=='property');
+  return acc.length?acc.map(a=>a.label).join(', '):'No accounts';
+};
+const growthL=a=>a.growth==='real'?'Real (above inflation)':'Nominal';
 
 /* ══ TAX ══
    Simplified US federal income tax using 2024/25 brackets.
@@ -979,7 +995,7 @@ const CE_T={
   giftin:{label:'Gift received',dir:'in',tax:'Not taxable to recipient. Giver must file a gift tax return if over $18,000 per person per year (2024 annual exclusion).'},
   assetsale:{label:'Asset / investment sale',dir:'in',tax:'Enter net proceeds after estimated capital gains tax. Long-term gains (held >1 year) taxed at 0%, 15%, or 20% depending on income.'},
   business_sale:{label:'Business sale / equity event',dir:'in',tax:'Capital gains treatment if structured as stock sale; ordinary income if asset sale. A tax attorney and CPA should be involved in structuring a business sale.'},
-  rsus:{label:'RSU / stock options vesting',dir:'in',tax:'Taxed as ordinary income in the year received (W-2 income). Any subsequent growth after vesting is taxed as capital gains.'},
+  rsus:{label:'RSU / stock options vesting',dir:'in',taxable:true,tax:'Taxed as ordinary income in the year received (W-2 income). The planner adds the amount to that year\'s income and taxes it, so enter the gross value. Any later growth is taxed as capital gains.'},
   settlement:{label:'Legal or insurance settlement',dir:'in',tax:'Physical injury settlements are generally tax-free. Punitive damages, emotional distress awards, and employment settlements are typically taxable. Verify with a CPA.'},
   otherin:{label:'Other inflow',dir:'in',tax:'Verify tax treatment with a CPA for unusual income sources.'},
   purchase:{label:'Large purchase',dir:'out',tax:'No tax deduction. Directly reduces account balances.'},
@@ -1108,11 +1124,13 @@ function simulate(scIdx){
     }
 
     // ── Social Security survivor benefit ──────────────────────────────────────
-    if(survivingSSAmounts.length===0&&allSS.length>0){
-      ssTotal=0; // all SS recipients have passed
-    } else if(survivingSSAmounts.length<allSS.length&&survivingSSAmounts.length>0){
-      // One died: survivor gets the highest of all original amounts at this year's COLA
-      ssTotal=Math.max(...allSS.map(inc=>inc.amount*Math.pow(1+(inc.adj||0)/100,y)));
+    // The survivor rule applies only when a recipient has actually passed. A benefit that
+    // has simply not started yet (a later From age) must not trigger it.
+    const annOf=inc=>inc.amount*(inc.adjType==='general'?inflY:inc.adjType==='medical'?medY:inc.adjType==='none'?1:Math.pow(1+(inc.adj||0)/100,y));
+    const ssRecipientGone=allSS.some(i=>i.pid!==0&&dead[i.pid]);
+    if(ssRecipientGone){
+      // Survivor keeps the highest benefit, once a living recipient is claiming
+      ssTotal=survivingSSAmounts.length?Math.max(...allSS.map(annOf)):0;
     } else {
       ssTotal=survivingSSAmounts.reduce((t,x)=>t+x.amt,0);
     }
@@ -1131,10 +1149,13 @@ function simulate(scIdx){
       });
     }
 
+    // Taxable cash events (RSU vesting) count as ordinary income in their year
+    for(const ce of (sc.cashEvents||[]))if(ce.age===tableAge&&ce.dir==='in'&&CE_T[ce.type]&&CE_T[ce.type].taxable)otherInc+=ce.amount;
+
     const gross=ssTotal+otherInc+rmdTotal;
-    const tax=calcTax(gross,ssTotal,singleFiler);
-    const netInc=gross-tax+exemptInc;
-    cumTax+=tax;
+    // Tax before any extra withdrawals. Withdrawals from tax-deferred accounts are taxed below.
+    const baseTax=calcTax(gross,ssTotal,singleFiler);
+    const netInc=gross-baseTax+exemptInc;
 
     // ── Expenses ─────────────────────────────────────────────────────────────
     let expenses=0;
@@ -1151,7 +1172,10 @@ function simulate(scIdx){
     // Per-scenario cash events (one-off inflows/outflows)
     let ceIn=0,ceOut=0;
     for(const ce of (sc.cashEvents||[])){
-      if(ce.age===tableAge){ce.dir==='in'?ceIn+=ce.amount:ceOut+=ce.amount;}
+      if(ce.age===tableAge){
+        if(ce.dir==='in'&&CE_T[ce.type]&&CE_T[ce.type].taxable)continue;   // already counted as income
+        ce.dir==='in'?ceIn+=ce.amount:ceOut+=ce.amount;
+      }
     }
 
     const cashflow=netInc-expenses-acctCosts-ceOut+ceIn;
@@ -1168,16 +1192,37 @@ function simulate(scIdx){
     });
 
     // ── Drawdown waterfall (skip property accounts) ───────────────────────────
-    let rem=extraDraw;
+    // Withdrawals from tax-deferred accounts (traditional IRA, 401k and so on) are taxed as
+    // income, so more has to come out than the spending gap: the bisection finds the amount
+    // whose after-tax value equals the gap. Roth and HSA money is tax-free. Other accounts
+    // are not taxed here (interest and capital gains tax are not modelled).
+    let rem=extraDraw,wd=0;
+    const taxOn=x=>calcTax(gross+wd+x,ssTotal,singleFiler)-calcTax(gross+wd,ssTotal,singleFiler);
     for(let i=0;i<bals.length;i++){
-      if(sorted[i].type==='property')continue; // property can't be drawn without selling
+      const a=sorted[i];
+      if(a.type==='property')continue; // property can't be drawn without selling
       if(rem<=0)break;
-      const d=Math.min(rem,Math.max(0,bals[i]));
-      bals[i]-=d;rem-=d;
+      const avail=Math.max(0,bals[i]);
+      if(RMD_TYPES.has(a.type)){
+        const net=e=>e-taxOn(e);
+        let take;
+        if(net(avail)<=rem)take=avail;
+        else{let lo=0,hi=avail;for(let k=0;k<40;k++){const mid=(lo+hi)/2;if(net(mid)<rem)lo=mid;else hi=mid;}take=hi;}
+        const got=net(take);
+        bals[i]-=take;rem-=got;wd+=take;
+      }else{
+        const d=Math.min(rem,avail);
+        bals[i]-=d;rem-=d;
+      }
     }
-    // Surplus goes into the first non-property account
+    // Tax for the year now includes tax on those withdrawals
+    const tax=calcTax(gross+wd,ssTotal,singleFiler);
+    cumTax+=tax;
+    // Surplus goes into the first taxable or cash account. Money cannot be paid into a
+    // tax-deferred account here, so those are used only if nothing else exists.
     if(surplus>0){
-      const fi=sorted.findIndex(a=>a.type!=='property');
+      let fi=sorted.findIndex(a=>a.type==='taxable'||a.type==='trust'||a.type==='cd');
+      if(fi<0)fi=sorted.findIndex(a=>a.type!=='property');
       if(fi>=0)bals[fi]+=surplus;
     }
 
@@ -1190,7 +1235,7 @@ function simulate(scIdx){
     rows.push({
       age:tableAge,yr:new Date().getFullYear()+y,
       ss:Math.round(ssTotal),otherInc:Math.round(otherInc+exemptInc),rmd:Math.round(rmdTotal),
-      gross:Math.round(gross),tax:Math.round(tax),cumTax:Math.round(cumTax),
+      wd:Math.round(wd),gross:Math.round(gross+wd),tax:Math.round(tax),cumTax:Math.round(cumTax),
       expenses:Math.round(expenses),ceIn:Math.round(ceIn),ceOut:Math.round(ceOut),
       extraDraw:Math.round(extraDraw),surplus:Math.round(surplus),
       snap,total,realTotal,inflLoss:Math.round(inflLoss),
@@ -1611,7 +1656,7 @@ function renderMetItems(){document.getElementById('met-items').innerHTML=MET_DEF
 */
 const COL_DEFS=[
   {key:'ss',label:'Social Security income'},{key:'pension',label:'Pension & other income'},
-  {key:'rmd',label:'Required min. distributions'},{key:'gross',label:'Gross income'},
+  {key:'rmd',label:'Required min. distributions'},{key:'wd',label:'Taxable withdrawals'},{key:'gross',label:'Gross income'},
   {key:'tax',label:'Tax'},{key:'expenses',label:'Expenses'},
   {key:'ceio',label:'Cash event inflows / outflows'},{key:'draw',label:'Extra draw / surplus'},
   {key:'realwealth',label:'Total wealth (today\'s $)'},{key:'infloss',label:'Inflation erosion this year'},
@@ -1774,7 +1819,7 @@ function renderTable(rows){
     infloss:'Gap between nominal and real wealth — the purchasing power eroded by inflation this year.',
   };
   const colHeaders={
-    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',gross:'Gross Income',
+    ss:'Social Security',pension:'Pension & Other',rmd:'Min. Withdrawal',wd:'Taxable Withdrawals',gross:'Gross Income',
     tax:'Tax',expenses:'Expenses',ceio:'Cash Events',draw:'Extra Draw',
     realwealth:"Wealth Today's $",infloss:'Inflation Erosion',cumtax:'Cumul. Tax',total:'Total Wealth',
   };
@@ -1801,6 +1846,7 @@ function renderTable(rows){
         case 'ss':      tds+=`<td>${fmt(r.ss)}</td>`;break;
         case 'pension': tds+=`<td>${r.otherInc>0?fmt(r.otherInc):'—'}</td>`;break;
         case 'rmd':     tds+=`<td>${r.rmd>0?fmt(r.rmd):'—'}</td>`;break;
+        case 'wd':      tds+=`<td>${r.wd>0?fmt(r.wd):'—'}</td>`;break;
         case 'gross':   tds+=`<td>${fmt(r.gross)}</td>`;break;
         case 'tax':     tds+=`<td class="neg">(${fmt(r.tax)})</td>`;break;
         case 'expenses':tds+=`<td class="neg">(${fmt(r.expenses)})</td>`;break;
@@ -1877,7 +1923,7 @@ function printRpt(){
       <span>Ages ${S.people[0].currentAge}–${last.age} (${S.people[0].name})</span>
       <span>${cur}${S.showEur?' ($1=€'+S.eurRate+')':''}</span>
       <span>Generated: ${dateStr}</span>
-      <span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Base return: '+S.retRate+'%/yr'}</span>
+      <span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Returns set per account'}</span>
     </div>
   </div>
   <div class="rpt-kpis">
@@ -1887,12 +1933,13 @@ function printRpt(){
     <div class="rpt-kpi"><div class="rpt-kpi-l">End wealth (today's $)</div><div class="rpt-kpi-v a">${sym}${n(last.realTotal)}</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">Average annual tax</div><div class="rpt-kpi-v">${sym}${n(avgTax)}</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">Total tax paid</div><div class="rpt-kpi-v">${sym}${n(last.cumTax)}</div></div>
-    <div class="rpt-kpi"><div class="rpt-kpi-l">Return rate</div><div class="rpt-kpi-v">${S.useStress?S.stressRate:S.retRate}%/yr</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">${S.useStress?'Stress-test return cap':'Blended account return'}</div><div class="rpt-kpi-v">${S.useStress?S.stressRate:blendedReturn().toFixed(1)}%/yr</div></div>
     <div class="rpt-kpi"><div class="rpt-kpi-l">General inflation</div><div class="rpt-kpi-v">${S.genInfl}%/yr</div></div>
   </div>
   <div class="rpt-sec"><h2>Simulation assumptions</h2>
     <div class="rpt-assm">
-      <div class="rpt-assm-row"><span class="al">Investment return</span><span class="av">${S.useStress?S.stressRate:S.retRate}%/yr${S.useStress?' (stress test)':''}</span></div>
+      <div class="rpt-assm-row"><span class="al">Investment return</span><span class="av">${S.useStress?'Each account capped at '+S.stressRate+'%/yr (stress test)':'Per account, blended '+blendedReturn().toFixed(1)+'%/yr'}</span></div>
+      <div class="rpt-assm-row"><span class="al">Withdrawals</span><span class="av">Tax-deferred accounts taxed as income; other accounts untaxed</span></div>
       <div class="rpt-assm-row"><span class="al">General inflation</span><span class="av">${S.genInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">Medical inflation</span><span class="av">${S.medInfl}%/yr</span></div>
       <div class="rpt-assm-row"><span class="al">State income tax</span><span class="av">${S.stateTax>0?S.stateTax+'% on AGI':'None (0%)'}</span></div>
@@ -1916,9 +1963,9 @@ function printRpt(){
     </table>
   </div>
   <div class="rpt-sec"><h2>Accounts & assets</h2>
-    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th>Balance / Value</th><th>Return / Apprec. %</th><th>Annual costs</th><th>Draw order</th></tr>
-    ${sorted.map(a=>`<tr><td class="tl">${a.label}</td><td class="tl">${a.type}</td><td>${sym}${n(a.balance)}</td><td>${pct(a.rate)}</td><td>${a.annualCost>0?sym+n(a.annualCost):'—'}</td><td>${a.type==='property'?'Not drawable (property)':a.drawOrder}</td></tr>`).join('')}
-    <tr class="tot"><td class="tl" colspan="2">Total</td><td>${sym}${n(sorted.reduce((t,a)=>t+a.balance,0))}</td><td colspan="3"></td></tr>
+    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th>Balance / Value</th><th>Return / Apprec. %</th><th class="tl">Growth basis</th><th>Annual costs</th><th>Draw order</th></tr>
+    ${sorted.map(a=>`<tr><td class="tl">${a.label}</td><td class="tl">${a.type}</td><td>${sym}${n(a.balance)}</td><td>${pct(a.rate)}</td><td class="tl">${growthL(a)}</td><td>${a.annualCost>0?sym+n(a.annualCost):'—'}</td><td>${a.type==='property'?'Not drawable (property)':a.drawOrder}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl" colspan="2">Total</td><td>${sym}${n(sorted.reduce((t,a)=>t+a.balance,0))}</td><td colspan="4"></td></tr>
     </table>
   </div>
   <div class="rpt-sec pb-before"><h2>Expenses — ${sc.name}</h2>
@@ -1932,22 +1979,30 @@ function printRpt(){
     <table class="rt2"><tr><th class="tl">Direction</th><th class="tl">Category</th><th class="tl">Description</th><th>At age</th><th>Amount (${cur})</th></tr>
     ${sc.cashEvents.map(ce=>`<tr><td class="tl">${ce.dir==='in'?'Inflow':'Outflow'}</td><td class="tl">${CE_T[ce.type]?.label||ce.type}</td><td class="tl">${ce.label}</td><td>${ce.age}</td><td>${sym}${n(ce.amount)}</td></tr>`).join('')}
     </table></div>`:''}
+  ${(sc.marketEvents||[]).length?`<div class="rpt-sec"><h2>Market events — ${sc.name}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
+    ${sc.marketEvents.map(ev=>`<tr><td class="tl">${ev.label}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${tgtNames(ev)}</td></tr>`).join('')}
+    </table></div>`:''}
+  ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
+    <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Funded</th><th>End wealth</th><th>In today's $</th><th>Total tax</th><th>Market events</th></tr>
+    ${S.scenarios.map(x=>{const r=simulate(S.scenarios.indexOf(x)),l=r[r.length-1],d=r.find(q=>q.depleted);return`<tr><td class="tl">${x.name}${x===sc?' (shown here)':''}</td><td class="tl">${d?'Runs out at '+d.age:'To age '+l.age}</td><td>${sym}${n(l.total)}</td><td>${sym}${n(l.realTotal)}</td><td>${sym}${n(l.cumTax)}</td><td>${(x.marketEvents||[]).length}</td></tr>`;}).join('')}
+    </table></div>`:''}
   <div class="rpt-sec pb-before landscape-section"><h2>Year-by-year projection — ${sc.name}</h2>
     <table class="rt2"><tr>
       <th class="tl">Age</th><th class="tl">Year</th><th class="tl">Events</th>
-      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th>
+      <th>Social Security</th><th>Pension & Other</th><th>Min. Withdrawal</th><th>Taxable Withdrawals</th>
       <th>Gross Income</th><th>Tax (est.)</th><th>Expenses</th><th>Cash Events</th><th>Extra Draw</th>
       ${sorted.map(a=>`<th>${a.label.length>12?a.label.slice(0,11)+'…':a.label}</th>`).join('')}
       <th>Total Wealth</th><th>Today's $</th><th>Cumul. Tax</th>
     </tr>
     ${rows.map(r=>{
-      const evtNames=r.events.filter(e=>e.type==='death').map(e=>e.name);
+      const evtNames=r.events.map(evText);
       const cls=r.depleted?'dep':evtNames.length?'evt':'';
       const ceNet=r.ceIn-r.ceOut;
       return`<tr class="${cls}">
         <td class="tl">${r.age}</td><td class="tl">${r.yr}</td>
-        <td class="tl" style="font-size:9px">${evtNames.map(n=>n+' passes').join('; ')||'—'}</td>
-        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td>
+        <td class="tl" style="font-size:9px">${evtNames.join('; ')||'—'}</td>
+        <td>${sym}${n(r.ss)}</td><td>${r.otherInc>0?sym+n(r.otherInc):'—'}</td><td>${r.rmd>0?sym+n(r.rmd):'—'}</td><td>${r.wd>0?sym+n(r.wd):'—'}</td>
         <td>${sym}${n(r.gross)}</td><td>(${sym}${n(r.tax)})</td><td>(${sym}${n(r.expenses)})</td>
         <td>${ceNet>0?'+'+sym+n(ceNet):ceNet<0?'('+sym+n(-ceNet)+')':'—'}</td>
         <td>${r.extraDraw>0?'('+sym+n(r.extraDraw)+')':r.surplus>0?'+'+sym+n(r.surplus):'—'}</td>
@@ -1956,7 +2011,7 @@ function printRpt(){
       </tr>`;
     }).join('')}
     </table>
-    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a person passes that year; red rows = all accounts depleted. Min. Withdrawal = Required Minimum Distribution from tax-deferred accounts. Today's $ = total wealth adjusted for ${S.genInfl}%/yr general inflation.</p>
+    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a person passes or a market event happens that year; red rows = all accounts depleted. Min. Withdrawal = Required Minimum Distribution from tax-deferred accounts. Taxable Withdrawals = extra money taken from tax-deferred accounts to cover spending, which is taxed as income. Today's $ = total wealth adjusted for ${S.genInfl}%/yr general inflation.</p>
   </div>
   <div class="rpt-disc"><strong>Disclaimer:</strong> For illustrative planning purposes only — not financial, tax, legal, or investment advice. Federal tax uses simplified 2024/25 estimates. Actual liability will vary. Returns are not guaranteed. Sequence-of-returns risk not modelled. Property values are estimates and are not independently verified. Consult a qualified financial planner (CFP), accountant (CPA), and estate attorney before making decisions.</div>`;
   window.print();
@@ -1979,7 +2034,7 @@ function exportXLSX(){
     const sumData=[
       ['Family Retirement Financial Forecast','','',''],
       ['Generated',new Date().toLocaleDateString('en-IE'),'Currency',cur],
-      ['Active scenario',sc.name,'Return rate',(S.useStress?S.stressRate:S.retRate)+'%/yr'],
+      ['Active scenario',sc.name,S.useStress?'Stress-test cap':'Blended account return',(S.useStress?S.stressRate:blendedReturn().toFixed(1))+'%/yr'],
       ['','','',''],
       ['KEY METRICS','','',''],
       ['Starting wealth',cv(rows[0].snap.reduce((t,v)=>t+v,0)),'',''],
@@ -1989,23 +2044,23 @@ function exportXLSX(){
       ['Average annual tax',cv(avgTax),'Total tax paid',cv(last.cumTax)],
       ['','','',''],
       ['ASSUMPTIONS','','',''],
-      ['Investment return',S.retRate+'%/yr','Stress-test return',S.stressRate+'%/yr ('+( S.useStress?'active':'inactive')+')'],
+      ['Default return for new accounts',S.retRate+'%/yr','Stress-test return',S.stressRate+'%/yr ('+( S.useStress?'active':'inactive')+')'],
       ['General inflation',S.genInfl+'%/yr','Medical inflation',S.medInfl+'%/yr'],
       ['State income tax',S.stateTax+'%','Federal brackets','2024/25 simplified'],
       ['','','',''],
       ['PEOPLE','Current age','Predicted age at passing','Income streams'],
       ...S.people.map(p=>[p.name,p.currentAge,p.deathAge,S.incomes.filter(i=>i.pid===p.id).length]),
       ['','','',''],
-      ['ACCOUNTS','Balance ('+cur+')','Return %','Type'],
-      ...sorted.map(a=>[a.label,cv(a.balance),a.rate,a.type]),
+      ['ACCOUNTS','Balance ('+cur+')','Return %','Type / growth basis'],
+      ...sorted.map(a=>[a.label,cv(a.balance),a.rate,a.type+' / '+(a.growth==='real'?'real':'nominal')]),
       ['TOTAL',cv(sorted.reduce((t,a)=>t+a.balance,0)),'',''],
     ];
     const wsSummary=XLSX.utils.aoa_to_sheet(sumData);
     wsSummary['!cols']=[{wch:40},{wch:18},{wch:28},{wch:18}];
     XLSX.utils.book_append_sheet(wb,wsSummary,'Summary');
     // Year by Year sheet
-    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
-    const yyR=rows.map(r=>[r.age,r.yr,r.events.filter(e=>e.type==='death').map(e=>e.name).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
+    const yyH=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal RMD ('+cur+')','Taxable Withdrawals ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+    const yyR=rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; ')||'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)]);
     const wsYY=XLSX.utils.aoa_to_sheet([yyH,...yyR]);
     wsYY['!cols']=[{wch:5},{wch:6},{wch:20},...Array(yyH.length-3).fill({wch:16})];
     XLSX.utils.book_append_sheet(wb,wsYY,'Year by Year');
@@ -2015,9 +2070,9 @@ function exportXLSX(){
     const wsInc=XLSX.utils.aoa_to_sheet([incH,...incR]);wsInc['!cols']=[{wch:24},{wch:14},{wch:18},{wch:14},{wch:14},{wch:20},{wch:8},{wch:9},{wch:9},{wch:24}];
     XLSX.utils.book_append_sheet(wb,wsInc,'Income Streams');
     // Accounts
-    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Annual Costs ('+cur+')','Draw Order'];
-    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder]);
-    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:16},{wch:14}];
+    const acH=['Account','Type','Balance/Value ('+cur+')','Return/Apprec %','Growth basis','Annual Costs ('+cur+')','Draw Order'];
+    const acR=sorted.map(a=>[a.label,a.type,cv(a.balance),a.rate,growthL(a),cv(a.annualCost||0),a.type==='property'?'N/A (property)':a.drawOrder]);
+    const wsAc=XLSX.utils.aoa_to_sheet([acH,...acR]);wsAc['!cols']=[{wch:28},{wch:14},{wch:18},{wch:14},{wch:22},{wch:16},{wch:14}];
     XLSX.utils.book_append_sheet(wb,wsAc,'Accounts');
     // All scenario expenses
     const expH=['Scenario','Item','Annual ('+cur+')','Monthly ('+cur+')','Inflation','From age','To age','Notes'];
@@ -2034,6 +2089,16 @@ function exportXLSX(){
     const ceR=[];
     S.scenarios.forEach(s=>(s.cashEvents||[]).forEach(ce=>ceR.push([s.name,ce.dir==='in'?'Inflow':'Outflow',CE_T[ce.type]?.label||ce.type,ce.label,ce.age,cv(ce.amount),ce.note||''])));
     if(ceR.length){const wsCE=XLSX.utils.aoa_to_sheet([ceH,...ceR]);wsCE['!cols']=[{wch:18},{wch:10},{wch:26},{wch:28},{wch:8},{wch:14},{wch:30}];XLSX.utils.book_append_sheet(wb,wsCE,'Cash Events');}
+    // Market events (all scenarios)
+    const meH=['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'];
+    const meR=[];
+    S.scenarios.forEach(s=>(s.marketEvents||[]).forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
+    if(meR.length){const wsME=XLSX.utils.aoa_to_sheet([meH,...meR]);wsME['!cols']=[{wch:18},{wch:26},{wch:8},{wch:16},{wch:18},{wch:10},{wch:44}];XLSX.utils.book_append_sheet(wb,wsME,'Market Events');}
+    // Scenario comparison
+    const cmpH=['Scenario','Funded','End wealth ('+cur+')','End wealth today\'s $ ('+cur+')','Total tax ('+cur+')','Market events'];
+    const cmpR=S.scenarios.map((x,i)=>{const r=simulate(i),l=r[r.length-1],d=r.find(q=>q.depleted);return[x.name,d?'Runs out at '+d.age:'To age '+l.age,cv(l.total),cv(l.realTotal),cv(l.cumTax),(x.marketEvents||[]).length];});
+    const wsCmp=XLSX.utils.aoa_to_sheet([cmpH,...cmpR]);wsCmp['!cols']=[{wch:26},{wch:18},{wch:18},{wch:24},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,wsCmp,'Scenario Comparison');
     XLSX.writeFile(wb,'retirement-projection.xlsx');
   }
   if(window.XLSX){doExport();}
@@ -2046,10 +2111,10 @@ function exportCSV(){
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   const cur=S.showEur?'EUR':'USD';
   const cv=v=>S.showEur?Math.round(v*S.eurRate):Math.round(v);
-  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>a.label+' ('+cur+')'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
+  const H=['Age','Year','Events','Social Security ('+cur+')','Pension & Other ('+cur+')','Min Withdrawal ('+cur+')','Taxable Withdrawals ('+cur+')','Gross Income ('+cur+')','Tax ('+cur+')','Expenses ('+cur+')','Cash Inflows ('+cur+')','Cash Outflows ('+cur+')','Extra Draw ('+cur+')','Surplus ('+cur+')',...sorted.map(a=>'"'+a.label.replace(/"/g,'""')+' ('+cur+')"'),'Total Wealth ('+cur+')','Wealth Today\'s $ ('+cur+')','Inflation Erosion ('+cur+')','Cumulative Tax ('+cur+')'];
   const R=rows.map(r=>{
-    const evts=r.events.filter(e=>e.type==='death').map(e=>e.name).join('; ');
-    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
+    const evts=r.events.map(evText).join('; ').replace(/"/g,'""');
+    return[r.age,r.yr,evts?'"'+evts+'"':'',cv(r.ss),r.otherInc>0?cv(r.otherInc):0,r.rmd>0?cv(r.rmd):0,cv(r.wd),cv(r.gross),cv(r.tax),cv(r.expenses),cv(r.ceIn),cv(r.ceOut),cv(r.extraDraw),cv(r.surplus),...sorted.map((_,i)=>cv(r.snap[i]||0)),cv(r.total),cv(r.realTotal),cv(r.inflLoss),cv(r.cumTax)].join(',');
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([[H.join(','),...R].join('\n')],{type:'text/csv'}));
