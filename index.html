@@ -601,6 +601,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
           <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addMacro('inflation')">+ Inflation shock</button>
         </div>
       </div>
     </div>
@@ -751,6 +752,7 @@ const HELP={
   cashEvent:{g:1,t:'Cash event',d:'A one-off sum paid in or out in a single year, such as selling the house or buying a car. The amount is not adjusted for inflation, so enter it in the money of that future year.'},
   ceAge:{t:'Age of the event',d:'The age of the first person in the year the event happens. The event appears in the results row for that age.'},
   ceAmount:{t:'Event amount',d:'The amount in the money of that future year. It is not adjusted for inflation, so use a larger figure for an event far away.'},
+  inflShock:{g:1,t:'Inflation shock',d:'A stretch of faster price rises, such as 7% a year for three years. Expenses, medical costs, cost-of-living increases, accounts on the real growth basis, the tax brackets and the figures in today\'s dollars all use the faster rate while it lasts. Pensions and annuities that are fixed do not keep up, so a shock squeezes anyone who relies on them.'},
   marketEvent:{g:1,t:'Market event',d:'A shock that hits chosen accounts only. The one-off change is applied to the balance at the start of the year. The optional return override then replaces the normal return for the number of years given, which lets you model a slow recovery.'},
   meTargets:{t:'Accounts affected',d:'Tick the accounts the event hits. If you have not ticked any yourself, the event hits every financial account and leaves property alone.'},
   sequence:{g:1,t:'Sequence of returns',d:'A fall early in retirement does more lasting damage than the same fall later, because withdrawals take money out while prices are low and that money cannot recover. Move a market event to different ages to see the effect.'},
@@ -1130,6 +1132,23 @@ function evTargets(ev,a){
    2. A market event with a "then return X% for N years" override replaces that rate while active.
    3. Growth basis "real" treats the rate as a return above general inflation,
       so the nominal growth is (1+rate)(1+inflation)-1. "nominal" uses the rate as entered. */
+/* Inflation shock: for N years prices rise at the shock rate instead of general inflation.
+   Medical inflation moves by the same amount, so the gap between the two is kept.
+   Each year's rise compounds on the last, so a shock leaves prices permanently higher. */
+function inflRate(sc,age){
+  let r=S.genInfl;
+  for(const m of (sc.macroEvents||[]))if(m.kind==='inflation'&&age>=m.age&&age<m.age+(+m.years||0))r=+m.rate;
+  return r;
+}
+function inflFactors(sc,age00,y){
+  let g=1,m=1;
+  for(let k=1;k<=y;k++){
+    const r=inflRate(sc,age00+k);
+    g*=1+r/100;
+    m*=1+(S.medInfl+r-S.genInfl)/100;
+  }
+  return{g,m};
+}
 function acctReturn(a,sc,tableAge){
   let r=a.rate;
   if(S.useStress&&a.type!=='property')r=Math.min(r,S.stressRate);
@@ -1137,7 +1156,7 @@ function acctReturn(a,sc,tableAge){
     if(ev.years>0&&ev.rate!==''&&ev.rate!==null&&ev.rate!==undefined&&tableAge>=ev.age&&tableAge<ev.age+ev.years&&evTargets(ev,a))r=+ev.rate;
   }
   r/=100;
-  if(a.growth==='real')r=(1+r)*(1+S.genInfl/100)-1;
+  if(a.growth==='real')r=(1+r)*(1+inflRate(sc,tableAge)/100)-1;
   return r;
 }
 
@@ -1190,8 +1209,10 @@ function simulate(scIdx){
     // MFJ filing for 2 people; single for 1; note: >2 uses MFJ as a simplification
     const singleFiler=livePeople.length<=1;
 
-    const inflY=Math.pow(1+S.genInfl/100,y);
-    const medY =Math.pow(1+S.medInfl/100,y);
+    const fac=inflFactors(sc,primaryAge,y);
+    const inflY=fac.g;
+    const medY =fac.m;
+    for(const m of (sc.macroEvents||[]))if(m.kind==='inflation'&&m.age===tableAge)events.push({type:'market',label:m.label||'Inflation shock'});
 
     // ── Income streams (each linked person uses their own age for timing) ──────
     let ssTotal=0,otherInc=0,exemptInc=0;
@@ -1338,7 +1359,7 @@ function simulate(scIdx){
 
     const snap=bals.map(b=>Math.round(Math.max(0,b)));
     const total=snap.reduce((t,v)=>t+v,0);
-    const deflator=Math.pow(1+S.genInfl/100,y);
+    const deflator=inflY;
     const realTotal=Math.round(total/deflator);
     const inflLoss=total-realTotal;
 
@@ -1567,7 +1588,7 @@ function renderScens(){
 function switchScen(i){S.activeScenario=i;renderScens();recalc();}
 function addScen(){
   const n=prompt('Scenario name:','New Scenario');if(!n)return;
-  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],marketEvents:[],expenses:[
+  S.scenarios.push({id:S._nsid++,name:n,cashEvents:[],marketEvents:[],macroEvents:[],expenses:[
     {id:S._neid++,label:'Housing',amount:24000,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Medical & healthcare',amount:24000,prd:'yr',infl:'medical',startAge:'',endAge:'',note:''},
     {id:S._neid++,label:'Food & groceries',amount:14400,prd:'yr',infl:'general',startAge:'',endAge:'',note:''},
@@ -1584,6 +1605,7 @@ function dupScen(i){
   clone.expenses.forEach(e=>e.id=S._neid++);
   clone.cashEvents.forEach(ce=>ce.id=S._ncid++);
   (clone.marketEvents||[]).forEach(ev=>ev.id=S._nmid++);
+  (clone.macroEvents||[]).forEach(m=>m.id=S._nmid++);
   S.scenarios.splice(i+1,0,clone);
   S.activeScenario=i+1;
   renderScens();recalc();
@@ -1691,6 +1713,15 @@ function delCE(si,id){S.scenarios[si].cashEvents=S.scenarios[si].cashEvents.filt
    slump, a rate change). shockPct is applied once at the start of the age shown.
    "years" and "rate" optionally replace the account's return for that many years from
    the same age, so a crash can be followed by a slow recovery. */
+const MAC_PRESETS={inflation:{kind:'inflation',label:'Inflation shock',years:3,rate:7}};
+function addMacro(kind){
+  const sc=S.scenarios[S.activeScenario];
+  if(!sc.macroEvents)sc.macroEvents=[];
+  sc.macroEvents.push(Object.assign({id:S._nmid++},MAC_PRESETS[kind],{age:S.people[0].currentAge+3}));
+  renderME();recalc();
+}
+function macF(si,id,f,v){const m=(S.scenarios[si].macroEvents||[]).find(x=>x.id===id);if(!m)return;m[f]=v;if(f!=='label')recalc();}
+function delMacro(si,id){S.scenarios[si].macroEvents=(S.scenarios[si].macroEvents||[]).filter(x=>x.id!==id);renderME();recalc();}
 const ME_PRESETS={
   crash:{label:'Stock market crash',shockPct:-35,years:2,rate:'3'},
   slump:{label:'Property slump',shockPct:-20,years:0,rate:''},
@@ -1700,9 +1731,20 @@ function renderME(){
   const si=S.activeScenario;
   const mes=(S.scenarios[si].marketEvents||[]);
   const accts=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
-  document.getElementById('me-list').innerHTML=mes.length===0
+  const macs=S.scenarios[si].macroEvents||[];
+  const macHtml=macs.map(m=>{
+    const num=(lbl,f,v,tip,extra)=>`<div class="f" style="margin:0"><label data-tip="${tip}">${lbl}</label><input type="number" value="${v}" ${extra||''} oninput="macF(${si},${m.id},'${f}',+this.value)"></div>`;
+    return `<div class="ce-card">
+      <div class="ce-head"><span class="ce-type ce-out">📈 Inflation shock</span>
+        <input type="text" value="${(m.label||'').replace(/"/g,'&quot;')}" style="flex:1;font-size:11.5px" oninput="macF(${si},${m.id},'label',this.value)">
+        <button class="btn-del" onclick="delMacro(${si},${m.id})">✕</button></div>
+      <div class="g3">${num('At age (first person)','age',m.age,'The first person\'s age when prices start rising faster.','min="40" max="115"')}
+      ${num('For N years','years',m.years,'How many years the faster inflation lasts.','min="1" max="40"')}
+      ${num('Inflation % a year','rate',m.rate,'Yearly price rise during those years, in place of general inflation. Medical costs rise by the same extra amount. It lifts expenses and cost-of-living adjustments, accounts on the real growth basis, the tax brackets, and the today\'s-dollar figures.','step="0.5"')}</div></div>`;
+  }).join('');
+  document.getElementById('me-list').innerHTML=(mes.length===0&&macs.length===0)
     ?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>'
-    :mes.map(ev=>{
+    :macHtml+mes.map(ev=>{
       const allOn=!(ev.targets&&ev.targets.length);
       const chips=accts.map(a=>{
         const on=allOn?a.type!=='property':ev.targets.includes(a.id);
@@ -1900,6 +1942,7 @@ function renderChart(rows){
   (sc.cashEvents||[]).forEach(ce=>{if(!evtAges[ce.age])evtAges[ce.age]={type:'ce'};});
   S.people.forEach(p=>{if(!evtAges[p.deathAge])evtAges[p.deathAge]={type:'death'};});
   (sc.marketEvents||[]).forEach(ev=>{evtAges[ev.age]={type:'market'};});
+  (sc.macroEvents||[]).forEach(m=>{evtAges[m.age]={type:'market'};});
   const evtPlugin={id:'evtLines',afterDraw(c){
     const ctx=c.ctx,xs=c.scales.x,ys=c.scales.y;
     Object.entries(evtAges).forEach(([ageStr,ev])=>{
@@ -2106,6 +2149,9 @@ function printRpt(){
     <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
     ${sc.marketEvents.map(ev=>`<tr><td class="tl">${ev.label}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${tgtNames(ev)}</td></tr>`).join('')}
     </table></div>`:''}
+  ${(sc.macroEvents||[]).length?`<div class="rpt-sec"><h2>Inflation shocks — ${sc.name}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>For</th><th>Inflation</th></tr>
+    ${sc.macroEvents.map(m=>`<tr><td class="tl">${m.label||''}</td><td>${m.age}</td><td>${m.years} yr${m.years===1?'':'s'}</td><td>${m.rate}%/yr</td></tr>`).join('')}</table></div>`:''}
   ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
     <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Funded</th><th>End wealth</th><th>In today's $</th><th>Total tax</th><th>Market events</th></tr>
     ${S.scenarios.map(x=>{const r=simulate(S.scenarios.indexOf(x)),l=r[r.length-1],d=r.find(q=>q.depleted);return`<tr><td class="tl">${x.name}${x===sc?' (shown here)':''}</td><td class="tl">${d?'Runs out at '+d.age:'To age '+l.age}</td><td>${sym}${n(l.total)}</td><td>${sym}${n(l.realTotal)}</td><td>${sym}${n(l.cumTax)}</td><td>${(x.marketEvents||[]).length}</td></tr>`;}).join('')}
@@ -2216,6 +2262,8 @@ function exportXLSX(){
     const meH=['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'];
     const meR=[];
     S.scenarios.forEach(s=>(s.marketEvents||[]).forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
+    const maR=[];S.scenarios.forEach(sc2=>(sc2.macroEvents||[]).forEach(m=>maR.push([sc2.name,m.label||'Inflation shock',m.age,m.years,m.rate])));
+    if(maR.length){const wsMA=XLSX.utils.aoa_to_sheet([['Scenario','Event','At age','For years','Inflation % a year'],...maR]);wsMA['!cols']=[{wch:26},{wch:26},{wch:8},{wch:10},{wch:18}];XLSX.utils.book_append_sheet(wb,wsMA,'Inflation Shocks');}
     if(meR.length){const wsME=XLSX.utils.aoa_to_sheet([meH,...meR]);wsME['!cols']=[{wch:18},{wch:26},{wch:8},{wch:16},{wch:18},{wch:10},{wch:44}];XLSX.utils.book_append_sheet(wb,wsME,'Market Events');}
     // Scenario comparison
     const cmpH=['Scenario','Funded','End wealth ('+cur+')','End wealth today\'s $ ('+cur+')','Total tax ('+cur+')','Market events'];

@@ -627,6 +627,9 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
           <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addMacro('inflation')">+ Inflation shock</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addMacro('job')">+ Job loss</button>
+          <button class="btn-add" style="flex:1;min-width:120px" onclick="addMacro('mortrate')">+ Mortgage rate rise</button>
         </div>
       </div>
     </div>
@@ -834,6 +837,9 @@ const HELP={
   smallGift:{t:'Small gift exemption',d:'The first €3,000 of gifts a person receives from any one giver in a calendar year is free of tax and does not count against the threshold. It does not apply to inheritances. The planner applies it to each gift entered.'},
   catUsed:{t:'CAT already used (Group A)',d:'The total of gifts and inheritances you have already received from parents. It uses up part of the Group A threshold. Leave at 0 if you have received nothing.'},
   marketEvent:{g:1,t:'Market event',d:'A shock that hits chosen accounts only. The one-off change is applied to the balance at the start of the year. The optional return override then replaces the normal return for the number of years given, which lets you model a slow recovery.'},
+  inflShock:{g:1,t:'Inflation shock',d:'A stretch of faster price rises, such as 7% a year for three years. Expenses, accounts on the real growth basis and the figures in today\'s euro all use the faster rate while it lasts. Wages, rents, house prices, the State Pension and the tax bands keep their own growth rates, so a shock squeezes people whose income does not keep up.'},
+  jobLoss:{g:1,t:'Job loss',d:'One person\'s salary stops for a set number of months. Tax, PRSI and pension contributions fall with the salary, regular saving pauses, and you can enter a taxable income, such as a jobless benefit, that arrives meanwhile. The salary returns at its normal level afterwards.'},
+  mortRise:{g:1,t:'Mortgage rate rise',d:'The mortgage rate changes from a chosen age, for example when a fixed rate ends. The payment is re-worked on the balance still owed so the loan ends on its original date. A higher payment cuts the cash left over for saving and drawing.'},
   meTargets:{t:'Accounts affected',d:'Tick the accounts the event hits. If you have not ticked any yourself, the event hits every financial account and leaves property alone.'},
   sequence:{g:1,t:'Sequence of returns',d:'A fall just before or after retirement does more lasting damage than the same fall earlier, because withdrawals take money out while prices are low. Move a market event to different ages to see the effect.'},
   chartView:{t:'Chart view',d:'Stacked bars and stacked area show how the accounts and home equity add up to net worth. Separate lines show each on its own, with a total line on top.'},
@@ -931,10 +937,10 @@ const DEF={
   ],_naid:5,
   activeScenario:0,
   scenarios:[
-    {id:1,name:'Rent',housing:mkHousing({mode:'rent'}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
-    {id:2,name:'Buy new build in 3 years, Help to Buy',housing:mkHousing({mode:'buy',buyAge:36}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
-    {id:3,name:'Buy in 2027 with Help to Buy and First Home Scheme',housing:mkHousing({mode:'buy',buyAge:34,useFHS:true,fhsPct:20}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
-    {id:4,name:'Buy second-hand, no schemes',housing:mkHousing({mode:'buy',buyAge:36,newBuild:false,useHTB:false}),expenses:mkExpenses(),cashEvents:[],marketEvents:[]},
+    {id:1,name:'Rent',housing:mkHousing({mode:'rent'}),expenses:mkExpenses(),cashEvents:[],marketEvents:[],macroEvents:[]},
+    {id:2,name:'Buy new build in 3 years, Help to Buy',housing:mkHousing({mode:'buy',buyAge:36}),expenses:mkExpenses(),cashEvents:[],marketEvents:[],macroEvents:[]},
+    {id:3,name:'Buy in 2027 with Help to Buy and First Home Scheme',housing:mkHousing({mode:'buy',buyAge:34,useFHS:true,fhsPct:20}),expenses:mkExpenses(),cashEvents:[],marketEvents:[],macroEvents:[]},
+    {id:4,name:'Buy second-hand, no schemes',housing:mkHousing({mode:'buy',buyAge:36,newBuild:false,useHTB:false}),expenses:mkExpenses(),cashEvents:[],marketEvents:[],macroEvents:[]},
   ],_nsid:5,_neid:6,_ncid:1,_nmid:1,
   chartView:'bars',
   cols:{salary:true,sp:true,pens:true,lump:false,it:true,usc:true,prsi:true,sav:false,cat:false,expenses:true,housing:true,ceio:true,draw:true,homeEq:true,mortBal:false,realwealth:true,cumtax:false,total:true},
@@ -952,7 +958,7 @@ const BLANK={
     {id:2,label:'Deposit savings',type:'deposit',owner:0,balance:0,rate:2.5,feePct:0,regular:0,saveTo:'',growth:'nominal',color:'',drawOrder:2},
   ],_naid:3,
   activeScenario:0,
-  scenarios:[{id:1,name:'Rent',housing:mkHousing({mode:'rent',rentMonthly:0}),expenses:[],cashEvents:[],marketEvents:[]}],
+  scenarios:[{id:1,name:'Rent',housing:mkHousing({mode:'rent',rentMonthly:0}),expenses:[],cashEvents:[],marketEvents:[],macroEvents:[]}],
   _nsid:2,_neid:1,_ncid:1,_nmid:1,
   chartView:'bars',
   cols:{salary:true,sp:true,pens:true,lump:false,it:true,usc:true,prsi:true,sav:false,cat:false,expenses:true,housing:true,ceio:true,draw:true,homeEq:true,mortBal:false,realwealth:true,cumtax:false,total:true},
@@ -1122,12 +1128,48 @@ function acctReturn(a,sc,age0,Y){
     if(ev.years>0&&ev.rate!==''&&ev.rate!==null&&ev.rate!==undefined&&age0>=ev.age&&age0<ev.age+ev.years&&evTargets(ev,a))r=+ev.rate;
   }
   r/=100;
-  if(a.growth==='real')r=(1+r)*(1+S.genInfl/100)-1;
+  if(a.growth==='real')r=(1+r)*(1+inflRate(sc,age0)/100)-1;
   return r;
 }
 function evTargets(ev,a){
   if(ev.targets&&ev.targets.length)return ev.targets.includes(a.id);
   return a.type!=='property';
+}
+
+/* ── Macro events: inflation shock, job loss, mortgage rate rise ──
+   These sit beside the market events. Each scenario keeps them in sc.macroEvents.
+   inflation  {age,years,rate}: prices rise at "rate" % instead of general inflation for N years
+   job        {pid,age,months,income}: that person's salary stops for N months from that age,
+              with an optional taxable income (for example a jobless benefit) while out of work
+   mortrate   {age,years,rate}: the mortgage rate becomes "rate" %; years 0 means it stays there */
+const macro=(sc,kind)=>(sc.macroEvents||[]).filter(m=>m.kind===kind);
+function inflRate(sc,age0){
+  let r=S.genInfl;
+  for(const m of macro(sc,'inflation'))if(age0>=m.age&&age0<m.age+(+m.years||0))r=+m.rate;
+  return r;
+}
+// Price level at year y relative to year 0: each year's rise uses that year's inflation rate
+function inflFactor(sc,age00,y){
+  let f=1;
+  for(let k=1;k<=y;k++)f*=1+inflRate(sc,age00+k)/100;
+  return f;
+}
+function mortRateAt(sc,age0,base){
+  let r=base;
+  for(const m of macro(sc,'mortrate')){const yrs=+m.years||0;if(age0>=m.age&&(yrs===0||age0<m.age+yrs))r=+m.rate;}
+  return r;
+}
+// Share of this year a person is out of work (0 to 1) and the income they receive meanwhile
+function jobOut(sc,pid,age){
+  let f=0,inc=0;
+  for(const m of macro(sc,'job')){
+    if(m.pid!==pid||age<m.age)continue;
+    const rem=(+m.months||0)-12*(age-m.age);
+    if(rem<=0)continue;
+    const share=Math.min(12,rem)/12;
+    if(share>f){f=share;inc=(+m.income||0)*share;}
+  }
+  return{f,inc};
 }
 function growOne(a,b,r,P,Y){
   const g=b*r;
@@ -1212,7 +1254,10 @@ function simulateIE(scIdx){
         events.push({type:'market',label:ev.label});
       }
     }
-    const inf=Math.pow(1+S.genInfl/100,y),wg=Math.pow(1+S.wageGrowth/100,y);
+    for(const m of (sc.macroEvents||[])){
+      if((m.kind==='inflation'||m.kind==='mortrate')&&age0===m.age)events.push({type:'market',label:m.label||(m.kind==='inflation'?'Inflation shock':'Mortgage rate rise')});
+    }
+    const inf=inflFactor(sc,p0.currentAge,y),wg=Math.pow(1+S.wageGrowth/100,y);
 
     // 2. retirement and lump sum
     let lumpNet=0,lumpTax=0;
@@ -1241,10 +1286,12 @@ function simulateIE(scIdx){
     const pp=alive.map(p=>{
       const age=p.currentAge+y;
       const working=age<p.retireAge;
-      const salary=working?p.salary*wg:0;
+      const jo=working?jobOut(sc,p.id,age):{f:0,inc:0};
+      const salary=working?p.salary*wg*(1-jo.f):0;
       const pf=pensionFlows(p,age,salary,Y,P);
       const o={p,age,salary,relief:pf.relief,ee:pf.ee,er:pf.er,st:pf.st,
-        sp:statePension(p,age,Y,alive.length),pens:0,other:0,card:p.card,forced:0};
+        sp:statePension(p,age,Y,alive.length),pens:0,other:jo.inc,card:p.card,forced:0,jobOut:jo.f};
+      if(jo.f>0){for(const m of macro(sc,'job'))if(m.pid===p.id&&m.age===age)events.push({type:'market',label:(m.label||'Job loss')+' ('+p.name+')'});}
       if(vested[p.id]&&age>=60){
         let ab=0;for(let i=0;i<n;i++)if(isPen(i)&&owner[i]===p.id)ab+=Math.max(0,bals[i]);
         const rate=ab>2e6?.06:(age>=71?.05:.04);   // 4% to age 70, 5% from 71, 6% on ARFs over €2m
@@ -1280,7 +1327,7 @@ function simulateIE(scIdx){
       const price=hs.price*Math.pow(1+hs.houseGrowth/100,y);
       const dep=hs.depositPct/100*price;
       const fhsOk=hs.useFHS&&hs.newBuild&&Y<=FHS_TO&&price<=hs.ceiling;   // new builds only
-      home={price,value:price,mort:0,pay:0,rate:hs.mortRate,fhsPct:0,buyY:Y,htb:0,fhsOk,price0:price};
+      home={price,value:price,mort:0,pay:0,rate:mortRateAt(sc,age0,hs.mortRate),fhsPct:0,buyY:Y,htb:0,fhsOk,price0:price};
       home.dep=dep;
       home.stamp=stampDuty(price);
       home.fees=hs.costsPct/100*price;
@@ -1311,7 +1358,7 @@ function simulateIE(scIdx){
       home.fhsPct=e;home.htb=htb;
       newMort=Math.max(0,price-home.dep-e*price);
       home.mort=newMort;home.mort0=newMort;
-      home.pay=mortgagePayment(newMort,hs.mortRate,hs.mortTerm);
+      home.pay=mortgagePayment(newMort,home.rate,hs.mortTerm);
       purchaseOut=home.dep+home.stamp+home.fees;
       const gross=pp.reduce((t,o)=>t+o.salary,0);
       if(newMort>4*gross&&gross>0)events.push({type:'warn',label:'Mortgage above 4 times income'});
@@ -1321,6 +1368,15 @@ function simulateIE(scIdx){
     let intPaid=0;
     if(home){
       runCost=hs.runPct/100*home.value;
+      if(!boughtNow&&home.mort>0){
+        // A rate change re-sets the payment so the loan still ends on its original date
+        const rNow=mortRateAt(sc,age0,hs.mortRate);
+        if(Math.abs(rNow-home.rate)>1e-9){
+          home.rate=rNow;
+          home.pay=mortgagePayment(home.mort,rNow,Math.max(1,hs.mortTerm-(Y-home.buyY)));
+          events.push({type:'market',label:'Mortgage rate now '+rNow+'%'});
+        }
+      }
       let m=home.mort;
       for(let k=0;k<12&&m>0;k++){
         const i=home.rate/1200,interest=m*i,pay=Math.min(home.pay,m+interest);
@@ -1355,11 +1411,12 @@ function simulateIE(scIdx){
     }
 
     let regular=0;const regAdd=new Array(n).fill(0);
+    const jobHold=Math.max(0,...pp.map(o=>o.jobOut||0));   // saving pauses while anyone is out of work
     for(let i=0;i<n;i++){
       const a=accts[i];
       if(!a.regular||a.type==='pension'||a.type==='property')continue;
       const until=a.saveTo===''||a.saveTo==null?p0.retireAge:+a.saveTo;
-      if(age0<until){const amt=a.regular*wg;regular+=amt;regAdd[i]=amt;}
+      if(age0<until){const amt=a.regular*wg*(1-jobHold);regular+=amt;regAdd[i]=amt;}
     }
 
     // 7. cash flow, draws and surplus
@@ -1547,6 +1604,11 @@ const CE_T={
   education:{dir:'out',label:'Education costs',tax:'No tax effect. Comes out of savings.'},
   renovation:{dir:'out',label:'Home improvement',tax:'No tax effect. Comes out of savings.'},
   otherout:{dir:'out',label:'Other outflow',tax:'No tax effect. Comes out of savings.'},
+};
+const MAC_PRESETS={
+  inflation:{kind:'inflation',label:'Inflation shock',years:3,rate:7},
+  job:{kind:'job',label:'Job loss',months:6,income:0},
+  mortrate:{kind:'mortrate',label:'Mortgage rate rise',years:0,rate:7},
 };
 const ME_PRESETS={
   crash:{label:'Stock market crash',shockPct:-35,years:2,rate:'3'},
@@ -1744,7 +1806,7 @@ function renderScensLight(){
 function switchScen(i){S.activeScenario=i;renderScens();recalc();}
 function addScen(){
   const n=prompt('Scenario name:','New scenario');if(!n)return;
-  S.scenarios.push({id:S._nsid++,name:n,housing:mkHousing(),expenses:mkExpenses().map(e=>({...e,id:S._neid++})),cashEvents:[],marketEvents:[]});
+  S.scenarios.push({id:S._nsid++,name:n,housing:mkHousing(),expenses:mkExpenses().map(e=>({...e,id:S._neid++})),cashEvents:[],marketEvents:[],macroEvents:[]});
   S.activeScenario=S.scenarios.length-1;renderScens();recalc();
 }
 function dupScen(i){
@@ -1885,7 +1947,28 @@ function delCE(si,id){S.scenarios[si].cashEvents=S.scenarios[si].cashEvents.filt
 /* ══ MARKET EVENTS ══ */
 function renderME(){
   const si=S.activeScenario,mes=sc0().marketEvents,accts=sortedAccts();
-  document.getElementById('me-list').innerHTML=mes.length===0?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>':mes.map(ev=>{
+  const macs=sc0().macroEvents||[];
+  const macHtml=macs.map(m=>{
+    const head=(badge)=>`<div class="ce-head"><span class="ce-type ce-out">${badge}</span>
+        <input type="text" value="${esc(m.label||'')}" style="flex:1;font-size:11.5px" oninput="macF(${si},${m.id},'label',this.value)">
+        <button class="btn-del" onclick="delMacro(${si},${m.id})">✕</button></div>`;
+    const num=(lbl,f,v,tip,extra)=>`<div class="f" style="margin:0"><label data-tip="${tip}">${lbl}</label><input type="number" value="${v}" ${extra||''} oninput="macF(${si},${m.id},'${f}',+this.value)"></div>`;
+    if(m.kind==='inflation')return `<div class="ce-card">${head('📈 Inflation shock')}
+      <div class="g3">${num('At age (first person)','age',m.age,'The first person\'s age when prices start rising faster.','min="16" max="115"')}
+      ${num('For N years','years',m.years,'How many years the faster inflation lasts.','min="1" max="40"')}
+      ${num('Inflation % a year','rate',m.rate,'Yearly price rise during those years, in place of general inflation. It lifts expenses, accounts on the real growth basis, and the today\'s-euro figures.','step="0.5"')}</div></div>`;
+    if(m.kind==='mortrate')return `<div class="ce-card">${head('🏦 Mortgage rate rise')}
+      <div class="g3">${num('At age (first person)','age',m.age,'The first person\'s age when the new rate starts.','min="16" max="115"')}
+      ${num('New rate %','rate',m.rate,'The mortgage rate from then on. The payment is re-set so the loan still ends on its original date.','step="0.25"')}
+      ${num('For N yrs (0 = stays)','years',m.years,'How long the new rate lasts. 0 keeps it for the rest of the mortgage. After that the rate returns to the one in the housing panel.','min="0" max="40"')}</div></div>`;
+    const popts=S.people.map(p=>`<option value="${p.id}" ${p.id===m.pid?'selected':''}>${esc(p.name)}</option>`).join('');
+    return `<div class="ce-card">${head('💼 Job loss')}
+      <div class="g3"><div class="f" style="margin:0"><label>Who</label><select onchange="macF(${si},${m.id},'pid',+this.value)">${popts}</select></div>
+      ${num('At their age','age',m.age,'That person\'s age when the salary stops.','min="16" max="70"')}
+      ${num('Months out of work','months',m.months,'How long the salary stops. Pension contributions and regular saving pause for the same share of the year, and PRSI falls with the salary.','min="1" max="60"')}</div>
+      <div class="g3" style="margin-top:5px">${num('Income while out, € a year','income',m.income,'Taxable income received while out of work, such as a jobless benefit, as a yearly figure. It is scaled to the months out.','step="1000" min="0"')}</div></div>`;
+  }).join('');
+  document.getElementById('me-list').innerHTML=(mes.length===0&&macs.length===0)?'<p style="font-size:12px;color:var(--hi);margin-bottom:5px">No market events for this scenario yet.</p>':macHtml+mes.map(ev=>{
     const allOn=!(ev.targets&&ev.targets.length);
     const chips=accts.map(a=>{
       const on=allOn?a.type!=='property':ev.targets.includes(a.id);
@@ -1922,6 +2005,15 @@ function addME(kind){
     targets:kind==='slump'?(S.accounts.some(a=>a.type==='property')?S.accounts.filter(a=>a.type==='property').map(a=>a.id):[-1]):[]});
   renderME();recalc();
 }
+function addMacro(kind){
+  const p=MAC_PRESETS[kind],sc=sc0();
+  if(!sc.macroEvents)sc.macroEvents=[];
+  const m=Object.assign({id:S._nmid++},p,{age:p0age()+3});
+  if(kind==='job'){m.pid=S.people[0].id;m.age=S.people[0].currentAge+3;}
+  sc.macroEvents.push(m);renderME();recalc();
+}
+function macF(si,id,f,v){const m=(S.scenarios[si].macroEvents||[]).find(x=>x.id===id);if(!m)return;m[f]=v;if(f!=='label')recalc();}
+function delMacro(si,id){S.scenarios[si].macroEvents=(S.scenarios[si].macroEvents||[]).filter(x=>x.id!==id);renderME();recalc();}
 function delME(si,id){S.scenarios[si].marketEvents=S.scenarios[si].marketEvents.filter(x=>x.id!==id);renderME();recalc();}
 
 /* ══ SCHEME STATUS AND PURCHASE TIMING ══
@@ -2199,6 +2291,12 @@ const tgtNames=ev=>{
   const acc=S.accounts.filter(a=>ev.targets&&ev.targets.length?ev.targets.includes(a.id):a.type!=='property');
   return acc.length?acc.map(a=>a.label).join(', '):'No accounts';
 };
+function macroDesc(m){
+  if(m.kind==='inflation')return `Prices rise ${m.rate}% a year for ${m.years} year${m.years===1?'':'s'}, from age ${m.age} (first person)`;
+  if(m.kind==='mortrate')return `Mortgage rate becomes ${m.rate}% from age ${m.age} (first person)${+m.years>0?' for '+m.years+' years':', staying there'}`;
+  const p=S.people.find(x=>x.id===m.pid);
+  return `${p?p.name:'Person'} out of work for ${m.months} months from age ${m.age}${+m.income>0?', with '+fmt(m.income)+' a year of taxable income meanwhile':''}`;
+}
 function housingText(hs){
   if(hs.mode!=='buy')return `Rent ${fmt(hs.rentMonthly)}/mo, rising ${hs.rentInfl}%/yr${hs.rtc===false?'':', rent tax credit claimed'}`;
   return `Rent ${fmt(hs.rentMonthly)}/mo until buying at age ${hs.buyAge}. Price ${fmt(hs.price)} today (growing ${hs.houseGrowth}%/yr), deposit ${hs.depositPct}%, mortgage ${hs.mortRate}% over ${hs.mortTerm} years. ${hs.newBuild?'New build':'Second-hand'}${hs.useHTB?', Help to Buy':''}${hs.useFHS?', First Home Scheme '+hs.fhsPct+'%':''}.`;
@@ -2269,6 +2367,9 @@ function printRpt(){
   ${sc.marketEvents.length?`<div class="rpt-sec"><h2>Market events — ${esc(sc.name)}</h2>
     <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
     ${sc.marketEvents.map(ev=>`<tr><td class="tl">${esc(ev.label)}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${esc(tgtNames(ev))}</td></tr>`).join('')}</table></div>`:''}
+  ${(sc.macroEvents||[]).length?`<div class="rpt-sec"><h2>Inflation, job and mortgage events — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th class="tl">What happens</th></tr>
+    ${sc.macroEvents.map(m=>`<tr><td class="tl">${esc(m.label||'')}</td><td class="tl">${esc(macroDesc(m))}</td></tr>`).join('')}</table></div>`:''}
   ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
     <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Home</th><th>Deposit ready</th><th>Mortgage-free</th><th class="tl">Funded</th><th>End net worth</th><th>In today's €</th><th>Total tax</th></tr>
     ${sums.map(x=>`<tr><td class="tl">${esc(x.sc.name)}${x.sc===sc?' (shown here)':''}</td><td class="tl" style="font-size:9px">${esc(x.home)}</td><td>${x.r.readyYear||'—'}</td><td>${x.r.mortFreeAge!=null?'Age '+x.r.mortFreeAge:'—'}</td><td class="tl">${x.d?'Runs out at '+x.d.age:'To age '+x.l.age}</td><td>${sym}${n(x.l.total)}</td><td>${sym}${n(x.l.realTotal)}</td><td>${sym}${n(x.l.cumTax)}</td></tr>`).join('')}</table></div>`:''}
@@ -2314,6 +2415,8 @@ function exportXLSX(){
     if(ceR.length)add('Cash Events',[['Scenario','Direction','Category','Description','At age','Amount','CAT group','Notes'],...ceR],[26,10,24,28,8,12,10,30]);
     const meR=[];S.scenarios.forEach(s=>s.marketEvents.forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
     if(meR.length)add('Market Events',[['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'],...meR],[26,26,8,16,18,10,44]);
+    const maR=[];S.scenarios.forEach(s=>(s.macroEvents||[]).forEach(m=>maR.push([s.name,m.label||'',m.kind==='inflation'?'Inflation shock':m.kind==='mortrate'?'Mortgage rate rise':'Job loss',macroDesc(m)])));
+    if(maR.length)add('Other Events',[['Scenario','Event','Type','What happens'],...maR],[26,26,20,80]);
     add('Scenario Comparison',[['Scenario','Home','Deposit ready','Mortgage-free age','Funded','End net worth','End net worth today\'s EUR','Total tax'],
       ...S.scenarios.map((_,i)=>{const x=summaryFor(i);return[x.sc.name,x.home,x.r.readyYear||'',x.r.mortFreeAge!=null?x.r.mortFreeAge:'',x.d?'Runs out at '+x.d.age:'To age '+x.l.age,x.l.total,x.l.realTotal,x.l.cumTax];})],[30,44,13,17,18,16,24,14]);
     XLSX.writeFile(wb,'irish-household-projection.xlsx');
