@@ -352,6 +352,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 </head>
 <body>
 <div class="tt" id="tt"></div>
+<div id="prpt"><div id="rpt-body"></div></div>
 
 <div id="app" style="display:flex;flex-direction:column;flex:1;min-height:0">
 
@@ -458,6 +459,14 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
           <span><span class="export-item-label">Save App</span><span class="export-item-desc">Download as a self-contained .html file with all current data baked in</span></span>
         </button>
         <div class="export-divider"></div>
+        <button class="export-item" onclick="printRpt();togglePop('export-pop')">
+          <span class="export-item-icon">⎙</span>
+          <span><span class="export-item-label">Print / PDF</span><span class="export-item-desc">Full report with inputs, assumptions, scheme status and the year-by-year projection</span></span>
+        </button>
+        <button class="export-item" onclick="exportXLSX();togglePop('export-pop')">
+          <span class="export-item-icon">⊞</span>
+          <span><span class="export-item-label">Excel (.xlsx)</span><span class="export-item-desc">Multi-sheet workbook with real numbers for charting and filtering</span></span>
+        </button>
         <button class="export-item" onclick="exportCSV();togglePop('export-pop')">
           <span class="export-item-icon">⊟</span>
           <span><span class="export-item-label">CSV</span><span class="export-item-desc">Year-by-year projection of the active scenario as a spreadsheet file</span></span>
@@ -861,6 +870,7 @@ const HELP={
   c_total:{t:'Net worth',d:'All accounts, cash and home equity at the end of the year, in that year\'s euro.'},
 };
 
+
 /* ══ RESIZER ══ */
 (()=>{
   const r=document.getElementById('resizer'),l=document.getElementById('lpane');
@@ -888,7 +898,6 @@ function togglePop(id){
   document.querySelectorAll('.popover').forEach(x=>x.classList.remove('open'));
   if(!wasOpen){p.classList.add('open');if(id==='met-pop')renderMetItems();if(id==='col-pop')renderColItems();}
 }
-document.addEventListener('click',e=>{if(!e.target.closest('.popwrap'))document.querySelectorAll('.popover').forEach(x=>x.classList.remove('open'));});
 /* ══ DEFAULT STATE ══
    A sample couple in their early thirties, both working, saving for a deposit.
    Every figure is a placeholder to be replaced with the household's own numbers. */
@@ -1058,7 +1067,8 @@ function householdTax(P,ppl,married,rentCredit){
     uscBase:x.salary+x.pens+x.other,
     card:!!x.card,
   }));
-  let it=(married&&rows.length>=2)?incomeTaxJoint(P,rows[0],rows[1]):rows.reduce((t,x)=>t+incomeTaxSingle(P,x),0);
+  // A married couple is assessed jointly (the first two people). Anyone else is taxed as a single person.
+  let it=(married&&rows.length>=2)?incomeTaxJoint(P,rows[0],rows[1])+rows.slice(2).reduce((t,x)=>t+incomeTaxSingle(P,x),0):rows.reduce((t,x)=>t+incomeTaxSingle(P,x),0);
   const rc=Math.min(it,rentCredit||0);
   it-=rc;
   let usc=0,prsi=0;
@@ -2179,6 +2189,138 @@ function exportCSV(){
   const H=['Age','Year','Events','Salary','State Pension','Pension and other','Lump sum (net)','Income tax','USC','PRSI','DIRT and exit tax','CAT','Living expenses','Housing','Cash inflows','Cash outflows','Extra draw','Surplus','Home equity','Mortgage balance',...sorted.map(a=>a.label),'Net worth','Net worth today\'s EUR','Cumulative tax'].map(q);
   const R=rows.map(r=>[r.age,r.yr,q(r.events.map(e=>e.label).join('; ')),r.salary,r.sp,r.pens,r.lump,r.it,r.usc,r.prsi,r.sav,r.cat,r.expenses,r.housing,r.ceIn,r.ceOut,r.draw,r.surplus,r.homeEquity,r.mortBal,...sorted.map((_,i)=>r.snap[i]||0),r.total,r.realTotal,r.cumTax].join(','));
   download('irish-household-projection.csv','text/csv',[H.join(','),...R].join('\n'));
+}
+
+/* ══ SHARED TEXT HELPERS FOR PRINT AND EXCEL ══ */
+const PEN_MODE_L={autoenrol:'Auto-enrolment',own:'Own pension / PRSA',none:'None'};
+const growthL=a=>a.growth==='real'?'Real (above inflation)':'Nominal';
+const ownerName=a=>{const p=S.people.find(x=>x.id===a.owner);return p?p.name:'Household';};
+const evText=e=>e.label;
+const tgtNames=ev=>{
+  const acc=S.accounts.filter(a=>ev.targets&&ev.targets.length?ev.targets.includes(a.id):a.type!=='property');
+  return acc.length?acc.map(a=>a.label).join(', '):'No accounts';
+};
+function housingText(hs){
+  if(hs.mode!=='buy')return `Rent ${fmt(hs.rentMonthly)}/mo, rising ${hs.rentInfl}%/yr${hs.rtc===false?'':', rent tax credit claimed'}`;
+  return `Rent ${fmt(hs.rentMonthly)}/mo until buying at age ${hs.buyAge}. Price ${fmt(hs.price)} today (growing ${hs.houseGrowth}%/yr), deposit ${hs.depositPct}%, mortgage ${hs.mortRate}% over ${hs.mortTerm} years. ${hs.newBuild?'New build':'Second-hand'}${hs.useHTB?', Help to Buy':''}${hs.useFHS?', First Home Scheme '+hs.fhsPct+'%':''}.`;
+}
+function summaryFor(i){
+  const r=simulateIE(i),l=r[r.length-1],d=r.find(x=>x.depleted),b=r.bought;
+  return{sc:S.scenarios[i],r,l,d,b,home:S.scenarios[i].housing.mode==='buy'?(b?`Buys ${b.buyY} for ${fmt(b.price)}`+(b.htb>0?`, Help to Buy ${fmt(b.htb)}`:'')+(b.fhsPct>0?`, First Home Scheme ${Math.round(b.fhsPct*100)}%`:''):'Not bought'):'Rents'};
+}
+
+/* ══ PRINT / PDF REPORT ══ */
+function printRpt(){
+  const rows=simulateIE(),sc=sc0(),hs=sc.housing,last=rows[rows.length-1],dep=rows.find(r=>r.depleted),sorted=sortedAccts();
+  const n=v=>Math.round(v).toLocaleString('en-IE'),sym='€';
+  const dateStr=new Date().toLocaleDateString('en-IE',{day:'numeric',month:'long',year:'numeric'});
+  const ret=rows.find(x=>x.age>=S.people[0].retireAge)||last;
+  const start=S.accounts.reduce((t,a)=>t+(+a.balance||0),0);
+  const sums=S.scenarios.map((_,i)=>summaryFor(i));
+  const evList=rows.map(r=>r.events.map(evText));
+  document.getElementById('rpt-body').innerHTML=`
+  <div class="rpt-cover"><h1>Irish Household Financial Forecast</h1>
+    <div class="rpt-meta"><span>Scenario: <strong>${esc(sc.name)}</strong></span><span>Ages ${S.people[0].currentAge}–${last.age} (${esc(S.people[0].name)})</span><span>EUR</span><span>Generated: ${dateStr}</span><span>${S.useStress?'⚠ Stress-test return active ('+S.stressRate+'%/yr)':'Returns set per account'}</span></div></div>
+  <div class="rpt-kpis">
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Net worth now</div><div class="rpt-kpi-v">${sym}${n(start)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">At retirement (age ${ret.age})</div><div class="rpt-kpi-v">${sym}${n(ret.total)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">At the end (age ${last.age})</div><div class="rpt-kpi-v ${last.total>0?'g':'r'}">${sym}${n(last.total)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">End, in today's €</div><div class="rpt-kpi-v a">${sym}${n(last.realTotal)}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">${dep?'Runs out at':'Funded through'}</div><div class="rpt-kpi-v ${dep?'r':'g'}">Age ${dep?dep.age:last.age+'+'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Deposit ready</div><div class="rpt-kpi-v">${rows.readyYear||'Not yet'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Mortgage-free</div><div class="rpt-kpi-v">${rows.mortFreeAge!=null?'Age '+rows.mortFreeAge:'—'}</div></div>
+    <div class="rpt-kpi"><div class="rpt-kpi-l">Total tax paid</div><div class="rpt-kpi-v">${sym}${n(last.cumTax)}</div></div>
+  </div>
+  <div class="rpt-sec"><h2>Assumptions</h2><div class="rpt-assm">
+    <div class="rpt-assm-row"><span class="al">Tax status</span><span class="av">${S.status==='married'?'Married or civil partners, joint assessment':'Single or cohabiting'}</span></div>
+    <div class="rpt-assm-row"><span class="al">Start year</span><span class="av">${S.startYear}</span></div>
+    <div class="rpt-assm-row"><span class="al">General inflation</span><span class="av">${S.genInfl}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">Wage growth</span><span class="av">${S.wageGrowth}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">Bands and credits after 2027</span><span class="av">+${S.bandIndex}%/yr</span></div>
+    <div class="rpt-assm-row"><span class="al">State Pension</span><span class="av">${sym}${S.spWeekly}/week, +${S.spGrowth}%/yr after 2027</span></div>
+    <div class="rpt-assm-row"><span class="al">Stress-test return</span><span class="av">${S.stressRate}%/yr (${S.useStress?'active':'inactive'})</span></div>
+    <div class="rpt-assm-row"><span class="al">CAT already used (Group A)</span><span class="av">${sym}${n(S.catUsed||0)}</span></div>
+  </div></div>
+  <div class="rpt-sec"><h2>People</h2>
+    <table class="rt2"><tr><th class="tl">Name</th><th>Age</th><th>Retires</th><th>Passes</th><th>Salary</th><th class="tl">Pension</th><th>State Pension from</th><th>Entitlement</th></tr>
+    ${S.people.map(p=>`<tr><td class="tl">${esc(p.name)}</td><td>${p.currentAge}</td><td>${p.retireAge}</td><td>${p.deathAge}</td><td>${sym}${n(p.salary)}</td><td class="tl">${PEN_MODE_L[p.pensionMode]}${p.pensionMode==='own'?` (${p.eePct}% + ${p.erPct}%)`:''}</td><td>${p.spAge}</td><td>${p.spPct}%</td></tr>`).join('')}</table></div>
+  ${S.incomes.length?`<div class="rpt-sec"><h2>Other income</h2>
+    <table class="rt2"><tr><th class="tl">Label</th><th class="tl">Person</th><th class="tl">Type</th><th>Annual</th><th class="tl">Adjustment</th><th>From</th><th>To</th></tr>
+    ${S.incomes.map(i=>{const p=S.people.find(x=>x.id===i.pid);return`<tr><td class="tl">${esc(i.label)}</td><td class="tl">${p?esc(p.name):'Household'}</td><td class="tl">${INC_T[i.type]?INC_T[i.type].label:i.type}</td><td>${sym}${n(i.amount)}</td><td class="tl">${{none:'None',general:'General inflation',wage:'Wage growth',fixed:(i.adj||0)+'%/yr'}[i.adjType]||''}</td><td>${i.startAge||'—'}</td><td>${i.endAge||'—'}</td></tr>`;}).join('')}</table></div>`:''}
+  <div class="rpt-sec"><h2>Accounts &amp; assets</h2>
+    <table class="rt2"><tr><th class="tl">Account</th><th class="tl">Type</th><th class="tl">Owner</th><th>Balance</th><th>Return %</th><th class="tl">Growth basis</th><th>Fees %</th><th>Regular saving</th><th>Draw order</th></tr>
+    ${sorted.map(a=>`<tr><td class="tl">${esc(a.label)}</td><td class="tl">${ACCT_T[a.type]?ACCT_T[a.type].label:a.type}</td><td class="tl">${esc(ownerName(a))}</td><td>${sym}${n(a.balance)}</td><td>${a.rate}</td><td class="tl">${growthL(a)}</td><td>${a.feePct||0}</td><td>${a.regular>0?sym+n(a.regular):'—'}</td><td>${a.type==='property'?'—':a.drawOrder}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl" colspan="3">Total</td><td>${sym}${n(start)}</td><td colspan="5"></td></tr></table></div>
+  <div class="rpt-sec"><h2>Housing — ${esc(sc.name)}</h2>
+    <p style="font-size:11px;line-height:1.55;margin-bottom:6px">${esc(housingText(hs))}</p>
+    ${hs.mode==='buy'&&rows.bought?`<table class="rt2"><tr><th class="tl">Item</th><th>Value</th></tr>
+      <tr><td class="tl">Purchase year</td><td>${rows.bought.buyY}</td></tr><tr><td class="tl">Price in that year</td><td>${sym}${n(rows.bought.price)}</td></tr>
+      <tr><td class="tl">Help to Buy refund</td><td>${rows.bought.htb>0?sym+n(rows.bought.htb):'—'}</td></tr>
+      <tr><td class="tl">First Home Scheme share</td><td>${rows.bought.fhsPct>0?Math.round(rows.bought.fhsPct*100)+'% ('+sym+n(rows.bought.fhsPct*rows.bought.price)+')':'—'}</td></tr>
+      <tr><td class="tl">Mortgage at purchase</td><td>${sym}${n(rows.bought.mort)}</td></tr>
+      <tr><td class="tl">Deposit ready from</td><td>${rows.readyYear||'—'}</td></tr></table>`:''}
+    <p style="font-size:9px;color:#786f62;margin-top:5px">Deposit ready is the first year liquid savings cover the deposit (after Help to Buy), stamp duty and purchase costs.</p></div>
+  <div class="rpt-sec pb-before"><h2>Expenses — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Item</th><th>Annual</th><th>Monthly</th><th class="tl">Rises with</th><th>From</th><th>To</th><th class="tl">Notes</th></tr>
+    ${sc.expenses.map(e=>`<tr><td class="tl">${esc(e.label)}</td><td>${sym}${n(e.amount)}</td><td>${sym}${n(e.amount/12)}</td><td class="tl">${{general:'General inflation',wage:'Wage growth',none:'Fixed'}[e.infl]}</td><td>${e.startAge||'—'}</td><td>${e.endAge||'—'}</td><td class="tl" style="font-size:9px">${esc(e.note||'')}</td></tr>`).join('')}
+    <tr class="tot"><td class="tl">Total</td><td>${sym}${n(sc.expenses.reduce((t,e)=>t+e.amount,0))}</td><td>${sym}${n(sc.expenses.reduce((t,e)=>t+e.amount,0)/12)}</td><td class="tl" colspan="4">Today's euro, not including rent or mortgage</td></tr></table></div>
+  ${sc.cashEvents.length?`<div class="rpt-sec"><h2>Cash events — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Direction</th><th class="tl">Category</th><th class="tl">Description</th><th>At age</th><th>Amount</th><th>CAT group</th></tr>
+    ${sc.cashEvents.map(c=>`<tr><td class="tl">${c.dir==='in'?'Inflow':'Outflow'}</td><td class="tl">${CE_T[c.type]?CE_T[c.type].label:c.type}</td><td class="tl">${esc(c.label)}</td><td>${c.age}</td><td>${sym}${n(c.amount)}</td><td>${CE_T[c.type]&&CE_T[c.type].cat?(c.group||'A'):'—'}</td></tr>`).join('')}</table></div>`:''}
+  ${sc.marketEvents.length?`<div class="rpt-sec"><h2>Market events — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Event</th><th>At age</th><th>One-off change</th><th>Then, return for</th><th class="tl">Accounts affected</th></tr>
+    ${sc.marketEvents.map(ev=>`<tr><td class="tl">${esc(ev.label)}</td><td>${ev.age}</td><td>${ev.shockPct>0?'+':''}${ev.shockPct}%</td><td>${ev.years>0&&ev.rate!==''?ev.rate+'%/yr for '+ev.years+' yr'+(ev.years>1?'s':''):'—'}</td><td class="tl" style="font-size:9px">${esc(tgtNames(ev))}</td></tr>`).join('')}</table></div>`:''}
+  ${S.scenarios.length>1?`<div class="rpt-sec"><h2>Scenario comparison</h2>
+    <table class="rt2"><tr><th class="tl">Scenario</th><th class="tl">Home</th><th>Deposit ready</th><th>Mortgage-free</th><th class="tl">Funded</th><th>End net worth</th><th>In today's €</th><th>Total tax</th></tr>
+    ${sums.map(x=>`<tr><td class="tl">${esc(x.sc.name)}${x.sc===sc?' (shown here)':''}</td><td class="tl" style="font-size:9px">${esc(x.home)}</td><td>${x.r.readyYear||'—'}</td><td>${x.r.mortFreeAge!=null?'Age '+x.r.mortFreeAge:'—'}</td><td class="tl">${x.d?'Runs out at '+x.d.age:'To age '+x.l.age}</td><td>${sym}${n(x.l.total)}</td><td>${sym}${n(x.l.realTotal)}</td><td>${sym}${n(x.l.cumTax)}</td></tr>`).join('')}</table></div>`:''}
+  <div class="rpt-sec pb-before landscape-section"><h2>Year-by-year projection — ${esc(sc.name)}</h2>
+    <table class="rt2"><tr><th class="tl">Age</th><th class="tl">Year</th><th class="tl">Events</th><th>Salary</th><th>State Pension</th><th>Pension &amp; Other</th><th>Lump Sum</th><th>Income Tax</th><th>USC</th><th>PRSI</th><th>DIRT / Exit</th><th>CAT</th><th>Expenses</th><th>Housing</th><th>Cash Events</th><th>Extra Draw</th>
+      ${sorted.map(a=>`<th>${esc(a.label.length>12?a.label.slice(0,11)+'…':a.label)}</th>`).join('')}<th>Home Equity</th><th>Mortgage</th><th>Net Worth</th><th>Today's €</th><th>Cumul. Tax</th></tr>
+    ${rows.map((r,ri)=>{const ev=evList[ri];const ce=r.ceIn-r.ceOut;const d=v=>v>0?sym+n(v):'—';const c=v=>v>0?'('+sym+n(v)+')':'—';
+      return`<tr class="${r.depleted?'dep':ev.length?'evt':''}"><td class="tl">${r.age}</td><td class="tl">${r.yr}</td><td class="tl" style="font-size:9px">${esc(ev.join('; '))||'—'}</td>
+      <td>${d(r.salary)}</td><td>${d(r.sp)}</td><td>${d(r.pens)}</td><td>${d(r.lump)}</td><td>${c(r.it)}</td><td>${c(r.usc)}</td><td>${c(r.prsi)}</td><td>${c(r.sav)}</td><td>${c(r.cat)}</td><td>${c(r.expenses)}</td><td>${c(r.housing)}</td>
+      <td>${ce>0?'+'+sym+n(ce):ce<0?'('+sym+n(-ce)+')':'—'}</td><td>${r.draw>0?'('+sym+n(r.draw)+')':r.surplus>0?'+'+sym+n(r.surplus):'—'}</td>
+      ${sorted.map((_,i)=>`<td>${sym}${n(r.snap[i]||0)}</td>`).join('')}<td>${d(r.homeEquity)}</td><td>${d(r.mortBal)}</td><td><strong>${sym}${n(r.total)}</strong></td><td>${sym}${n(r.realTotal)}</td><td>(${sym}${n(r.cumTax)})</td></tr>`;}).join('')}
+    </table>
+    <p style="font-size:8.5px;color:#a8a098;margin-top:5px">Amber rows = a retirement, purchase, passing or market event happens that year; red rows = money has run out. Today's € = net worth adjusted for ${S.genInfl}%/yr general inflation.</p></div>
+  <div class="rpt-disc"><strong>Disclaimer:</strong> A planning aid, not tax or financial advice. Figures follow the rules published in October 2026, including Budget 2027 as announced. Several figures are assumptions or come from news summaries: the 2027 age credit, the single age exemption limit, the Help to Buy price cap, the First Home Scheme end date and price ceiling, the rent credit rate, exit tax from 2027, the Investment Account design and the CAT thresholds. Investment returns, house prices and rents are assumptions, not forecasts. Check with Revenue or a qualified adviser before making decisions.</div>`;
+  window.print();
+}
+
+/* ══ EXCEL EXPORT ══ */
+function exportXLSX(){
+  function doExport(){
+    const XLSX=window.XLSX,wb=XLSX.utils.book_new();
+    const rows=simulateIE(),sc=sc0(),sorted=sortedAccts(),last=rows[rows.length-1],dep=rows.find(r=>r.depleted);
+    const ret=rows.find(x=>x.age>=S.people[0].retireAge)||last;
+    const add=(name,aoa,cols)=>{const ws=XLSX.utils.aoa_to_sheet(aoa);if(cols)ws['!cols']=cols.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,name);};
+    add('Summary',[
+      ['Irish Household Financial Forecast','',''],['Generated',new Date().toLocaleDateString('en-IE'),'Currency','EUR'],['Active scenario',sc.name,'Tax status',S.status],['','',''],
+      ['KEY METRICS','',''],['Net worth now',S.accounts.reduce((t,a)=>t+(+a.balance||0),0),''],['Net worth at retirement (age '+ret.age+')',ret.total,''],
+      ['Net worth at the end (age '+last.age+')',last.total,''],['End net worth, today\'s EUR',last.realTotal,''],[dep?'Money runs out at age':'Funded through age',dep?dep.age:last.age+'+',''],
+      ['Deposit ready',rows.readyYear||'Not within projection',''],['Mortgage-free age',rows.mortFreeAge!=null?rows.mortFreeAge:'',''],['Total tax paid',last.cumTax,''],['','',''],
+      ['ASSUMPTIONS','',''],['General inflation %',S.genInfl,'Wage growth %',S.wageGrowth],['Bands and credits rise after 2027 %',S.bandIndex,'State Pension weekly EUR',S.spWeekly],
+      ['State Pension rise after 2027 %',S.spGrowth,'Stress-test return %',S.stressRate+(S.useStress?' (active)':' (inactive)')],['Start year',S.startYear,'CAT already used (Group A)',S.catUsed||0],
+      ['','',''],['HOUSING',housingText(sc.housing),'']],[44,60,28,22]);
+    const yyH=['Age','Year','Events','Salary','State Pension','Pension and other','Lump sum (net)','Income tax','USC','PRSI','DIRT and exit tax','CAT','Living expenses','Housing','Cash inflows','Cash outflows','Extra draw','Surplus',...sorted.map(a=>a.label),'Home equity','Mortgage balance','Net worth','Net worth today\'s EUR','Cumulative tax'];
+    add('Year by Year',[yyH,...rows.map(r=>[r.age,r.yr,r.events.map(evText).join('; '),r.salary,r.sp,r.pens,r.lump,r.it,r.usc,r.prsi,r.sav,r.cat,r.expenses,r.housing,r.ceIn,r.ceOut,r.draw,r.surplus,...sorted.map((_,i)=>r.snap[i]||0),r.homeEquity,r.mortBal,r.total,r.realTotal,r.cumTax])],[5,6,26,...Array(yyH.length-3).fill(16)]);
+    add('People',[['Name','Current age','Retires at','Age at passing','Gross salary','Pension','Employee %','Employer %','Medical card','State Pension from','Entitlement %'],...S.people.map(p=>[p.name,p.currentAge,p.retireAge,p.deathAge,p.salary,PEN_MODE_L[p.pensionMode],p.pensionMode==='own'?p.eePct:'',p.pensionMode==='own'?p.erPct:'',p.card?'Yes':'No',p.spAge,p.spPct])],[16,12,11,14,13,22,11,11,12,16,13]);
+    add('Accounts',[['Account','Type','Owner','Balance','Return %','Growth basis','Fees %','Regular saving','Save until age','Draw order'],...sorted.map(a=>[a.label,ACCT_T[a.type]?ACCT_T[a.type].label:a.type,ownerName(a),a.balance,a.rate,growthL(a),a.feePct||0,a.regular||0,a.saveTo===''?'retirement':a.saveTo,a.type==='property'?'N/A':a.drawOrder])],[28,20,14,14,10,22,8,14,14,10]);
+    if(S.incomes.length)add('Other Income',[['Label','Person','Type','Annual','Adjustment','Adj %/yr','From age','To age'],...S.incomes.map(i=>{const p=S.people.find(x=>x.id===i.pid);return[i.label,p?p.name:'Household',INC_T[i.type]?INC_T[i.type].label:i.type,i.amount,i.adjType,i.adj,i.startAge||'',i.endAge||''];})],[24,14,22,12,12,9,9,9]);
+    add('Housing',[['Scenario','Mode','Rent/mo','Rent rise %','Rent credit','Buy at age','Price today','House growth %','Deposit %','New build','Help to Buy','First Home Scheme','Scheme share %','Mortgage rate %','Term','Costs %','Running %'],
+      ...S.scenarios.map(s=>{const h=s.housing,b=h.mode==='buy';return[s.name,h.mode,h.rentMonthly,h.rentInfl,h.rtc===false?'No':'Yes',b?h.buyAge:'',b?h.price:'',b?h.houseGrowth:'',b?h.depositPct:'',b?(h.newBuild?'Yes':'No'):'',b?(h.useHTB?'Yes':'No'):'',b?(h.useFHS?'Yes':'No'):'',b&&h.useFHS?h.fhsPct:'',b?h.mortRate:'',b?h.mortTerm:'',b?h.costsPct:'',b?h.runPct:''];})],[28,8,10,11,11,10,12,13,10,10,12,16,14,14,7,9,10]);
+    const exR=[];S.scenarios.forEach(s=>{s.expenses.forEach(e=>exR.push([s.name,e.label,e.amount,e.amount/12,{general:'General inflation',wage:'Wage growth',none:'Fixed'}[e.infl],e.startAge||'',e.endAge||'',e.note||'']));exR.push([s.name,'TOTAL',s.expenses.reduce((t,e)=>t+e.amount,0),s.expenses.reduce((t,e)=>t+e.amount,0)/12,'','','','']);exR.push([]);});
+    add('Expenses',[['Scenario','Item','Annual','Monthly','Rises with','From age','To age','Notes'],...exR],[26,28,12,12,18,9,9,30]);
+    const ceR=[];S.scenarios.forEach(s=>s.cashEvents.forEach(c=>ceR.push([s.name,c.dir==='in'?'Inflow':'Outflow',CE_T[c.type]?CE_T[c.type].label:c.type,c.label,c.age,c.amount,CE_T[c.type]&&CE_T[c.type].cat?(c.group||'A'):'',c.note||''])));
+    if(ceR.length)add('Cash Events',[['Scenario','Direction','Category','Description','At age','Amount','CAT group','Notes'],...ceR],[26,10,24,28,8,12,10,30]);
+    const meR=[];S.scenarios.forEach(s=>s.marketEvents.forEach(ev=>meR.push([s.name,ev.label,ev.age,ev.shockPct,ev.years>0&&ev.rate!==''?ev.rate:'',ev.years>0?ev.years:'',tgtNames(ev)])));
+    if(meR.length)add('Market Events',[['Scenario','Event','At age','One-off change %','Return % afterwards','For years','Accounts affected'],...meR],[26,26,8,16,18,10,44]);
+    add('Scenario Comparison',[['Scenario','Home','Deposit ready','Mortgage-free age','Funded','End net worth','End net worth today\'s EUR','Total tax'],
+      ...S.scenarios.map((_,i)=>{const x=summaryFor(i);return[x.sc.name,x.home,x.r.readyYear||'',x.r.mortFreeAge!=null?x.r.mortFreeAge:'',x.d?'Runs out at '+x.d.age:'To age '+x.l.age,x.l.total,x.l.realTotal,x.l.cumTax];})],[30,44,13,17,18,16,24,14]);
+    XLSX.writeFile(wb,'irish-household-projection.xlsx');
+  }
+  if(window.XLSX){doExport();}
+  else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=doExport;s.onerror=()=>alert('Could not load the Excel library. Please check your internet connection.');document.head.appendChild(s);}
 }
 
 /* ══ INFO CONTENT BUILT FROM THE ENGINE'S OWN FIGURES ══ */
