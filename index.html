@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<script>
+/* Theme: saved choice wins; otherwise follow the system. Runs before first paint. */
+(function(){var t=null;try{t=localStorage.getItem('planner-theme');}catch(e){}
+if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';}
+document.documentElement.setAttribute('data-theme',t);})();
+</script>
 <title>Family Retirement Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <script id="istate" type="application/json">null</script>
@@ -18,6 +24,20 @@
   --text-primary:#1a1917;--text-muted:#786f62;--text-hint:#a8a098;
   /* ── Status colours ── */
   --status-green:#2d6a4f;--status-red:#b83232;--status-amber:#b5620a;
+  /* ink = brand navy used as TEXT/outline; navy = brand navy used as a SURFACE */
+  --ink:#1b2f4a;--gold-ink:#8f6a1a;--on-gold:#1a1410;--on-red:#fff;
+  /* tag palettes: background / text / border */
+  --t-blue-bg:#e6f1fb;--t-blue-fg:#0c447c;--t-blue-bd:#85b7eb;
+  --t-ss-bg:#e6eef7;--t-ss-fg:#1b2f4a;--t-ss-bd:#a8c0d8;
+  --t-amber-bg:#fff8ec;--t-amber-fg:#8a5e00;--t-amber-bd:#f5d87a;
+  --t-green-bg:#eaf3de;--t-green-fg:#3b6d11;--t-green-bd:#c0dd97;
+  --t-orange-bg:#fff4ec;--t-orange-fg:#b5620a;--t-orange-bd:#f5c497;
+  --t-purple-bg:#f0eeff;--t-purple-fg:#5a50b0;--t-purple-bd:#c0b8f0;
+  --t-brown-bg:#f5ede4;--t-brown-fg:#7a4f2e;--t-brown-bd:#d4a97a;
+  --t-red-bg:#fef2f2;--t-red-fg:#b83232;--t-red-bd:#f8d4d4;
+  --row-evt:#fefbf3;--row-evtm:#f0f7ff;--row-line:#f2ede4;
+  --hover-tint:rgba(0,0,0,0.015);--grid:rgba(0,0,0,0.04);--chart-total:#333;--chart-real:#6B48FF;
+  color-scheme:light;
   /* ── Aliases used in older selectors (kept for compatibility) ── */
   --surf:var(--surface);--surf2:var(--surface-raised);--surf3:var(--surface-sunken);
   --brd:var(--border);--brd2:var(--border-strong);
@@ -42,7 +62,32 @@
   /* ── Z-index layers ── */
   --z-header:30;--z-infopanel:25;--z-popover:500;--z-tooltip:9999;
 }
+
+/* ── DARK THEME ── only variables change; components read the same names.
+   Surfaces step up in lightness (bg < sunken < surface < raised) so depth survives without shadows. */
+:root[data-theme="dark"]{
+  --navy:#1f3556;--navy-mid:#284268;--gold:#b8892b;--gold-light:#e0b25a;
+  --bg:#121418;--surface:#1c1f26;--surface-raised:#232731;--surface-sunken:#16191f;
+  --border:#2e333d;--border-strong:#454c59;
+  --color-property:#d9a97c;
+  --text-primary:#e9e6e0;--text-muted:#aaa397;--text-hint:#9b9589;
+  --status-green:#62c493;--status-red:#f08585;--status-amber:#eca054;
+  --ink:#c4d4ee;--gold-ink:#e0b25a;--on-gold:#1a1410;--on-red:#1a1010;
+  --t-blue-bg:#18283d;--t-blue-fg:#a9cdf2;--t-blue-bd:#36557f;
+  --t-ss-bg:#1a2a41;--t-ss-fg:#b4cdee;--t-ss-bd:#3a5780;
+  --t-amber-bg:#2e2610;--t-amber-fg:#ecca74;--t-amber-bd:#6a5522;
+  --t-green-bg:#1a2c19;--t-green-fg:#a9d58f;--t-green-bd:#3c5f31;
+  --t-orange-bg:#33210f;--t-orange-fg:#f2ad6d;--t-orange-bd:#704824;
+  --t-purple-bg:#25213f;--t-purple-fg:#c0b8f4;--t-purple-bd:#4a4488;
+  --t-brown-bg:#2b2018;--t-brown-fg:#dbad82;--t-brown-bd:#5f4433;
+  --t-red-bg:#321919;--t-red-fg:#f29595;--t-red-bd:#6c3030;
+  --row-evt:#221e12;--row-evtm:#15202d;--row-line:#252a33;
+  --hover-tint:rgba(255,255,255,0.04);--grid:rgba(255,255,255,0.07);--chart-total:#ece9e3;--chart-real:#a99aff;
+  color-scheme:dark;
+}
 html{font-size:14px}
+/* form fields without their own rule follow the theme (zero specificity so every component rule still wins) */
+:where(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]),select,textarea){background-color:var(--surface);color:var(--text-primary)}
 body{font-family:var(--font-sans);background:var(--bg);color:var(--text-primary);line-height:1.5;overflow:hidden;height:100vh;display:flex;flex-direction:column}
 
 /* ── HEADER ── */
@@ -64,8 +109,8 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .settings-row label{flex:1;color:var(--text-muted);font-size:12px;cursor:default}
 .settings-row label[data-tip]{cursor:help}
 .settings-row input[type=number]{width:58px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-family:var(--font-mono);font-size:12px;text-align:center;background:var(--surface);color:var(--text-primary)}
-.settings-row input[type=number]:focus{outline:none;border-color:var(--navy)}
-.settings-row input[type=checkbox]{accent-color:var(--navy);cursor:pointer}
+.settings-row input[type=number]:focus{outline:none;border-color:var(--ink)}
+.settings-row input[type=checkbox]{accent-color:var(--ink);cursor:pointer}
 .settings-row .unit{font-size:11px;color:var(--text-hint);flex-shrink:0}
 
 /* ── INFO PANEL (collapsible, below header) ── */
@@ -80,13 +125,13 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .info-tbl td{padding:2px 6px;border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.65);font-family:var(--font-mono);font-size:11px}
 .info-tbl tr:last-child td{border-bottom:none}
 .info-tbl td:first-child{font-family:var(--font-sans)}
-.info-disc{grid-column:1/-1;font-size:10px;color:rgba(255,255,255,0.35);line-height:1.5;padding-top:6px;border-top:1px solid rgba(255,255,255,0.1);font-style:italic}
+.info-disc{grid-column:1/-1;font-size:10px;color:rgba(255,255,255,0.6);line-height:1.5;padding-top:6px;border-top:1px solid rgba(255,255,255,0.1);font-style:italic}
 
 /* ── CONFIRM DIALOG (Start Fresh) ── */
 .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,35,0.55);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .confirm-overlay.open{display:flex}
 .confirm-box{background:var(--surface);border-radius:var(--radius-lg);padding:1.5rem;width:360px;max-width:92vw;border:1px solid var(--border-strong)}
-.confirm-box h3{font-family:var(--font-serif);font-size:1rem;font-weight:500;color:var(--navy);margin-bottom:0.6rem}
+.confirm-box h3{font-family:var(--font-serif);font-size:1rem;font-weight:500;color:var(--ink);margin-bottom:0.6rem}
 .confirm-box p{font-size:13px;color:var(--text-muted);line-height:1.55;margin-bottom:1rem}
 .confirm-btns{display:flex;gap:8px;justify-content:flex-end}
 
@@ -96,7 +141,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .col-drag-item.drag-over{background:var(--surface-sunken);outline:2px dashed var(--gold)}
 .drag-handle{color:var(--text-hint);font-size:13px;cursor:grab;padding:0 2px;flex-shrink:0;line-height:1}
 .drag-handle:active{cursor:grabbing}
-.col-drag-item input[type=checkbox]{accent-color:var(--navy);cursor:pointer;flex-shrink:0}
+.col-drag-item input[type=checkbox]{accent-color:var(--ink);cursor:pointer;flex-shrink:0}
 .col-drag-item span{font-size:12.5px;color:var(--text-primary);flex:1}
 
 /* ── BUTTONS ── */
@@ -112,22 +157,22 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .btn-danger-ghost{background:transparent;border-color:rgba(255,120,100,0.35);color:rgba(255,160,140,0.85)}
 .btn-danger-ghost:hover{background:rgba(255,80,60,0.12)}
 /* Gold — used for Export & Save */
-.btn-gold{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-gold{background:var(--gold);border-color:var(--gold);color:var(--on-gold)}
 .btn-gold:hover{opacity:0.87}
 /* Light surface button — used in left/right panes */
 .btn-outline{background:var(--surface);border-color:var(--border-strong);color:var(--text-primary);font-size:12px}
 .btn-outline:hover{background:var(--surface-raised)}
 /* Dashed add button — full-width, used below lists */
 .btn-add{background:transparent;border:1.5px dashed var(--border-strong);color:var(--text-muted);width:100%;justify-content:center;padding:0.35rem;border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:var(--font-sans);display:flex;align-items:center;gap:4px;margin-top:4px;transition:all var(--dur)}
-.btn-add:hover{border-color:var(--gold);color:var(--gold)}
+.btn-add:hover{border-color:var(--gold-ink);color:var(--gold-ink)}
 /* Small inline delete button */
-.btn-del{background:transparent;border:1px solid #f2d0d0;color:var(--status-red);font-size:11px;padding:1px 5px;border-radius:4px;cursor:pointer;font-family:var(--font-sans)}
-.btn-del:hover{background:#fef2f2}
+.btn-del{background:transparent;border:1px solid var(--t-red-bd);color:var(--status-red);font-size:11px;padding:1px 5px;border-radius:4px;cursor:pointer;font-family:var(--font-sans)}
+.btn-del:hover{background:var(--t-red-bg)}
 /* Tiny xs button — reorder arrows, scenario new etc. */
 .btn-xs{font-family:var(--font-sans);font-size:11px;padding:2px 7px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text-muted);cursor:pointer;transition:background var(--dur)}
 .btn-xs:hover{background:var(--surface-raised)}
 /* Scenario "+ New" gets the dashed gold treatment */
-.btn-scen-new{font-family:var(--font-sans);font-size:11.5px;font-weight:500;padding:3px 10px;border:1.5px dashed var(--gold);border-radius:18px;background:transparent;color:var(--gold);cursor:pointer;transition:all var(--dur)}
+.btn-scen-new{font-family:var(--font-sans);font-size:11.5px;font-weight:500;padding:3px 10px;border:1.5px dashed var(--gold);border-radius:18px;background:transparent;color:var(--gold-ink);cursor:pointer;transition:all var(--dur)}
 .btn-scen-new:hover{background:rgba(184,137,43,0.08)}
 
 /* ── EXPORT MENU ITEM (inside the Export & Save popover) ── */
@@ -150,14 +195,14 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .ltab-bar{display:flex;background:var(--surf3);border-bottom:2px solid var(--brd);flex-shrink:0}
 .ltab{flex:1;padding:0.55rem 0.5rem;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:var(--fu);font-size:12px;font-weight:500;color:var(--mu);cursor:pointer;transition:all 0.12s;white-space:nowrap}
 .ltab:hover{color:var(--tx)}
-.ltab.act{color:var(--navy);border-bottom-color:var(--navy);background:var(--surf2)}
+.ltab.act{color:var(--ink);border-bottom-color:var(--ink);background:var(--surf2)}
 .ltab-panel{display:none;flex:1;overflow-y:auto}
 .ltab-panel.open{display:block}
 
 /* ── ACCORDION ── */
 .accord{border-bottom:1px solid var(--brd)}
-.ac-btn{width:100%;background:none;border:none;padding:0.7rem 1rem;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--navy);transition:background 0.12s}
-.ac-btn:hover{background:rgba(0,0,0,0.015)}
+.ac-btn{width:100%;background:none;border:none;padding:0.7rem 1rem;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--ink);transition:background 0.12s}
+.ac-btn:hover{background:var(--hover-tint)}
 .ac-arr{font-size:9px;color:var(--hi);transition:transform 0.2s;display:inline-block}
 .ac-btn.open .ac-arr{transform:rotate(180deg)}
 .ac-body{padding:0.6rem 1rem 0.875rem;display:none}
@@ -167,7 +212,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .f{margin-bottom:7px}
 .f>label{font-size:11px;color:var(--mu);display:block;margin-bottom:2px}
 .f input[type=number],.f input[type=text],.f select{width:100%;padding:4px 7px;border:1px solid var(--brd);border-radius:5px;font-family:var(--fu);font-size:12.5px;background:var(--surf);color:var(--tx);transition:border-color 0.12s}
-.f input:focus,.f select:focus{outline:none;border-color:var(--navy)}
+.f input:focus,.f select:focus{outline:none;border-color:var(--ink)}
 .mono{font-family:var(--fn)!important}
 .note{font-size:10.5px;color:var(--hi);font-style:italic;margin-top:2px;line-height:1.35}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
@@ -181,7 +226,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 [data-tip]:hover{text-decoration-color:var(--gold)}
 .has-qm[data-tip],.has-qm[data-help]{text-decoration:none}
 .qm{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-left:4px;border:1px solid var(--hi);border-radius:50%;font-size:9.5px;font-weight:600;line-height:1;color:var(--mu);background:transparent;cursor:help;vertical-align:1px;font-style:normal;text-transform:none;letter-spacing:0;flex:none;text-decoration:none}
-.qm:hover,.qm:focus-visible,.qm.on{background:var(--gold);border-color:var(--gold);color:#fff;outline:none}
+.qm:hover,.qm:focus-visible,.qm.on{background:var(--gold);border-color:var(--gold);color:var(--on-gold);outline:none}
 .tt b{display:block;margin-bottom:2px;color:#fff}
 .cmp{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:0.6rem}
 .cmp th{font-weight:500;color:var(--mu);text-align:right;padding:3px 6px;border-bottom:1px solid var(--brd)}
@@ -189,27 +234,27 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .cmp th:first-child,.cmp td:first-child{text-align:left;font-family:inherit}
 .cmp tr.act td{background:rgba(184,137,43,0.10);font-weight:600}
 .cmp tr{cursor:pointer}
-.gl-item{margin-bottom:6px}.gl-item b{color:var(--navy)}
+.gl-item{margin-bottom:6px}.gl-item b{color:var(--ink)}.info-panel .gl-item b,.info-panel b{color:#fff}
 
 /* ── PERSON BLOCK ── */
 .phead{display:flex;align-items:center;gap:7px;padding:0.6rem 0.875rem;background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2) var(--r2) 0 0;border-bottom:none}
 .pavi{width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:11px;flex-shrink:0}
-.pname{font-family:var(--fd);font-size:0.85rem;font-weight:500;color:var(--navy);border:none;background:transparent;padding:0;flex:1}
+.pname{font-family:var(--fd);font-size:0.85rem;font-weight:500;color:var(--ink);border:none;background:transparent;padding:0;flex:1}
 .pname:focus{outline:none}
 .pblock{background:var(--surf);border:1px solid var(--brd);border-radius:0 0 var(--r2) var(--r2);padding:0.6rem 0.875rem;margin-bottom:6px}
 
 /* ── INCOME STREAM CARD ── */
 .inc-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem;margin-bottom:5px;border-left:3px solid var(--brd2)}
-.inc-card.type-ss{border-left-color:#1b2f4a}.inc-card.type-pension{border-left-color:#b8892b}
-.inc-card.type-annuity{border-left-color:#2d6a4f}.inc-card.type-rental{border-left-color:#b5620a}
-.inc-card.type-wages{border-left-color:#7366c8}.inc-card.type-other{border-left-color:#a8a098}
+.inc-card.type-ss{border-left-color:var(--t-ss-fg)}.inc-card.type-pension{border-left-color:var(--t-amber-fg)}
+.inc-card.type-annuity{border-left-color:var(--t-green-fg)}.inc-card.type-rental{border-left-color:var(--t-orange-fg)}
+.inc-card.type-wages{border-left-color:var(--t-purple-fg)}.inc-card.type-other{border-left-color:var(--text-hint)}
 .inc-head{display:flex;align-items:center;gap:5px;margin-bottom:0.5rem}
 .inc-type-badge{font-size:10px;padding:1px 6px;border-radius:9px;border:1px solid;font-weight:500;white-space:nowrap}
-.itb-ss{background:#e6eef7;color:#1b2f4a;border-color:#a8c0d8}
-.itb-pension{background:#fff8ec;color:#8a5e00;border-color:#f5d87a}
-.itb-annuity{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
-.itb-rental{background:#fff4ec;color:#b5620a;border-color:#f5c497}
-.itb-wages{background:#f0eeff;color:#5a50b0;border-color:#c0b8f0}
+.itb-ss{background:var(--t-ss-bg);color:var(--t-ss-fg);border-color:var(--t-ss-bd)}
+.itb-pension{background:var(--t-amber-bg);color:var(--t-amber-fg);border-color:var(--t-amber-bd)}
+.itb-annuity{background:var(--t-green-bg);color:var(--t-green-fg);border-color:var(--t-green-bd)}
+.itb-rental{background:var(--t-orange-bg);color:var(--t-orange-fg);border-color:var(--t-orange-bd)}
+.itb-wages{background:var(--t-purple-bg);color:var(--t-purple-fg);border-color:var(--t-purple-bd)}
 .itb-other{background:var(--surf3);color:var(--mu);border-color:var(--brd2)}
 
 /* ── MONEY ROW ── */
@@ -225,19 +270,19 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .acct-card.prop-acct{border-left:3px solid var(--prop)}
 .acct-head{display:flex;align-items:center;gap:5px;margin-bottom:0.45rem;padding-bottom:0.4rem;border-bottom:1px solid var(--brd)}
 .acct-ord{width:20px;height:20px;border-radius:50%;background:var(--surf3);border:1px solid var(--brd2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--mu);flex-shrink:0}
-.acct-ni{font-weight:500;font-size:12.5px;color:var(--navy);border:none;background:transparent;padding:0;flex:1}
+.acct-ni{font-weight:500;font-size:12.5px;color:var(--ink);border:none;background:transparent;padding:0;flex:1}
 .acct-ni:focus{outline:none}
 .tbadge{font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;border:1px solid;white-space:nowrap}
-.trad{background:#fff8ec;color:#8a5e00;border-color:#f5d87a}
-.roth{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
-.taxb{background:#e6f1fb;color:#0c447c;border-color:#85b7eb}
-.prop{background:#f5ede4;color:#7a4f2e;border-color:#d4a97a}
-.rmd-chip{font-size:11px;color:var(--amb);margin-top:3px;padding:3px 7px;background:#fff8ec;border-radius:4px;display:inline-block}
+.trad{background:var(--t-amber-bg);color:var(--t-amber-fg);border-color:var(--t-amber-bd)}
+.roth{background:var(--t-green-bg);color:var(--t-green-fg);border-color:var(--t-green-bd)}
+.taxb{background:var(--t-blue-bg);color:var(--t-blue-fg);border-color:var(--t-blue-bd)}
+.prop{background:var(--t-brown-bg);color:var(--t-brown-fg);border-color:var(--t-brown-bd)}
+.rmd-chip{font-size:11px;color:var(--amb);margin-top:3px;padding:3px 7px;background:var(--t-amber-bg);border-radius:4px;display:inline-block}
 
 /* ── SCENARIO PILLS ── */
 .spills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:0.7rem;align-items:center}
 .spill{padding:3px 10px;border-radius:18px;font-size:12px;border:1px solid var(--brd2);background:var(--surf);cursor:pointer;color:var(--mu);font-family:var(--fu);font-weight:500;display:flex;align-items:center;gap:4px;transition:all 0.12s}
-.spill.act{background:var(--navy);color:#fff;border-color:var(--navy)}
+.spill.act{background:var(--navy);color:#fff;border-color:var(--ink)}
 .sdel,.sdup{font-size:9.5px;opacity:0.55;cursor:pointer;padding:1px 2px;transition:opacity 0.1s}
 .sdel:hover,.sdup:hover{opacity:1}
 
@@ -253,13 +298,13 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 .ce-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem;margin-bottom:5px}
 .ce-head{display:flex;align-items:center;gap:6px;margin-bottom:0.45rem;padding-bottom:0.4rem;border-bottom:1px solid var(--brd)}
 .ce-type{font-size:10px;padding:1px 7px;border-radius:9px;border:1px solid;font-weight:500}
-.ce-in{background:#eaf3de;color:#3b6d11;border-color:#c0dd97}
-.ce-out{background:#fef2f2;color:var(--red);border-color:#f8d4d4}
+.ce-in{background:var(--t-green-bg);color:var(--t-green-fg);border-color:var(--t-green-bd)}
+.ce-out{background:var(--t-red-bg);color:var(--t-red-fg);border-color:var(--t-red-bd)}
 .ce-rows{display:grid;grid-template-columns:1fr 52px 105px 1fr 24px;gap:5px;align-items:end}
 .ce-rows .f{margin:0}
 .tnote{font-size:10.5px;padding:3px 7px;border-radius:4px;margin-top:3px;line-height:1.5}
-.tnote-y{background:#fff8ec;color:#8a5e00}
-.tnote-n{background:#eaf3de;color:#3b6d11}
+.tnote-y{background:var(--t-amber-bg);color:var(--t-amber-fg)}
+.tnote-n{background:var(--t-green-bg);color:var(--t-green-fg)}
 
 /* ── POPOVER — z-index must exceed the metrics cards ── */
 .popwrap{position:relative;display:inline-block}
@@ -269,32 +314,32 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
 /* Standard checkbox/label row used in Metrics popover */
 .pop-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:13px;cursor:pointer;border-radius:4px;transition:background var(--dur)}
 .pop-item:hover{background:var(--surface-raised)}
-.pop-item input[type=checkbox]{cursor:pointer;accent-color:var(--navy);flex-shrink:0}
+.pop-item input[type=checkbox]{cursor:pointer;accent-color:var(--ink);flex-shrink:0}
 
 /* ── RESULTS ── */
 .met-grid{display:grid;gap:7px;margin-bottom:0.875rem}
 .met{background:var(--surf2);border:1px solid var(--brd);border-radius:var(--r2);padding:0.65rem 0.875rem;text-align:center}
 .met-l{font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--mu);margin-bottom:4px}
-.met-v{font-family:var(--fn);font-size:1.1rem;color:var(--navy)}
+.met-v{font-family:var(--fn);font-size:1.1rem;color:var(--ink)}
 .met-v.g{color:var(--grn)}.met-v.r{color:var(--red)}.met-v.a{color:var(--amb)}
 .met-s{font-size:10px;color:var(--hi);margin-top:2px}
 .chart-wrap{background:var(--surf2);border:1px solid var(--brd);border-radius:var(--r2);padding:0.875rem;position:relative;height:240px;margin-bottom:0.75rem}
 .cleg{display:flex;gap:12px;margin-bottom:5px;font-size:11px;color:var(--mu);flex-wrap:wrap}
 .ld{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:middle}
 .resbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.45rem;gap:6px}
-.res-hd{font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--navy)}
+.res-hd{font-family:var(--fd);font-size:0.875rem;font-weight:500;color:var(--ink)}
 .rt-wrap{overflow-x:auto}
 /* Column headers wrap rather than truncate */
 .rt{width:100%;border-collapse:collapse;font-size:11px}
 .rt th{font-size:9px;text-transform:uppercase;letter-spacing:0.04em;color:var(--mu);padding:3px 5px;text-align:right;border-bottom:1px solid var(--brd);background:var(--surf);font-weight:500;white-space:normal;min-width:68px;line-height:1.3}
 .rt th:first-child{text-align:left;min-width:80px}
-.rt td{padding:2.5px 5px;text-align:right;border-bottom:1px solid #f2ede4;font-family:var(--fn);font-size:10.5px}
+.rt td{padding:2.5px 5px;text-align:right;border-bottom:1px solid var(--row-line);font-family:var(--fn);font-size:10.5px}
 .rt td:first-child{text-align:left;font-family:var(--fu);font-size:11px}
-.rt tr.dep td{color:var(--red);background:#fef2f2}
-.rt tr.evt{background:#fefbf3}.rt tr.evtm{background:#f0f7ff}
+.rt tr.dep td{color:var(--red);background:var(--t-red-bg)}
+.rt tr.evt{background:var(--row-evt)}.rt tr.evtm{background:var(--row-evtm)}
 .neg{color:var(--red)}.pos{color:var(--grn)}.bk{font-weight:500}
 .badge{display:inline-block;padding:0 5px;border-radius:5px;font-size:9px;font-weight:500;vertical-align:middle;margin-left:2px;font-family:var(--fu)}
-.bw{background:#fff8e6;color:#8a5e00;border:1px solid #f5d87a}
+.bw{background:var(--t-amber-bg);color:var(--t-amber-fg);border:1px solid var(--t-amber-bd)}
 .disc{font-size:10px;color:var(--hi);margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--brd);line-height:1.65}
 
 /* ── PRINT ── */
@@ -347,6 +392,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
   <div class="hdr-mid"></div>
 
   <div class="hdr-r">
+    <button class="btn btn-ghost" id="theme-btn" onclick="toggleTheme()" aria-pressed="false" data-tip="Switch between light and dark. Your choice is remembered in this browser; until you choose, the page follows your device setting.">☾ Dark</button>
     <!-- ↺ Fresh Start — danger styling signals destructive action -->
     <button class="btn btn-danger-ghost" onclick="startFresh()" data-tip="Reset to a blank slate. All data will be cleared. Save first using Export & Save if needed.">↺ Fresh Start</button>
     <div class="hdr-sep"></div>
@@ -554,7 +600,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
     <p>This will clear all people, income streams, accounts, scenarios, and cash events — resetting to a blank default state. <strong>This cannot be undone.</strong> If you want to keep your current data, use <em>↓ Export &amp; Save → Save App</em> first to download a copy before resetting.</p>
     <div class="confirm-btns">
       <button class="btn btn-outline" onclick="document.getElementById('confirm-overlay').classList.remove('open')">Cancel</button>
-      <button class="btn" style="background:var(--status-red);border-color:var(--status-red);color:#fff" onclick="doStartFresh()">Yes, reset everything</button>
+      <button class="btn" style="background:var(--status-red);border-color:var(--status-red);color:var(--on-red)" onclick="doStartFresh()">Yes, reset everything</button>
     </div>
   </div>
 </div>
@@ -598,7 +644,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <p style="font-size:11.5px;color:var(--mu);margin-bottom:0.65rem;line-height:1.5">Shocks that hit <em>chosen accounts only</em>, such as a stock market crash that spares the savings account, or a property slump. Each scenario has its own list. Tick the accounts an event affects; with nothing ticked explicitly it hits every financial account.</p>
         <div id="me-list"></div>
         <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
-          <button class="btn-add" style="flex:1;min-width:120px;border-color:#f8d4d4;color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
+          <button class="btn-add" style="flex:1;min-width:120px;border-color:var(--t-red-bd);color:var(--red)" onclick="addME('crash')">+ Stock market crash</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('slump')">+ Property slump</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addME('lost')">+ Lost decade</button>
           <button class="btn-add" style="flex:1;min-width:120px" onclick="addMacro('inflation')">+ Inflation shock</button>
@@ -619,9 +665,9 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
         <div id="ce-list"></div>
         <div style="display:flex;gap:5px;margin-top:4px">
           <button class="btn-add" style="width:50%" onclick="addCE('in')">+ Add inflow / windfall</button>
-          <button class="btn-add" style="width:50%;border-color:#f8d4d4;color:var(--red)" onclick="addCE('out')">+ Add outflow / purchase</button>
+          <button class="btn-add" style="width:50%;border-color:var(--t-red-bd);color:var(--red)" onclick="addCE('out')">+ Add outflow / purchase</button>
         </div>
-        <p class="note" style="margin-top:8px">Tax guidance for each event type is shown on each card below. For full details on tax brackets, gift limits, and required minimum distributions, open the <button onclick="toggleInfo()" style="background:none;border:none;padding:0;font-size:10.5px;color:var(--navy);cursor:pointer;text-decoration:underline;font-family:var(--font-sans);font-style:italic">Info &amp; Assumptions Panel</button> in the header.</p>
+        <p class="note" style="margin-top:8px">Tax guidance for each event type is shown on each card below. For full details on tax brackets, gift limits, and required minimum distributions, open the <button onclick="toggleInfo()" style="background:none;border:none;padding:0;font-size:10.5px;color:var(--ink);cursor:pointer;text-decoration:underline;font-family:var(--font-sans);font-style:italic">Info &amp; Assumptions Panel</button> in the header.</p>
       </div>
     </div>
   </div>
@@ -649,7 +695,7 @@ header{background:var(--navy);height:var(--header-h);padding:0 1rem;display:flex
   <div class="cleg" id="cleg"></div>
   <div class="chart-wrap"><canvas id="main-chart"></canvas></div>
   <div class="resbar">
-    <div style="font-size:0.85rem;font-family:var(--fd);color:var(--navy)" id="tbl-hd">Year-by-year projection</div>
+    <div style="font-size:0.85rem;font-family:var(--fd);color:var(--ink)" id="tbl-hd">Year-by-year projection</div>
     <div class="popwrap">
       <button class="btn-outline" onclick="togglePop('col-pop')" style="font-size:12px;padding:3px 9px">Adjust Columns ···</button>
       <div class="popover" id="col-pop" style="min-width:230px"><div class="pop-title">Drag to reorder · check to show</div><div id="col-items"></div></div>
@@ -1620,7 +1666,7 @@ function renderExp(){
     <div style="background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:0.6rem 0.875rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;gap:6px">
         <div style="display:flex;align-items:center;gap:5px">
-          <input style="font-family:var(--fd);font-size:0.8rem;font-weight:500;color:var(--navy);border:none;border-bottom:1px dashed var(--brd2);background:transparent;padding:1px 0;width:150px" value="${sc.name}" oninput="S.scenarios[${si}].name=this.value;document.querySelectorAll('.spill.act span:first-child').forEach(s=>s.textContent=this.value);document.getElementById('tbl-hd').textContent='Year-by-year · '+this.value;document.getElementById('ce-scen-name').textContent='&quot;'+this.value+'&quot;'">
+          <input style="font-family:var(--fd);font-size:0.8rem;font-weight:500;color:var(--ink);border:none;border-bottom:1px dashed var(--brd2);background:transparent;padding:1px 0;width:150px" value="${sc.name}" oninput="S.scenarios[${si}].name=this.value;document.querySelectorAll('.spill.act span:first-child').forEach(s=>s.textContent=this.value);document.getElementById('tbl-hd').textContent='Year-by-year · '+this.value;document.getElementById('ce-scen-name').textContent='&quot;'+this.value+'&quot;'">
           <span style="font-size:10px;color:var(--hi)">← rename</span>
         </div>
         <span style="font-size:11.5px;color:var(--mu);white-space:nowrap">Total: <strong style="font-family:var(--fn);color:var(--tx)">${fmt(tot)}/yr</strong> · <strong style="font-family:var(--fn)">${fmt(tot/12)}/mo</strong></span>
@@ -1748,7 +1794,7 @@ function renderME(){
       const allOn=!(ev.targets&&ev.targets.length);
       const chips=accts.map(a=>{
         const on=allOn?a.type!=='property':ev.targets.includes(a.id);
-        return `<label class="pop-item" style="display:inline-flex;gap:4px;margin-right:8px;font-size:11.5px"><input type="checkbox" ${on?'checked':''} onchange="meTarget(${si},${ev.id},${a.id},this.checked)"><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</label>`;
+        return `<label class="pop-item" style="display:inline-flex;gap:4px;margin-right:8px;font-size:11.5px"><input type="checkbox" ${on?'checked':''} onchange="meTarget(${si},${ev.id},${a.id},this.checked)"><span class="ld" style="background:${themeClr(acctColor(a))}"></span>${a.label}</label>`;
       }).join('');
       return `<div class="ce-card">
         <div class="ce-head">
@@ -1902,27 +1948,65 @@ function renderMetrics(rows){
 
 let chart=null;
 function setChartView(v){S.chartView=v;recalc();}
+
+/* ── THEME ── */
+const isDark=()=>document.documentElement.getAttribute('data-theme')==='dark';
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const evRed=a=>isDark()?`rgba(240,133,133,${a})`:`rgba(184,50,50,${a})`;
+/* Dark mode lifts any series colour that would sink into the dark card, keeping its hue. */
+function themeClr(h){
+  if(!isDark())return h;
+  const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);if(!m)return h;
+  let r=parseInt(m[1],16)/255,g=parseInt(m[2],16)/255,b=parseInt(m[3],16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let H=0,Sx=0,L=(mx+mn)/2;
+  if(mx!==mn){const d=mx-mn;Sx=L>0.5?d/(2-mx-mn):d/(mx+mn);
+    H=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;H/=6;}
+  if(L>=0.58)return h;
+  L=0.62;Sx=Math.min(Sx,0.7);
+  const q=L<0.5?L*(1+Sx):L+Sx-L*Sx,p=2*L-q;
+  const f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<1/2?q:t<2/3?p+(q-p)*(2/3-t)*6:p;};
+  const x=v=>Math.round(v*255).toString(16).padStart(2,'0');
+  return '#'+x(f(H+1/3))+x(f(H))+x(f(H-1/3));
+}
+function applyChartTheme(){
+  if(typeof Chart==='undefined')return;
+  Chart.defaults.color=cssv('--text-muted');
+  Chart.defaults.borderColor=cssv('--grid');
+}
+function setTheme(t,persist){
+  document.documentElement.setAttribute('data-theme',t);
+  if(persist){try{localStorage.setItem('planner-theme',t);}catch(e){}}
+  const b=document.getElementById('theme-btn');
+  if(b){b.textContent=t==='dark'?'☀ Light':'☾ Dark';b.setAttribute('aria-pressed',t==='dark');}
+  applyChartTheme();
+  if(typeof recalc==='function'&&typeof S!=='undefined'&&S.accounts){try{recalc();}catch(e){}}
+}
+function toggleTheme(){setTheme(isDark()?'light':'dark',true);}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{
+  let saved=null;try{saved=localStorage.getItem('planner-theme');}catch(_){}
+  if(!saved)setTheme(e.matches?'dark':'light',false);});}catch(e){}
 function renderChart(rows){
+  applyChartTheme();
   const sorted=[...S.accounts].sort((a,b)=>a.drawOrder-b.drawOrder);
   const view=S.chartView||'bars';
   const labels=rows.map(r=>String(r.age));
   const hex2rgba=(h,al)=>{const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?`rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${al})`:h;};
   // One dataset per account. Bars and areas stack; the lines view plots each balance on its own.
   const acctSets=sorted.map((a,idx)=>{
-    const color=acctColor(a);
+    const color=themeClr(acctColor(a));
     const data=rows.map(r=>r.snap[idx]||0);
     if(view==='bars')return{label:a.label,data,backgroundColor:color,stack:'s'};
     if(view==='area')return{type:'line',label:a.label,data,borderColor:color,backgroundColor:hex2rgba(color,0.75),borderWidth:1.5,pointRadius:0,tension:0.25,fill:true};
     return{type:'line',label:a.label,data,borderColor:color,backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:0.25};
   });
   // Nominal total: shown on the lines view, where accounts do not stack to it
-  const totalLine=view==='lines'?{type:'line',label:'Total (nominal)',data:rows.map(r=>r.total),borderColor:'#333',backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:0.25}:null;
+  const totalLine=view==='lines'?{type:'line',label:'Total (nominal)',data:rows.map(r=>r.total),borderColor:cssv('--chart-total'),backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,tension:0.25}:null;
   // Today's $ overlay line, drawn last so it sits on top
   const realLine={
     label:"Wealth in today's $",
     data:rows.map(r=>r.realTotal),
     type:'line',
-    borderColor:'#6B48FF',
+    borderColor:cssv('--chart-real'),
     backgroundColor:'transparent',
     borderWidth:2,
     borderDash:[5,3],
@@ -1931,10 +2015,10 @@ function renderChart(rows){
   };
   // Legend follows the same colours as the datasets
   document.getElementById('cleg').innerHTML=
-    sorted.map(a=>`<span><span class="ld" style="background:${acctColor(a)}"></span>${a.label}</span>`).join('')+
-    (totalLine?`<span><span style="display:inline-block;width:14px;height:0;border-top:2.5px solid #333;vertical-align:middle;margin-right:3px"></span>Total</span>`:'')+
-    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #6B48FF;vertical-align:middle;margin-right:3px"></span>Today's $${qm('todayDollars')}</span>`+
-    `<span><span style="display:inline-block;width:0;height:11px;border-left:2px dashed rgba(184,50,50,0.7);vertical-align:middle;margin-right:4px"></span>Market event${qm('eventLine')}</span>`;
+    sorted.map(a=>`<span><span class="ld" style="background:${themeClr(acctColor(a))}"></span>${a.label}</span>`).join('')+
+    (totalLine?`<span><span style="display:inline-block;width:14px;height:0;border-top:2.5px solid ${cssv('--chart-total')};vertical-align:middle;margin-right:3px"></span>Total</span>`:'')+
+    `<span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed ${cssv('--chart-real')};vertical-align:middle;margin-right:3px"></span>Today's $${qm('todayDollars')}</span>`+
+    `<span><span style="display:inline-block;width:0;height:11px;border-left:2px dashed ${evRed(0.8)};vertical-align:middle;margin-right:4px"></span>Market event${qm('eventLine')}</span>`;
   const sel=document.getElementById('chart-view');if(sel&&sel.value!==view)sel.value=view;
   // Vertical dashed lines at deaths, cash events and market events
   const sc=S.scenarios[S.activeScenario];
@@ -1949,7 +2033,7 @@ function renderChart(rows){
       const idx=labels.indexOf(String(+ageStr));if(idx<0)return;
       const x=xs.getPixelForValue(idx);
       ctx.save();
-      ctx.strokeStyle=ev.type==='market'?'rgba(184,50,50,0.75)':ev.type==='death'?'rgba(184,50,50,0.3)':'rgba(184,137,43,0.4)';
+      ctx.strokeStyle=ev.type==='market'?evRed(0.8):ev.type==='death'?evRed(0.35):'rgba(212,164,69,0.5)';
       ctx.lineWidth=ev.type==='market'?1.5:1;ctx.setLineDash([3,3]);
       ctx.beginPath();ctx.moveTo(x,ys.top);ctx.lineTo(x,ys.bottom);ctx.stroke();
       ctx.restore();
@@ -1964,7 +2048,7 @@ function renderChart(rows){
       interaction:view==='bars'?undefined:{mode:'index',intersect:false},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
       scales:{x:{stacked:view!=='lines',grid:{display:false},ticks:{font:{size:10},autoSkip:true,maxTicksLimit:20}},
-               y:{stacked:view!=='lines',grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
+               y:{stacked:view!=='lines',grid:{color:cssv('--grid')},ticks:{callback:v=>fmtK(v),font:{size:10}}}}}
   });
 }
 
@@ -2002,7 +2086,7 @@ function renderTable(rows){
     const evtNames=r.events.filter(e=>e.type==='death').map(e=>e.name);
     const mktNames=r.events.filter(e=>e.type==='market').map(e=>e.label);
     const cls=r.depleted?'dep':(evtNames.length||mktNames.length)?'evt':'';
-    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('')+mktNames.map(n=>`<span class="badge bw" style="background:#fef2f2;color:var(--red)">${n}</span>`).join('');
+    const evtB=evtNames.map(n=>`<span class="badge bw">${n} passes</span>`).join('')+mktNames.map(n=>`<span class="badge bw" style="background:var(--t-red-bg);color:var(--red)">${n}</span>`).join('');
     let tds=`<td>${r.age}<span style="color:var(--text-hint);font-size:9px;margin-left:3px">${r.yr}</span>${evtB}</td>`;
     for(const key of S.colOrder){
       if(!c[key])continue;
@@ -2058,7 +2142,7 @@ function toggleStress(){
    JSON is escaped so < and > don't prematurely close the <script> tag.
 */
 function dlApp(){
-  let html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  let html='<!DOCTYPE html>\n'+document.documentElement.outerHTML.replace(/<html([^>]*?) data-theme="[a-z]+"/,'<html$1').replace(/ style="color-scheme:[^"]*"/,'');
   const j=JSON.stringify(S).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
   html=html.replace(/<script id="istate" type="application\/json">[\s\S]*?<\/script>/,
     `<script id="istate" type="application/json">${j}<\/script>`);
@@ -2306,6 +2390,7 @@ function syncInputs(){
   if(S.useStress){const b=document.getElementById('stress-btn');if(b){b.textContent='ON — pessimistic';b.className='stress-pill sp-on';}}
 }
 function init(){
+  setTheme(document.documentElement.getAttribute('data-theme')||'light',false);
   buildTaxInfo();
   document.getElementById('glossary').innerHTML=Object.values(HELP).filter(h=>h.g).map(h=>`<div class="gl-item"><b>${esc(h.t)}.</b> ${esc(h.d)}</div>`).join('');
   decorateTips(document.body);
